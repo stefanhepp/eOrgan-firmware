@@ -1,2 +1,4 @@
-# eOrgan-firmware
+README
+------
+
 Firmware sources for my eOrgan project
