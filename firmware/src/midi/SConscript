@@ -1,0 +1,8 @@
+Import("avrEnv midiModules")
+
+objs = []
+for module in midiModules:
+    o = avrEnv.SConscript("%s/SConscript" % module)
+    objs.extend(o)
+
+Return("objs")

@@ -1,0 +1,11 @@
+Import("avrEnv avrlibModules")
+
+# common is always included
+avrlibModules.insert(0,"common")
+
+objs = []
+for module in avrlibModules:
+    o = avrEnv.SConscript("%s/SConscript" % module)
+    objs.extend(o)
+
+Return("objs")

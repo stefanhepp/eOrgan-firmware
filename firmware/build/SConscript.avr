@@ -1,0 +1,25 @@
+# SCons script to setup AVR build environment
+Import("avrEnv opts")
+
+# set up environment
+t = Tool("avr", avrEnv["toolpath"] )
+t(avrEnv)
+p = Tool("avrprog", avrEnv["toolpath"] )
+p(avrEnv)
+
+# initialize default options
+opts.Add( "DEBUG", "Debug level", 0 )
+opts.Add( "MCU", "Target architecture", "at90s2313" )
+opts.Add( "WARNLEVEL", "Warning level", "-Wall -Wstrict-prototypes" )
+opts.Add( "AVRPROGDEV", "AVR programming device", "/dev/ttyS0" )
+opts.Add( EnumOption("AVRFORMAT", "Output file format", "srec", allowed_values=('ihex','srec')) )
+opts.Add( PathOption("OBJDIR", "Temporary build path", "obj", PathOption.PathIsDirCreate) )
+opts.Add( PathOption("SRCDIR", "Source directory", "src") )
+opts.Add( PathOption("BINDIR", "Binary output directory", "bin") )
+
+opts.Update(avrEnv)
+
+avrEnv.Append( CPPDEFINES={'DEBUG_LEVEL' : "$DEBUG" } )
+avrEnv.Append( CPPPATH="#${SRCDIR}/pedal" )
+
+Return("avrEnv")

@@ -1,0 +1,10 @@
+Import("avrEnv")
+
+objs = [ 
+    avrEnv.Object("setup.c"), 
+    avrEnv.Object("led.c"), 
+    avrEnv.Object("encoder.c"), 
+    avrEnv.Object("main.c") 
+    ]
+
+Return("objs")

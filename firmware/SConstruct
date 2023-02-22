@@ -1,0 +1,36 @@
+
+# initialize options
+opts = Options("custom.py")
+avrEnv = Environment( toolpath=["build/scons"] )
+
+# include avr setup script, but do not change dir
+SConscriptChdir(0)
+SConscript("build/SConscript.avr", exports="avrEnv opts" )
+SConscriptChdir(1)
+
+Help(opts.GenerateHelpText(avrEnv))
+
+# Define used avrlib and usb modules
+avrlibModules = []
+midiModules = ["midi"]
+
+Export("avrEnv", "avrlibModules", "midiModules")
+
+# Include all needed modules, collect build files
+objs = []
+module = "pedal"
+for component in [ "avrlib", "midi", module ]:
+    o = avrEnv.SConscript("${SRCDIR}/%s/SConscript" % component, build_dir="$OBJDIR/"+module+"/%s" % component, duplicate=0)
+    objs.extend(o)
+
+# Build main program (default)
+pedal = avrEnv.Program("${BINDIR}/" + module, objs)
+hex = avrEnv.HexObject("${BINDIR}/" + module, pedal)
+eep = avrEnv.EepObject("${BINDIR}/" + module, pedal)
+Default(pedal, hex, eep)
+
+# Install Targets
+#isp = avrEnv.Upload("install", [hex, eep])
+isp = avrEnv.Upload("install", hex)
+
+

@@ -1,0 +1,7 @@
+Import("avrEnv")
+
+objs = [ avrEnv.Object("lcd.c")
+	 avrEnv.Object("lcd_hw.c")
+       ]
+
+Return("objs")
