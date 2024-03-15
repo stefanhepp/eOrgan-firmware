@@ -1,18 +1,16 @@
 #include <Arduino.h>
+#include <Wire.h>
+#include <MIDI.h>
+//#include <USB-MIDI.h>
 
-// put function declarations here:
-int myFunction(int, int);
+MIDI_CREATE_INSTANCE(HardwareSerial, Serial1,    midiA);
+//USBMIDI_CREATE_DEFAULT_INSTANCE();
 
 void setup() {
-  // put your setup code here, to run once:
-  int result = myFunction(2, 3);
+  midiA.begin(1);
+  Wire.begin(8);
 }
 
 void loop() {
-  // put your main code here, to run repeatedly:
-}
-
-// put function definitions here:
-int myFunction(int x, int y) {
-  return x + y;
+  
 }
