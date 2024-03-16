@@ -16,5 +16,11 @@ static const uint8_t I2C_ADDR_TOESTUD  = 13;
 static const uint8_t I2C_ADDR_PEDAL	   = 14;
 static const uint8_t I2C_ADDR_PANEL	   = 15;
 
+// Default MIDI channels
+static const uint8_t MIDI_CHANNEL_KEYBOARD_1 = 6;
+static const uint8_t MIDI_CHANNEL_KEYBOARD_2 = 5;
+static const uint8_t MIDI_CHANNEL_TECHNICS   = 4;
+static const uint8_t MIDI_CHANNEL_PEDAL	     = 3;
+
 
 #endif
