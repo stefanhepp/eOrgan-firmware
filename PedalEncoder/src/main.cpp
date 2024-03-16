@@ -81,7 +81,26 @@ static void updateMIDIChannel(uint8_t channel) {
     settings.setMIDIChannel(channel);   
 }
 
-static void encReset(void)
+static void updateLEDIntensity(uint8_t intensity) {
+    led.setIntensity(intensity);
+    settings.setLEDIntensity(intensity);
+}
+
+static void decreaseLEDIntensity() {
+    uint8_t intensity = led.getIntensity();
+    if (intensity > 0) {
+        updateLEDIntensity(intensity - 1);
+    }
+}
+
+static void increaseLEDIntensity() {
+    uint8_t intensity = led.getIntensity();
+    if (intensity < StatusLED::MAX_INTENSITY) {
+        updateLEDIntensity(intensity + 1);
+    }
+}
+
+static void encoderReset(void)
 {
     // disable all notes on current channel
     sendAllNotesOff(1);
@@ -111,13 +130,11 @@ static void processConfigInput(uint8_t key, uint8_t velocity)
 	}
     // highest notes for config
 	if ( key == 28 ) {
-	    encReset();
+	    encoderReset();
 	} else if ( key == 24 ) {
-	    led.decreaseIntensity();
-        settings.setLEDIntensity(led.getIntensity());
+	    decreaseLEDIntensity();
 	} else if ( key == 26 ) {
-	    led.increaseIntensity();
-        settings.setLEDIntensity(led.getIntensity());
+	    increaseLEDIntensity();
     } else {
     	// TODO transpose
     }
@@ -161,6 +178,8 @@ void setup() {
     MIDIChannel = settings.getMIDIChannel();
     MIDI.turnThruOff();
     MIDI.begin(MIDIChannel);
+
+    led.begin(settings.getLEDIntensity());
 
     pedal.setHandleKeyChange(onKeyChange);
     pedal.begin();

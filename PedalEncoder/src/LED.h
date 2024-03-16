@@ -24,18 +24,16 @@ class StatusLED {
     private:
         uint8_t mIntensity;
 
-        LEDMode mMode;
-
-        bool mBlinkOn;
-
-        uint8_t mBlinkCount;
-
         void updateIntensity();
 
     public:
-        explicit StatusLED() : mIntensity(0), mMode(LEDModeNormal) {}
+        static const uint8_t MAX_INTENSITY = 0x0F;
+
+        explicit StatusLED() : mIntensity(0) {}
         
         uint8_t getIntensity() const { return mIntensity; }
+
+        void setIntensity(uint8_t intensity);
 
         /**
          * Initialize all input ports and routines.
@@ -46,9 +44,6 @@ class StatusLED {
 
         void setMode(LEDMode mode);
 
-        void decreaseIntensity();
-
-        void increaseIntensity();
 };
 
 #endif

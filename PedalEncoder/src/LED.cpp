@@ -17,10 +17,16 @@
 #include <avr/io.h>
 #include <avr/interrupt.h>
 
-// bit 0: led on/off; bit 1: blink state; bit 2: blink mode
+#include <avrlib.h>
+
+// ledState: bit 0: led on/off; bit 1: blink state; bit 2: blink mode
 #define STATE_LED_ON	0x01
 #define STATE_BLINK_ON	0x02
-#define STATE_BLINK	0x04
+#define STATE_BLINK	    0x04
+
+static uint8_t ledState;
+
+static uint16_t ledCount;
 
 void StatusLED::updateIntensity() 
 {
@@ -29,29 +35,25 @@ void StatusLED::updateIntensity()
 
 void StatusLED::begin(uint8_t intensity)
 {
-    mMode = LEDModeNormal;
-    mBlinkCount = 0;
-    mBlinkOn = false;
+    ledState = 0x00;
+    ledCount = 0;
 
     mIntensity = intensity;
     updateIntensity();
 
     // disable output pin, 8-bit PWM
-    /*
-    TCCR1A &= ~((1<<COM1A1)|(1<<COM1A0)|(1<<PWM11));
-    TCCR1A |= (1<<PWM10);
+    TCCR1A &= ~((1<<COM1A1)|(1<<COM1A0)|(1<<WGM11));
+    TCCR1A |= (1<<WGM10);
 
     // set prescaler to CK/8
     TCCR1B &= ~((1<<CS12)|(1<<CS10));
     TCCR1B |= (1<<CS11);
 
     // Enable interrupts
-    TIMSK |= (1<<OCIE1A)|(1<<TOIE1);
+    TIMSK0 |= (1<<OCIE1A)|(1<<TOIE1);
 
     // enable led output
-    IO_DDR(PORT_LED) |= (1<<PIN_LED);
-    IO_PORT(PORT_LED) |= (1<<PIN_LED);
-    */
+    pinMode(PIN_LED, OUTPUT);
 }
 
 void StatusLED::reset() 
@@ -62,62 +64,56 @@ void StatusLED::reset()
 
 void StatusLED::setMode(LEDMode mode)
 {
-    mMode = mode;
-    mBlinkCount = 0;
-    mBlinkOn = false;
-}
-
-void StatusLED::decreaseIntensity()
-{
-    if ( mIntensity > 0 ) {
-	    mIntensity--;
-	    updateIntensity();
+    if (mode == LEDModeNormal) {
+    	ledState &= ~(STATE_BLINK|STATE_BLINK_ON);
+	    ledCount = 0;
+    } else {
+	    ledState |= STATE_BLINK;
     }
 }
 
-void StatusLED::increaseIntensity()
+void StatusLED::setIntensity(uint8_t intensity)
 {
-    if ( mIntensity < 0x0F ) {
-    	mIntensity++;
-	    updateIntensity();
+    if ( intensity < MAX_INTENSITY ) {
+	    mIntensity = intensity;
+    } else {
+        mIntensity = MAX_INTENSITY;
     }
+	updateIntensity();
 }
 
-/*
-ISR(SIG_OVERFLOW1)
+ISR(TIMER1_OVF_vect)
 {
     sei();
 
-    state &= ~STATE_LED_ON;
+    ledState &= ~STATE_LED_ON;
 
-    if ( state & STATE_BLINK ) {
-
-	if (cntBlink > 600) {
-	    cntBlink = 0;
-	} else {
-	    cntBlink++;
-	}
+    if ( ledState & STATE_BLINK ) {
+        if (ledCount > 600) {
+            ledCount = 0;
+        } else {
+            ledCount++;
+        }
     }
 }
 
-ISR(SIG_OUTPUT_COMPARE1A) 
+ISR(TIMER1_COMPA_vect) 
 {
     sei();
 
-    if ( state & STATE_LED_ON ) {
+    if ( ledState & STATE_LED_ON ) {
 	
-	state &= ~STATE_LED_ON;
+	    ledState &= ~STATE_LED_ON;
 
-	if ( cntBlink < 320 ) {
-	    //IO_PORT(PORT_LED) |= (1<<PIN_LED);
-	}
+	    if ( ledCount < 320 ) {
+	        digitalWrite(PIN_LED, HIGH);
+	    }
 
     } else {
 
-	state |= STATE_LED_ON;
+	    ledState |= STATE_LED_ON;
 
-	//IO_PORT(PORT_LED) &= ~(1<<PIN_LED);
+	    digitalWrite(PIN_LED, LOW);
 
     }
 }
-*/
