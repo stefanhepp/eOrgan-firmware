@@ -78,7 +78,9 @@ static void finalizeConfig(void)
 static void updateMIDIChannel(uint8_t channel) {
     MIDIChannel = channel;
     MIDI.setInputChannel(channel);
-    settings.setMIDIChannel(channel);   
+    settings.setMIDIChannel(channel);
+
+    // TODO pull ready pin to indicate MIDI channel change
 }
 
 static void updateLEDIntensity(uint8_t intensity) {
@@ -163,8 +165,8 @@ void setup() {
     // Enable pullups for unconnected pins
     pinMode(PIN_PC1, INPUT_PULLUP);
     pinMode(PIN_PC2, INPUT_PULLUP);
-    pinMode(PIN_PD2, INPUT_PULLUP);
     pinMode(PIN_PC6, INPUT_PULLUP);
+    pinMode(PIN_PD2, INPUT_PULLUP);
 
     // Set output pin modes
     // Set pin value first before turing on output mode, to prevent spurious signals
@@ -195,7 +197,6 @@ void loop() {
 	} else if ( !config && ConfigMode ) {
 	    finalizeConfig();
 	}
-
     ConfigMode = config;
 
     pedal.poll();
