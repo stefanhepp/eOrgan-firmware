@@ -22,7 +22,7 @@
 TechnicsKeyboard::TechnicsKeyboard() : mKeyChangeHandler(NULL) {
 }
 
-void TechnicsKeyboard::setHandleKeyChange( void(*handler)(uint8_t key, uint8_t velocity) ) {
+void TechnicsKeyboard::setHandleKeyChange( void(*handler)(uint8_t note, uint8_t velocity) ) {
     mKeyChangeHandler = handler;
 }
 
@@ -40,9 +40,11 @@ void TechnicsKeyboard::begin()
     digitalWrite(PIN_CLOCK, HIGH);
 
     digitalWrite(PIN_ENABLE, HIGH);
+
+    delayMicroseconds(50);
 }
 
 void TechnicsKeyboard::poll()
 {
-
+    
 }

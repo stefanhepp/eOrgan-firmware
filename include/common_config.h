@@ -22,5 +22,7 @@ static const uint8_t MIDI_CHANNEL_KEYBOARD_2 = 5;
 static const uint8_t MIDI_CHANNEL_TECHNICS   = 4;
 static const uint8_t MIDI_CHANNEL_PEDAL	     = 3;
 
+// Velocity for digital keys
+static const uint8_t KEY_VELOCITY = 64;
 
 #endif

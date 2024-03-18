@@ -34,11 +34,6 @@ Keyboard kbd;
 
 static uint8_t MIDIChannel[2];
 
-static inline char getNote( char Key ) 
-{
-    return Key + LOWEST_NOTE;
-}
-
 /**
  * send notes off for all pressed notes.
  * @param force if non-zero, send a note-off controller msg on the current channel.
@@ -74,12 +69,12 @@ static void encoderReset(void)
     updateMIDIChannel(1, MIDI_CHANNEL_KEYBOARD_2);
 }
 
-void onKeyChange(uint8_t kbd, uint8_t key, uint8_t velocity) {
+void onKeyChange(uint8_t kbd, uint8_t note, uint8_t velocity) {
     if (velocity > 0) {
-        MIDI.sendNoteOn(  getNote(key), velocity, MIDIChannel[kbd] );
+        MIDI.sendNoteOn(  note, velocity, MIDIChannel[kbd] );
     } else {
 	    // this is a note off event (velocity is 0)
-        MIDI.sendNoteOff( getNote(key), velocity, MIDIChannel[kbd] );
+        MIDI.sendNoteOff( note, velocity, MIDIChannel[kbd] );
     }
 }
 

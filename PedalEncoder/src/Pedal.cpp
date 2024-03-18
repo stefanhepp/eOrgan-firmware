@@ -17,6 +17,8 @@
 
 #include <avrlib.h>
 
+#include <common_config.h>
+
 #include "config.h"
 
 Pedal::Pedal() : mKeyChangeHandler(NULL) {
@@ -66,7 +68,7 @@ void Pedal::poll()
     for (i = 0; i < 8; i++) {
 	    if ( (input & bit) && !(mPedalState[line] & bit) ) {
             // Key is being pressed
-            mKeyChangeHandler( (line<<3) | i, PEDAL_VELOCITY);
+            mKeyChangeHandler( (line<<3) | i, KEY_VELOCITY);
 	    } else if ( !(input & bit) && (mPedalState[line] & bit) ) {
             // Key is being released
             mKeyChangeHandler( (line<<3) | i, 0);

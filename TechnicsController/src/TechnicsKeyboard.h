@@ -22,7 +22,7 @@ class TechnicsKeyboard
     public:
         explicit TechnicsKeyboard();
 
-        void setHandleKeyChange(void (*handler)(uint8_t key, uint8_t velocity) );
+        void setHandleKeyChange(void (*handler)(uint8_t note, uint8_t velocity) );
 
         /**
          * Initialize all pins and routines.

@@ -13,22 +13,44 @@
 
 #include <inttypes.h>
 
-static const uint8_t PEDAL_VELOCITY = 64;
+#include "config.h"
+
+static const uint8_t NUM_KEYBOARDS = 2;
+static const uint8_t NUM_LINES = 8;
+static const uint8_t NUM_KEYS = 61;
 
 class Keyboard
 {
     private:
-        // callback for key changes
-        void (*mKeyChangeHandler)(uint8_t kbd, uint8_t key, uint8_t velocity);
-    public:
-        explicit Keyboard();
+        uint8_t mLearning;
+        uint8_t mCurrentInput;
+        uint8_t mLearnNextNote;
 
-        void setHandleKeyChange(void (*handler)(uint8_t kbd, uint8_t key, uint8_t velocity) );
+        uint8_t mKeyMap[NUM_KEYBOARDS * NUM_LINES * 8];
+
+        // callback for key changes
+        void (*mKeyChangeHandler)(uint8_t kbd, uint8_t note, uint8_t velocity);
+
+        void loadKeyMap();
+
+        void storeKeyMap();
+
+        void learnNextKey(const uint8_t kbd, const uint8_t key);
+
+        void readLine(const uint8_t kbd, const uint8_t line);
+    public:
+        explicit Keyboard() : mLearning(0xFF), mKeyChangeHandler(NULL) {}
+
+        void setHandleKeyChange(void (*handler)(uint8_t kbd, uint8_t note, uint8_t velocity) );
 
         /**
          * Initialize all pins and routines.
          **/
         void begin();
+
+        bool isLearning() const { return mLearning != 0xFF; }
+
+        void startLearning(uint8_t kbd);
 
         /** 
          * poll input ports for changes, call handler on changed notes.

@@ -13,8 +13,6 @@
 
 #include <inttypes.h>
 
-static const uint8_t PEDAL_VELOCITY = 64;
-
 class Pedal
 {
     private:

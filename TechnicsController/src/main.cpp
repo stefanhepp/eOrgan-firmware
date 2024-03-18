@@ -37,11 +37,6 @@ TechnicsKeyboard kbd;
 
 static uint8_t MIDIChannel;
 
-static inline char getNote( char key ) 
-{
-    return key + LOWEST_NOTE;
-}
-
 /**
  * send notes off for all pressed notes.
  * @param force if non-zero, send a note-off controller msg on the current channel.
@@ -72,12 +67,12 @@ static void encoderReset(void)
     updateMIDIChannel(MIDI_CHANNEL_TECHNICS);
 }
 
-void onKeyChange(uint8_t key, uint8_t velocity) {
+void onKeyChange(uint8_t note, uint8_t velocity) {
     if (velocity > 0) {
-        MIDI.sendNoteOn(  getNote(key), velocity, MIDIChannel );
+        MIDI.sendNoteOn(  note, velocity, MIDIChannel );
     } else {
 	    // this is a note off event (velocity is 0)
-        MIDI.sendNoteOff( getNote(key), velocity, MIDIChannel );
+        MIDI.sendNoteOff( note, velocity, MIDIChannel );
     }
 }
 

@@ -15,7 +15,7 @@
 #include <common_config.h>
 
 uint8_t EEMEM confChannel1 = 0x00;
-uint8_t EEMEM confChannel2 = 0x00;
+uint8_t EEMEM confChannel2 = 0x01;
 
 Settings::Settings()
 {
