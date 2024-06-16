@@ -1,0 +1,40 @@
+{
+	"folders": [
+		{
+			"name": "archive",
+			"path": "archive"
+		},
+		{
+			"name": "include",
+			"path": "include"
+		},
+		{
+			"name": "lib",
+			"path": "lib"
+		},
+		{
+			"name": "KeyboardEncoder",
+			"path": "KeyboardEncoder"
+		},
+		{
+			"name": "PedalEncoder",
+			"path": "PedalEncoder"
+		},
+		{
+			"name": "PistonEncoder",
+			"path": "PistonEncoder"
+		},
+		{
+			"name": "TechnicsController",
+			"path": "TechnicsController"
+		},
+		{
+			"name": "ToeStudEncoder",
+			"path": "ToeStudEncoder"
+		},
+		{
+			"name": "TeensyController",
+			"path": "TeensyController"
+		}
+	]
+}
