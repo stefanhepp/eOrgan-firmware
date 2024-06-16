@@ -33,8 +33,7 @@
 			"path": "ToeStudEncoder"
 		},
 		{
-			"name": "TeensyController",
-			"path": "TeensyController"
+			"path": "MIDIController"
 		}
 	]
 }
