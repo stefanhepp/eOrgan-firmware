@@ -1,9 +1,9 @@
 /**
  * Author: Stefan Hepp (stefan@stefant.org)
  * 
- * Implementation of the pedalboard controller.
- * Reads pedal switches and generates MIDI messages.
- * Configurable either via config switch or I2C interface.
+ * Implementation of the Technics keyboard MIDI encoder.
+ * Reads Technics proprietary keyboard messages and generates MIDI messages.
+ * Configurable via I2C interface.
  * 
  * Pins:
  * - PB0-6: IN;  Keyboard data bytes
