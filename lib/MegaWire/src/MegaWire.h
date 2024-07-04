@@ -20,22 +20,45 @@ class MegaWire
 
         /**
          * Setup as master.
-         **/
+         */
         void begin();
 
         /**
          * Setup as slave, using the given slave address.
-         **/
+         * 
+         * @param slaveAddr the 7 bit address of this device.
+         */
         void begin(uint8_t slaveAddr);
 
-        uint8_t read();
+        /**
+         * Send a read request (master only). Sends a stop message after the request.
+         */
+        void requestFrom(uint8_t address, uint8_t quantity);
 
-        uint8_t receive();
+        void beginTransmission(uint8_t address);
+
+        void write(uint8_t value);
+
+        void write(const uint8_t* data, uint8_t length);
+
+        void write(const char* str);
+
+        void endTransmission();
+
+        /**
+         * Returns the number of bytes available for reading.
+         */
+        uint8_t available();
+
+        /**
+         * Consume the next byte from the read queue.
+         */
+        uint8_t read();
 
         /**
          * Register receive callback handler
          **/
-        void onReceive( void(*callback)(int) );
+        void onReceive( void(*callback)(uint8_t length) );
         
         /**
          * Register request callback handler

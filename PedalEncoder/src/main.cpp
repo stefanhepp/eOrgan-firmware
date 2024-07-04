@@ -39,9 +39,29 @@ static bool ConfigMode;
 
 static uint8_t MIDIChannel;
 
+static const uint8_t IRQ_CONFIG = 0;
+static const uint8_t IRQ_CHANNEL = 1;
+
+static uint16_t IRQFlags = 0x00;
+
 static inline char getNote( char pedalKey ) 
 {
     return pedalKey + LOWEST_NOTE;
+}
+
+
+static void sendIRQ(uint8_t flag)
+{
+    IRQFlags |= (1<<flag);
+    digitalWrite(PIN_INTERRUPT, HIGH);
+}
+
+static void clearIRQ(uint8_t flag)
+{
+    IRQFlags &= ~(1<<flag);
+    if (IRQFlags == 0x00) {
+        digitalWrite(PIN_INTERRUPT, LOW);
+    }
 }
 
 /**
@@ -79,8 +99,6 @@ static void updateMIDIChannel(uint8_t channel) {
     MIDIChannel = channel;
     MIDI.setInputChannel(channel);
     settings.setMIDIChannel(channel);
-
-    // TODO pull ready pin to indicate MIDI channel change
 }
 
 static void updateLEDIntensity(uint8_t intensity) {
@@ -170,7 +188,7 @@ void setup() {
 
     // Set output pin modes
     // Set pin value first before turing on output mode, to prevent spurious signals
-    digitalWrite(PIN_INTERRUPT, HIGH);
+    digitalWrite(PIN_INTERRUPT, LOW);
     pinMode(PIN_INTERRUPT, OUTPUT);
 
     pinMode(PIN_CONFIG, INPUT);
