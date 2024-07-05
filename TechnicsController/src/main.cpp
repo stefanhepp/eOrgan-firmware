@@ -58,7 +58,7 @@ static void updateMIDIChannel(uint8_t channel) {
     // TODO pull ready pin to indicate MIDI channel change
 }
 
-static void encoderReset(void)
+static void resetEncoder(void)
 {
     // disable all notes on current channel
     sendAllNotesOff(1);

@@ -120,7 +120,7 @@ static void increaseLEDIntensity() {
     }
 }
 
-static void encoderReset(void)
+static void resetEncoder(void)
 {
     // disable all notes on current channel
     sendAllNotesOff(1);
@@ -150,7 +150,7 @@ static void processConfigInput(uint8_t key, uint8_t velocity)
 	}
     // highest notes for config
 	if ( key == 28 ) {
-	    encoderReset();
+	    resetEncoder();
 	} else if ( key == 24 ) {
 	    decreaseLEDIntensity();
 	} else if ( key == 26 ) {
@@ -179,6 +179,36 @@ void onKeyChange(uint8_t key, uint8_t velocity) {
     }
 }
 
+void i2cReceive(uint8_t length) {
+    uint8_t cmd = Wire.read();
+    uint8_t value;
+
+    switch (cmd) {
+        case I2C_CMD_RESET: 
+            resetEncoder();
+            break;
+        case I2C_CMD_SET_CHANNEL:
+            if (Wire.available()) {
+                value = Wire.read();
+                updateMIDIChannel(value);
+            }
+            break;
+        case I2C_CMD_LED_INTENSITY:
+            if (Wire.available()) {
+                value = Wire.read();
+                updateLEDIntensity(value);
+            }
+            break;
+    }
+}
+
+void i2cRequest() {
+    Wire.write(MIDIChannel);
+    Wire.write(led.getIntensity());
+    clearIRQ(IRQ_CHANNEL);
+    clearIRQ(IRQ_CONFIG);
+}
+
 void setup() {
     // Enable pullups for unconnected pins
     pinMode(PIN_PC1, INPUT_PULLUP);
@@ -192,6 +222,9 @@ void setup() {
     pinMode(PIN_INTERRUPT, OUTPUT);
 
     pinMode(PIN_CONFIG, INPUT);
+
+    Wire.onReceive(i2cReceive);
+    Wire.onRequest(i2cRequest);
 
     Wire.begin(I2C_ADDR_PEDAL);
 
