@@ -34,7 +34,7 @@ void setup() {
  
     // Set output pin modes
     // Set pin value first before turing on output mode, to prevent spurious signals
-    digitalWrite(PIN_INTERRUPT, HIGH);
+    digitalWrite(PIN_INTERRUPT, LOW);
     pinMode(PIN_INTERRUPT, OUTPUT);
 
     pinMode(PIN_A0,   OUTPUT);

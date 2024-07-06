@@ -1,3 +1,9 @@
+/**
+ * @author Stefan Hepp (stefan@stefant.org)
+ * 
+ * Main program of the central MIDI controller.
+ */
+
 #include <Arduino.h>
 #include <Wire.h>
 #include <MIDI.h>

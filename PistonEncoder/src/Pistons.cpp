@@ -1,16 +1,14 @@
 /*
- * @project     UsbRc
- * @author      Stefan Hepp, s.hepp@gentics.com
- * @date        $Date: 2007-08-05 03:00:41 +0200 (Son, 05 Aug 2007) $
- * @version     $Id: input.c 111 2007-08-05 01:00:41Z stefan $
+ * @project     PistonController
+ * @author      Stefan Hepp, stefan@stefant.org
  *
  * Input processing routines.
  *
- * Copyright 2007 Stefan Hepp
+ * Copyright 2024 Stefan Hepp
  * License: GPL v3
  * See 'COPYRIGHT.txt' for copyright and licensing information.
  */
-#include "Keyboard.h"
+#include "Pistons.h"
 
 #include <inttypes.h>
 #include <avr/io.h>

@@ -1,12 +1,10 @@
 /*
  * @project     Midi Pedalboard
- * @author      Stefan Hepp, s.hepp@gentics.com
- * @date        $Date: 2007-08-04 23:21:53 +0200 (Sam, 04 Aug 2007) $
- * @version     $Id: common.h 108 2007-08-04 21:21:53Z stefan $
+ * @author      Stefan Hepp, stefan@stefant.org
  *
- * common custom IO and config settings.
+ * Common custom IO and config settings.
  *
- * Copyright (c) 2007 Stefan Hepp
+ * Copyright (c) 2024 Stefan Hepp
  * License: GPL v3
  * See 'COPYRIGHT.txt' for copyright and licensing information.
  */

@@ -4,12 +4,12 @@
  *
  * Input encoding and processing routines.
  *
- * Copyright 2007 Stefan Hepp
+ * Copyright 2024 Stefan Hepp
  * License: GPL v3
  * See 'COPYRIGHT.txt' for copyright and licensing information.
  */
-#ifndef __PEDAL_H__
-#define __PEDAL_H__
+#ifndef __TECHNICSKEYBOARD_H__
+#define __TECHNICSKEYBOARD_H__
 
 #include <inttypes.h>
 

@@ -1,15 +1,15 @@
 /*
- * @project     Midi keyboard
+ * @project     Midi KeyboardController
  * @author      Stefan Hepp, stefan@stefant.org
  *
  * Input encoding and processing routines.
  *
- * Copyright 2007 Stefan Hepp
+ * Copyright 2024 Stefan Hepp
  * License: GPL v3
  * See 'COPYRIGHT.txt' for copyright and licensing information.
  */
-#ifndef __PEDAL_H__
-#define __PEDAL_H__
+#ifndef __KEYBOARD_H__
+#define __KEYBOARD_H__
 
 #include <inttypes.h>
 

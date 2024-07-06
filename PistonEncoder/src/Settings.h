@@ -1,5 +1,5 @@
 /*
- * @project     Midi Pedalboard
+ * @project     PistonController
  * @author      Stefan Hepp, stefan@stefant.org
  *
  * Store config values in EEPROM.
@@ -9,8 +9,8 @@
  * License: GPL v3
  * See 'COPYRIGHT.txt' for copyright and licensing information.
  */
-#ifndef __SETUP_H__
-#define __SETUP_H__
+#ifndef __SETTINGs_H__
+#define __SETTINGS_H__
 
 #include <inttypes.h>
 

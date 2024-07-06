@@ -27,6 +27,7 @@
 #include "config.h"
 #include "Settings.h"
 #include "TechnicsKeyboard.h"
+#include "BendWheel.h"
 
 // Create device driver instances
 MIDI_CREATE_DEFAULT_INSTANCE();
@@ -34,6 +35,7 @@ MegaWire Wire;
 
 Settings         settings;
 TechnicsKeyboard kbd;
+BendWheel        wheel;
 
 static uint8_t MIDIChannel;
 
@@ -76,6 +78,38 @@ void onKeyChange(uint8_t note, uint8_t velocity) {
     }
 }
 
+void onWheelChange(uint8_t value) {
+
+}
+
+void i2cReceive(uint8_t length) {
+    uint8_t cmd = Wire.read();
+    uint8_t value;
+
+    switch (cmd) {
+        case I2C_CMD_RESET: 
+            resetEncoder();
+            break;
+        case I2C_CMD_SET_CHANNEL:
+            if (Wire.available()) {
+                value = Wire.read();
+                updateMIDIChannel(value);
+            }
+            break;
+        case I2C_CMD_CALIBRATE:
+            if (Wire.available()) {
+                value = Wire.read();
+                wheel.startCalibration();
+            }
+            break;
+    }
+}
+
+void i2cRequest() {
+    Wire.write(MIDIChannel);
+    Wire.write(wheel.getWheel());
+}
+
 void setup() {
     // Enable pullups for unconnected pins
     pinMode(PIN_PC1, INPUT_PULLUP);
@@ -86,19 +120,17 @@ void setup() {
 
     // Set output pin modes
     // Set pin value first before turing on output mode, to prevent spurious signals
-    digitalWrite(PIN_INTERRUPT, HIGH);
+    digitalWrite(PIN_INTERRUPT, LOW);
     pinMode(PIN_INTERRUPT, OUTPUT);
 
-    pinMode(PIN_READ,   INPUT);
-    pinMode(PIN_ENABLE, OUTPUT);
-    pinMode(PIN_LATCH,  OUTPUT);
-    pinMode(PIN_CLOCK,  OUTPUT);
+    MIDIChannel = settings.getMIDIChannel();
+    MIDI.turnThruOn(midi::Thru::Full);
+    MIDI.begin(MIDIChannel);
+
+    wheel.setOnChange(onWheelChange);
+    wheel.begin();
 
     Wire.begin(I2C_ADDR_TECHNICS);
-
-    MIDIChannel = settings.getMIDIChannel();
-    MIDI.turnThruOff();
-    MIDI.begin(MIDIChannel);
 
     kbd.setHandleKeyChange(onKeyChange);
     kbd.begin();
@@ -106,4 +138,5 @@ void setup() {
 
 void loop() {
     kbd.poll();
+    wheel.poll();
 }

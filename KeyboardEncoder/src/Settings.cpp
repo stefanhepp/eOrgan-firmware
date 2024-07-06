@@ -1,10 +1,10 @@
 /*
- * @project     Midi Pedalboard
- * @author      Stefan Hepp, s.hepp@gentics.com
+ * @project     Midi KeybordController
+ * @author      Stefan Hepp, stefan@stefant.org
  *
  * Implementation of EEPROM access.
  *
- * Copyright 2007 Stefan Hepp
+ * Copyright 2024 Stefan Hepp
  * License: GPL v3
  * See 'COPYRIGHT.txt' for copyright and licensing information.
  */

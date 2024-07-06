@@ -1,12 +1,10 @@
 /*
  * @project     Midi Pedalboard
- * @author      Stefan Hepp, s.hepp@gentics.com
- * @date        $Date: 2007-08-04 23:21:53 +0200 (Sam, 04 Aug 2007) $
- * @version     $Id: input.h 108 2007-08-04 21:21:53Z stefan $
+ * @author      Stefan Hepp, stefan@stefant.org
  *
  * LED intensity and mode interface.
  *
- * Copyright 2007 Stefan Hepp
+ * Copyright 2024 Stefan Hepp
  * License: GPL v3
  * See 'COPYRIGHT.txt' for copyright and licensing information.
  */

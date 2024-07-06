@@ -226,13 +226,13 @@ void setup() {
     Wire.onReceive(i2cReceive);
     Wire.onRequest(i2cRequest);
 
-    Wire.begin(I2C_ADDR_PEDAL);
-
     MIDIChannel = settings.getMIDIChannel();
-    MIDI.turnThruOff();
+    MIDI.turnThruOn(midi::Thru::Full);
     MIDI.begin(MIDIChannel);
 
     led.begin(settings.getLEDIntensity());
+
+    Wire.begin(I2C_ADDR_PEDAL);
 
     pedal.setHandleKeyChange(onKeyChange);
     pedal.begin();

@@ -1,12 +1,10 @@
 /*
- * @project     UsbRc
- * @author      Stefan Hepp, s.hepp@gentics.com
- * @date        $Date: 2007-08-05 03:00:41 +0200 (Son, 05 Aug 2007) $
- * @version     $Id: input.c 111 2007-08-05 01:00:41Z stefan $
+ * @project     TechnicsController
+ * @author      Stefan Hepp, stefan@stefant.org
  *
  * Input processing routines.
  *
- * Copyright 2007 Stefan Hepp
+ * Copyright 2024 Stefan Hepp
  * License: GPL v3
  * See 'COPYRIGHT.txt' for copyright and licensing information.
  */
@@ -33,11 +31,11 @@ void TechnicsKeyboard::begin()
     IO_PORT(PORT_IN) = 0x00;
 
     pinMode(PIN_ENABLE, OUTPUT);
-    pinMode(PIN_LATCH, OUTPUT);
-    pinMode(PIN_CLOCK, OUTPUT);
+    pinMode(PIN_LATCH, INPUT);
+    pinMode(PIN_CLOCK, INPUT);
 
-    digitalWrite(PIN_LATCH, HIGH);
-    digitalWrite(PIN_CLOCK, HIGH);
+    pinMode(PIN_READ, OUTPUT);
+    digitalWrite(PIN_READ, LOW);
 
     digitalWrite(PIN_ENABLE, HIGH);
 

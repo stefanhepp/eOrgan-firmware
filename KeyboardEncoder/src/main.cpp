@@ -78,6 +78,36 @@ void onKeyChange(uint8_t kbd, uint8_t note, uint8_t velocity) {
     }
 }
 
+void i2cReceive(uint8_t length) {
+    uint8_t cmd = Wire.read();
+    uint8_t value;
+
+    switch (cmd) {
+        case I2C_CMD_RESET: 
+            resetEncoder();
+            break;
+        case I2C_CMD_SET_CHANNEL:
+            if (Wire.available() > 1) {
+                value = Wire.read();
+                updateMIDIChannel(0, value);
+                value = Wire.read();
+                updateMIDIChannel(1, value);
+            }
+            break;
+        case I2C_CMD_CALIBRATE:
+            if (Wire.available()) {
+                value = Wire.read();
+                kbd.startLearning(value);
+            }
+            break;
+    }
+}
+
+void i2cRequest() {
+    Wire.write(MIDIChannel[0]);
+    Wire.write(MIDIChannel[1]);
+}
+
 void setup() {
     // Enable pullups for unconnected pins
     pinMode(PIN_PC0, INPUT_PULLUP);
@@ -88,7 +118,7 @@ void setup() {
 
     // Set output pin modes
     // Set pin value first before turing on output mode, to prevent spurious signals
-    digitalWrite(PIN_INTERRUPT, HIGH);
+    digitalWrite(PIN_INTERRUPT, LOW);
     pinMode(PIN_INTERRUPT, OUTPUT);
 
     pinMode(PIN_S0,   OUTPUT);
@@ -97,13 +127,13 @@ void setup() {
     pinMode(PIN_EN1,  OUTPUT);
     pinMode(PIN_EN2,  OUTPUT);
 
-    Wire.begin(I2C_ADDR_KEYBOARD);
-
     MIDIChannel[0] = settings.getMIDIChannel(0);
     MIDIChannel[1] = settings.getMIDIChannel(1);
 
     MIDI.turnThruOff();
     MIDI.begin(MIDIChannel[0]);
+
+    Wire.begin(I2C_ADDR_KEYBOARD);
 
     kbd.setHandleKeyChange(onKeyChange);
     kbd.begin();
