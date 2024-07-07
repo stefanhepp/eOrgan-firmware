@@ -22,7 +22,7 @@
 
 static uint8_t kbdStatus[NUM_KEYBOARDS * NUM_LINES];
 
-static EEMEM uint8_t eeKeyMap = 0x04;
+static uint8_t EEMEM eeKeyMap[NUM_KEYBOARDS * NUM_LINES];
 
 void Keyboard::setHandleKeyChange( void(*handler)(uint8_t kbd, uint8_t note, uint8_t velocity) ) {
     mKeyChangeHandler = handler;

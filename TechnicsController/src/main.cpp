@@ -20,6 +20,7 @@
 
 #include <Arduino.h>
 #include <MIDI.h>
+#include <CalibratedAnalogInput.h>
 #include <MegaWire.h>
 
 #include <common_config.h>
@@ -27,7 +28,6 @@
 #include "config.h"
 #include "Settings.h"
 #include "TechnicsKeyboard.h"
-#include "BendWheel.h"
 
 // Create device driver instances
 MIDI_CREATE_DEFAULT_INSTANCE();
@@ -35,7 +35,7 @@ MegaWire Wire;
 
 Settings         settings;
 TechnicsKeyboard kbd;
-BendWheel        wheel;
+CalibratedAnalogInput  wheel(PIN_BENDER);
 
 static uint8_t MIDIChannel;
 
@@ -56,8 +56,6 @@ static void updateMIDIChannel(uint8_t channel) {
     MIDIChannel = channel;
     MIDI.setInputChannel(channel);
     settings.setMIDIChannel(channel);
-
-    // TODO pull ready pin to indicate MIDI channel change
 }
 
 static void resetEncoder(void)
@@ -78,7 +76,13 @@ void onKeyChange(uint8_t note, uint8_t velocity) {
     }
 }
 
-void onWheelChange(uint8_t value) {
+void onWheelCalibrate(void) {
+    AICalibrationData data;
+    wheel.getCalibrationData(data);
+    settings.setWheelSettings(data);
+}
+
+void onWheelChange(int value) {
 
 }
 
@@ -97,17 +101,18 @@ void i2cReceive(uint8_t length) {
             }
             break;
         case I2C_CMD_CALIBRATE:
-            if (Wire.available()) {
-                value = Wire.read();
-                wheel.startCalibration();
-            }
+            wheel.resetCalibration();
+            break;
+        case I2C_CMD_STOP_CALIBRATE:
+            wheel.stopCalibration();
             break;
     }
 }
 
 void i2cRequest() {
     Wire.write(MIDIChannel);
-    Wire.write(wheel.getWheel());
+    Wire.write((uint8_t)(wheel.value() >> 8));
+    Wire.write((uint8_t)(wheel.value() & 0xFF));
 }
 
 void setup() {
@@ -127,7 +132,13 @@ void setup() {
     MIDI.turnThruOn(midi::Thru::Full);
     MIDI.begin(MIDIChannel);
 
-    wheel.setOnChange(onWheelChange);
+    wheel.onCalibrating(onWheelCalibrate);
+    wheel.onChange(onWheelChange);
+    if (settings.hasSettings()) {
+        AICalibrationData data;
+        settings.getWheelSettings(data);
+        wheel.setCalibrationData(data);
+    }
     wheel.begin();
 
     Wire.begin(I2C_ADDR_TECHNICS);

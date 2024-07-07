@@ -14,9 +14,9 @@
 
 #include <common_config.h>
 
-uint8_t EEMEM confChannel  = 0x00;
-uint8_t EEMEM confWheelMin = 0x01;
-uint8_t EEMEM confWheelMax = 0x02;
+uint8_t EEMEM confChannel;
+uint16_t EEMEM confWheelMin;
+uint16_t EEMEM confWheelMax;
 
 Settings::Settings()
 {
@@ -33,20 +33,20 @@ void Settings::setMIDIChannel(uint8_t channel)
     eeprom_write_byte(&confChannel, channel);
 }
 
-uint8_t Settings::getWheelMin()
+bool Settings::hasSettings()
 {
-    uint8_t v = eeprom_read_byte(&confChannel);
-    return (v == 0xFF) ? 0x00 : v;
+    uint16_t v = eeprom_read_word(&confWheelMin);
+    return (v != 0xFFFF);
 }
 
-uint8_t Settings::getWheelMax()
+void Settings::getWheelSettings(AICalibrationData &data)
 {
-    uint8_t v = eeprom_read_byte(&confChannel);
-    return (v == 0xFF) ? 0xFF : v;
+    data.min = (int) eeprom_read_word(&confWheelMin);
+    data.max = (int) eeprom_read_word(&confWheelMax);
 }
 
-void Settings::setWheelMinMax(uint8_t min, uint8_t max)
+void Settings::setWheelSettings(const AICalibrationData &data)
 {
-    eeprom_write_byte(&confWheelMin, min);
-    eeprom_write_byte(&confWheelMax, max);
+    eeprom_write_word(&confWheelMin, (uint16_t) data.min);
+    eeprom_write_word(&confWheelMax, (uint16_t) data.max);
 }

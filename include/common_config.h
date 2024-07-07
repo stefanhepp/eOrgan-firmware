@@ -17,10 +17,11 @@ static const uint8_t I2C_ADDR_PANEL    = 0x54;
 static const uint8_t I2C_ADDR_PISTON1  = 0x5A;
 static const uint8_t I2C_ADDR_PISTON2  = 0x5B;
 
-static const uint8_t I2C_CMD_RESET       = 0x01;
-static const uint8_t I2C_CMD_SET_CHANNEL = 0x02;
-static const uint8_t I2C_CMD_CALIBRATE   = 0x03;
-static const uint8_t I2C_CMD_LED_INTENSITY = 0x04;
+static const uint8_t I2C_CMD_RESET          = 0x01;
+static const uint8_t I2C_CMD_SET_CHANNEL    = 0x02;
+static const uint8_t I2C_CMD_CALIBRATE      = 0x03;
+static const uint8_t I2C_CMD_STOP_CALIBRATE = 0x04;
+static const uint8_t I2C_CMD_LED_INTENSITY  = 0x05;
 
 // Default MIDI channels
 static const uint8_t MIDI_CHANNEL_KEYBOARD_1 = 6;

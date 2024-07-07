@@ -14,20 +14,22 @@
 
 #include <inttypes.h>
 
+#include <CalibratedAnalogInput.h>
+
 class Settings
 {
     public:
         Settings();
 
+        bool hasSettings();
+
         uint8_t getMIDIChannel();
 
         void setMIDIChannel(uint8_t channel);
 
-        uint8_t getWheelMin();
+        void getWheelSettings(AICalibrationData &data);
 
-        uint8_t getWheelMax();
-
-        void setWheelMinMax(uint8_t min, uint8_t max);
+        void setWheelSettings(const AICalibrationData &data);
 };
 
 #endif
