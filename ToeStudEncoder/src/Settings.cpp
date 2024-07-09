@@ -15,6 +15,8 @@
 #include <common_config.h>
 
 uint8_t EEMEM confChannel;
+uint8_t EEMEM confMode;
+
 uint16_t EEMEM confCalibrationData[6];
 
 Settings::Settings()
@@ -48,4 +50,15 @@ void Settings::setCalibrationData(uint8_t pedal, const AICalibrationData &data)
 {
     eeprom_write_word(&confCalibrationData[pedal * 2    ], (uint16_t) data.min);
     eeprom_write_word(&confCalibrationData[pedal * 2 + 1], (uint16_t) data.max);
+}
+
+uint8_t Settings::getSendMode(uint8_t defaultMode)
+{
+    uint8_t v = eeprom_read_byte(&confChannel);
+    return (v == 0xFF) ? defaultMode : v;
+}
+
+void Settings::setSendMode(uint8_t mode)
+{
+    eeprom_write_byte(&confMode, mode);
 }

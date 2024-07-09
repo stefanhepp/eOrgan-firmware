@@ -41,6 +41,34 @@ CalibratedAnalogInput pedals[3];
 
 static uint8_t MIDIChannel;
 
+static const uint8_t BUFFER_SIZE = 16;
+static uint8_t ToeStudBuffer[BUFFER_SIZE];
+static uint8_t ToeStudBufferLength = 0;
+
+static const uint8_t IRQ_PEDALS = 0;
+static const uint8_t IRQ_TOESTUDS = 1;
+
+static uint16_t IRQFlags = 0x00;
+
+static const uint8_t MODE_MIDI = 0x01;
+static const uint8_t MODE_I2C  = 0x02;
+
+static uint8_t SendMode;
+
+static void sendIRQ(uint8_t flag)
+{
+    IRQFlags |= (1<<flag);
+    digitalWrite(PIN_INTERRUPT, HIGH);
+}
+
+static void clearIRQ(uint8_t flag)
+{
+    IRQFlags &= ~(1<<flag);
+    if (IRQFlags == 0x00) {
+        digitalWrite(PIN_INTERRUPT, LOW);
+    }
+}
+
 static void updateMIDIChannel(uint8_t channel) {
     MIDIChannel = channel;
     settings.setMIDIChannel(channel);
@@ -52,6 +80,9 @@ static void resetEncoder(void)
     updateMIDIChannel(MIDI_CHANNEL_TOESTUDS);
 
     toestuds.reset();
+
+    clearIRQ(IRQ_PEDALS);
+    clearIRQ(IRQ_TOESTUDS);
 }
 
 void onPedalCalibrate(void* payload) {
@@ -64,10 +95,31 @@ void onPedalCalibrate(void* payload) {
 void onPedalChange(int value, void* payload) {
     uint8_t pedal = *((uint8_t *)payload);
 
+    if (SendMode & MODE_MIDI) {
+        // TODO send MIDI event
+
+    }
+
+    if (SendMode & MODE_I2C) {
+        // Just set IRQ, read latest values via I2C
+        sendIRQ(IRQ_PEDALS);
+    }
 }
 
 void onToeStudPress(uint8_t button, bool longPress) {
+    if (SendMode & MODE_MIDI) {
 
+        // TODO send event
+    }
+
+    if (SendMode & MODE_I2C) {
+        noInterrupts();
+        if (ToeStudBufferLength < BUFFER_SIZE) {
+            ToeStudBuffer[ToeStudBufferLength++] = (button << 1) | longPress;
+        }
+        sendIRQ(IRQ_TOESTUDS);
+        interrupts();
+    }
 }
 
 void i2cReceive(uint8_t length) {
@@ -94,6 +146,13 @@ void i2cReceive(uint8_t length) {
                 pedals[i].stopCalibration();
             }
             break;
+        case I2C_CMD_SET_MODE:
+            if (Wire.available()) {
+                value = Wire.read();
+                SendMode = value;
+                settings.setSendMode(value);
+            }
+            break;
     }
 }
 
@@ -103,6 +162,15 @@ void i2cRequest() {
         Wire.write((uint8_t)(pedals[i].value() >> 8));
         Wire.write((uint8_t)(pedals[i].value() & 0xFF));
     }
+    clearIRQ(IRQ_PEDALS);
+
+    Wire.write(ToeStudBufferLength);
+    for (uint8_t i = 0; i < ToeStudBufferLength; i++) {
+        Wire.write(ToeStudBuffer[i]);
+    }
+    ToeStudBufferLength = 0;
+
+    clearIRQ(IRQ_TOESTUDS);
 }
 
 void setupPedal(uint8_t *pedal, uint8_t pin)
@@ -131,6 +199,8 @@ void setup() {
     pinMode(PIN_INTERRUPT, OUTPUT);
 
     MIDIChannel = settings.getMIDIChannel();
+
+    SendMode = settings.getSendMode(MODE_MIDI | MODE_I2C);
 
     MIDI.begin(MIDIChannel);
 

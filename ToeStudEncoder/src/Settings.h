@@ -30,6 +30,10 @@ class Settings
         void getCalibrationData(uint8_t pedal, AICalibrationData &data) const;
 
         void setCalibrationData(uint8_t pedal, const AICalibrationData &data);
+
+        uint8_t getSendMode(uint8_t defaultMode);
+
+        void setSendMode(uint8_t mode);
 };
 
 #endif
