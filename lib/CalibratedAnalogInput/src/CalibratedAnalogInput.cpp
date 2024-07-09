@@ -7,8 +7,8 @@
 
 #include <Arduino.h>
 
-CalibratedAnalogInput::CalibratedAnalogInput(uint8_t pin)
-: mPin(pin), mRangeMax(1023)
+CalibratedAnalogInput::CalibratedAnalogInput()
+: mPin(0), mRangeMax(1023)
 {
     resetCalibration();
     mLastValue = center();
@@ -39,14 +39,16 @@ void CalibratedAnalogInput::stopCalibration()
     mCalibrating = false;
 }
 
-void CalibratedAnalogInput::onCalibrating( void(*callback)(void) )
+void CalibratedAnalogInput::onCalibrating( void(*callback)(void* payload), void* payload)
 {
     mOnCalibration = callback;
+    mCalibrationPayload = payload;
 }
 
-void CalibratedAnalogInput::onChange( void(*callback)(int value) )
+void CalibratedAnalogInput::onChange( void(*callback)(int value, void* payload), void* payload )
 {
     mOnChange = callback;
+    mChangePayload = payload;
 }
 
 int CalibratedAnalogInput::value() const
@@ -59,8 +61,9 @@ int CalibratedAnalogInput::center() const
     return mRangeMax/2;
 }
 
-void CalibratedAnalogInput::begin()
+void CalibratedAnalogInput::begin(uint8_t pin)
 {
+    mPin = pin;
 }
 
 void CalibratedAnalogInput::poll()
@@ -77,7 +80,7 @@ void CalibratedAnalogInput::poll()
             updated = true;
         }
         if (updated) {
-            mOnCalibration();
+            mOnCalibration(mCalibrationPayload);
         }
     }
 
@@ -85,6 +88,6 @@ void CalibratedAnalogInput::poll()
 
     if (newValue != mLastValue) {
         mLastValue = newValue;
-        mOnChange(newValue);
+        mOnChange(newValue, mChangePayload);
     }
 }

@@ -19,7 +19,7 @@
 
 #define PORT_IN       B
 
-static const uint8_t PIN_INTERRUPT   = PIN_PD3;
+static const uint8_t PIN_INTERRUPT   = PIN_PC3;
 
 static const uint8_t PIN_S0        = PIN_PD2;
 static const uint8_t PIN_S1        = PIN_PD3;

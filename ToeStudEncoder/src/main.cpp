@@ -16,7 +16,7 @@
  **/
 
 #include <Arduino.h>
-#include <MIDI.h>
+#include <MiniMIDI.h>
 #include <MegaWire.h>
 #include <CalibratedAnalogInput.h>
 
@@ -24,33 +24,22 @@
 
 #include "config.h"
 #include "Settings.h"
-#include "Keyboard.h"
+#include "ToeStuds.h"
 
 // Create device driver instances
-MIDI_CREATE_DEFAULT_INSTANCE();
+MiniMIDI MIDI;
 MegaWire Wire;
 
 Settings settings;
-Keyboard kbd;
+ToeStuds toestuds;
 
-CalibratedAnalogInput volumeChoir(PIN_VOL_CHOIR);
-CalibratedAnalogInput volumeSwell(PIN_VOL_SWELL);
-CalibratedAnalogInput crescendo(PIN_CRESENDO);
+static uint8_t PEDAL_CHOIR = 0;
+static uint8_t PEDAL_SWELL = 1;
+static uint8_t PEDAL_CRESCENDO = 2;
+
+CalibratedAnalogInput pedals[3];
 
 static uint8_t MIDIChannel;
-
-/**
- * send notes off for all pressed notes.
- * @param force if non-zero, send a note-off controller msg on the current channel.
- **/
-static void sendAllNotesOff(uint8_t force)
-{
-    if ( force ) {
-       MIDI.sendControlChange(midi::AllSoundOff, 0, MIDIChannel;
-    } else {
-       MIDI.sendControlChange(midi::AllNotesOff, 0, MIDIChannel);
-    }
-}
 
 static void updateMIDIChannel(uint8_t channel) {
     MIDIChannel = channel;
@@ -59,11 +48,73 @@ static void updateMIDIChannel(uint8_t channel) {
 
 static void resetEncoder(void)
 {
-    // disable all notes on current channel
-    sendAllNotesOff(1);
-
     // Reset channel
-    updateMIDIChannel(MIDI_CHANNEL_TOESTUD);
+    updateMIDIChannel(MIDI_CHANNEL_TOESTUDS);
+
+    toestuds.reset();
+}
+
+void onPedalCalibrate(void* payload) {
+    uint8_t pedal = *((uint8_t *)payload);
+    AICalibrationData data;
+    pedals[pedal].getCalibrationData(data);
+    settings.setCalibrationData(pedal, data);
+}
+
+void onPedalChange(int value, void* payload) {
+    uint8_t pedal = *((uint8_t *)payload);
+
+}
+
+void onToeStudPress(uint8_t button, bool longPress) {
+
+}
+
+void i2cReceive(uint8_t length) {
+    uint8_t cmd = Wire.read();
+    uint8_t value;
+
+    switch (cmd) {
+        case I2C_CMD_RESET: 
+            resetEncoder();
+            break;
+        case I2C_CMD_SET_CHANNEL:
+            if (Wire.available()) {
+                value = Wire.read();
+                updateMIDIChannel(value);
+            }
+            break;
+        case I2C_CMD_CALIBRATE:
+            for (uint8_t i = 0; i < 3; i++) {
+                pedals[i].resetCalibration();
+            }
+            break;
+        case I2C_CMD_STOP_CALIBRATE:
+            for (uint8_t i = 0; i < 3; i++) {
+                pedals[i].stopCalibration();
+            }
+            break;
+    }
+}
+
+void i2cRequest() {
+    Wire.write(MIDIChannel);
+    for (uint8_t i = 0; i < 3; i++) {
+        Wire.write((uint8_t)(pedals[i].value() >> 8));
+        Wire.write((uint8_t)(pedals[i].value() & 0xFF));
+    }
+}
+
+void setupPedal(uint8_t *pedal, uint8_t pin)
+{
+    pedals[*pedal].onCalibrating(onPedalCalibrate, pedal);
+    pedals[*pedal].onChange(onPedalChange, pedal);
+    if (settings.hasCalibrationData()) {
+        AICalibrationData data;
+        settings.getCalibrationData(*pedal, data);
+        pedals[*pedal].setCalibrationData(data);
+    }
+    pedals[*pedal].begin(pin);
 }
 
 void setup() {
@@ -79,26 +130,25 @@ void setup() {
     digitalWrite(PIN_INTERRUPT, LOW);
     pinMode(PIN_INTERRUPT, OUTPUT);
 
-    pinMode(PIN_L1,   OUTPUT);
-    pinMode(PIN_L2,   OUTPUT);
-    pinMode(PIN_L3,   OUTPUT);
-    pinMode(PIN_L4,   OUTPUT);
-    pinMode(PIN_D1,   OUTPUT);
-    pinMode(PIN_D2,   OUTPUT);
-    pinMode(PIN_D3,   OUTPUT);
-    pinMode(PIN_D4,   OUTPUT);
-    pinMode(PIN_D5,   OUTPUT);
-
-    Wire.begin(I2C_ADDR_TOESTUD);
-
     MIDIChannel = settings.getMIDIChannel();
 
-    MIDI.turnThruOn(midi::Thru::Full);
     MIDI.begin(MIDIChannel);
 
-    kbd.begin();
+    setupPedal(&PEDAL_CHOIR, PIN_PEDAL_CHOIR);
+    setupPedal(&PEDAL_SWELL, PIN_PEDAL_SWELL);
+    setupPedal(&PEDAL_CRESCENDO, PIN_CRESCENDO);
+
+    Wire.onReceive(i2cReceive);
+    Wire.onRequest(i2cRequest);
+    Wire.begin(I2C_ADDR_TOESTUD);
+
+    toestuds.setHandleButton(onToeStudPress);
+    toestuds.begin();
 }
 
 void loop() {
-    kbd.poll();
+    toestuds.poll();
+    for (uint8_t i = 0; i < 2; i++) {
+        pedals[i].poll();
+    }
 }

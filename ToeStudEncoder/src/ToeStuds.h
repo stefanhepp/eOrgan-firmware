@@ -13,17 +13,26 @@
 
 #include <inttypes.h>
 
+static const uint8_t NUM_TOESTUDS = 20;
+static const uint8_t TOESTUD_LONG_PRESS = 220;
+
 class ToeStuds
 {
     private:
         // callback for key changes
-        void (*mChangeHandler)(uint8_t btn, bool longPress) = nullptr;
+        void (*mButtonHandler)(uint8_t btn, bool longPress) = nullptr;
+
+        uint8_t mToeStuds[NUM_TOESTUDS];
+
+        uint8_t getBtnNumber(uint8_t line, uint8_t pin);
 
         void readLine(const uint8_t line);
     public:
-        explicit ToeStuds() {}
+        explicit ToeStuds();
 
         void setHandleButton(void (*handler)(uint8_t btn, bool longPress) );
+
+        void reset();
 
         /**
          * Initialize all pins and routines.

@@ -35,7 +35,7 @@ MegaWire Wire;
 
 Settings         settings;
 TechnicsKeyboard kbd;
-CalibratedAnalogInput  wheel(PIN_BENDER);
+CalibratedAnalogInput  wheel;
 
 static uint8_t MIDIChannel;
 
@@ -76,13 +76,13 @@ void onKeyChange(uint8_t note, uint8_t velocity) {
     }
 }
 
-void onWheelCalibrate(void) {
+void onWheelCalibrate(void* payload) {
     AICalibrationData data;
     wheel.getCalibrationData(data);
     settings.setWheelSettings(data);
 }
 
-void onWheelChange(int value) {
+void onWheelChange(int value, void* payload) {
 
 }
 
@@ -139,8 +139,10 @@ void setup() {
         settings.getWheelSettings(data);
         wheel.setCalibrationData(data);
     }
-    wheel.begin();
+    wheel.begin(PIN_BENDER);
 
+    Wire.onReceive(i2cReceive);
+    Wire.onRequest(i2cRequest);
     Wire.begin(I2C_ADDR_TECHNICS);
 
     kbd.setHandleKeyChange(onKeyChange);

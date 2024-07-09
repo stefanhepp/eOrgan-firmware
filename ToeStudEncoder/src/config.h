@@ -31,8 +31,8 @@ static const uint8_t PIN_D3        = PIN_PD5;
 static const uint8_t PIN_D4        = PIN_PD6;
 static const uint8_t PIN_D5        = PIN_PD7;
 
-static const uint8_t PIN_VOL_CHOIR = PC0;
-static const uint8_t PIN_VOL_SWELL = PC1;
+static const uint8_t PIN_PEDAL_CHOIR = PC0;
+static const uint8_t PIN_PEDAL_SWELL = PC1;
 static const uint8_t PIN_CRESCENDO = PC2;
 
 

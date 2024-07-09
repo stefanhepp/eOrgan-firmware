@@ -1,5 +1,5 @@
 /*
- * @project     Midi Pedalboard
+ * @project     ToeStud Encoder
  * @author      Stefan Hepp, stefan@stefant.org
  *
  * Store config values in EEPROM.
@@ -14,14 +14,22 @@
 
 #include <inttypes.h>
 
+#include <CalibratedAnalogInput.h>
+
 class Settings
 {
     public:
         Settings();
 
-        uint8_t getMIDIChannel(uint8_t kbd);
+        uint8_t getMIDIChannel();
 
-        void setMIDIChannel(uint8_t kbd, uint8_t channel);
+        void setMIDIChannel(uint8_t channel);
+
+        bool hasCalibrationData();
+
+        void getCalibrationData(uint8_t pedal, AICalibrationData &data) const;
+
+        void setCalibrationData(uint8_t pedal, const AICalibrationData &data);
 };
 
 #endif

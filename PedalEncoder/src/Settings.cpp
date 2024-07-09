@@ -14,9 +14,9 @@
 
 #include <common_config.h>
 
-uint8_t EEMEM confChannel = 0x00;
+uint8_t EEMEM confChannel;
 
-uint8_t EEMEM confIntensity = 0x0F;
+uint8_t EEMEM confIntensity;
 
 Settings::Settings()
 {

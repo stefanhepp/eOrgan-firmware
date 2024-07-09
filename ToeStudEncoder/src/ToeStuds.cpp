@@ -18,93 +18,72 @@
 
 #include "config.h"
 
-void Keyboard::setHandleKeyChange( void(*handler)(uint8_t kbd, uint8_t note, uint8_t velocity) ) {
-    mKeyChangeHandler = handler;
+static const uint8_t INPUT_PINS[5] = {PIN_D1, PIN_D2, PIN_D3, PIN_D3, PIN_D5};
+static const uint8_t OUTPUT_PINS[4] = {PIN_L1, PIN_L2, PIN_L3, PIN_L4};
+
+ToeStuds::ToeStuds()
+{
+    reset();
 }
 
-void Keyboard::begin()
+void ToeStuds::setHandleButton( void(*handler)(uint8_t button, bool longPress) ) {
+    mButtonHandler = handler;
+}
+
+void ToeStuds::reset()
+{
+    for (uint8_t i = 0; i < NUM_TOESTUDS; i++) {
+        mToeStuds[i] = 0;
+    }
+}
+
+void ToeStuds::begin()
 {
     uint8_t i;
-
-    // init ports (in port without pullups, out ports, all disabled)
-    IO_DDR(PORT_IN) = 0x00;
-    IO_PORT(PORT_IN) = 0x00;
-
-    pinMode(PIN_S0, OUTPUT);
-    pinMode(PIN_S1, OUTPUT);
-    pinMode(PIN_S2, OUTPUT);
-    pinMode(PIN_EN1, OUTPUT);
-    pinMode(PIN_EN2, OUTPUT);
-
-    digitalWrite(PIN_S0, LOW);
-    digitalWrite(PIN_S1, LOW);
-    digitalWrite(PIN_S2, LOW);
-
-    digitalWrite(PIN_EN1, LOW);
-    digitalWrite(PIN_EN2, LOW);
-
-    for (i = 0; i < NUM_KEYBOARDS * NUM_LINES; i++) {
-        kbdStatus[i] = 0x00;
+    for (i = 0; i < 4; i++) {
+        pinMode(OUTPUT_PINS[i], OUTPUT);
+        digitalWrite(OUTPUT_PINS[i], LOW);
     }
-
-    loadKeyMap();
+    for (i = 0; i < 5; i++) {
+        pinMode(INPUT_PINS[i], INPUT_PULLUP);
+    }
 }
 
-void Keyboard::readLine(const uint8_t kbd, const uint8_t line) {
-    uint8_t idx = kbd * NUM_KEYBOARDS + line;
-    uint8_t oldStatus = kbdStatus[idx];
+uint8_t ToeStuds::getBtnNumber(uint8_t line, uint8_t pin)
+{
+    return line * 5 + pin;
+}
 
-    // Select line
-    digitalWrite(PIN_S0, (line & 0x01) > 0 ? HIGH : LOW);
-    digitalWrite(PIN_S1, (line & 0x02) > 0 ? HIGH : LOW);
-    digitalWrite(PIN_S2, (line & 0x04) > 0 ? HIGH : LOW);
+void ToeStuds::readLine(const uint8_t line) {
+    for (uint8_t i = 0; i < 5; i++) {
+        uint8_t btn = getBtnNumber(line, i);
+        uint8_t value = digitalRead(INPUT_PINS[i]);
 
-    // wait for response
-    delayMicroseconds(20);
-
-    // read status from current line
-    char input = IO_PIN(PORT_IN);
-
-    for (uint8_t i = 0; i < 8; i++) {
-        uint8_t key = line * 8 + i;
-
-        if ( (input & (1<<i)) && !(oldStatus & (1<<i)) ) {
-            // Key was pressed
-            if (mLearning == kbd) {
-                learnNextKey(kbd, key);         
-            } else {
-                mKeyChangeHandler(kbd, mKeyMap[key], KEY_VELOCITY);
-            }
-        } else if ( !(input & (1<<i)) && (oldStatus & (1<<i)) ) {
-            // Key was released
-            if (mLearning == kbd) {
-                // ignored
-            } else {
-                mKeyChangeHandler(kbd, mKeyMap[key], 0);
-            }
+        if (value && mToeStuds[btn] < 0xFF) {
+            mToeStuds[btn]++;
         }
-    } 
+        if (!value && mToeStuds[btn] > 0) {
+            // Button was just released
+            if (mButtonHandler) {
+                mButtonHandler(btn, mToeStuds[btn] > TOESTUD_LONG_PRESS);
+            }
+            mToeStuds[btn] = 0;
+        }
 
-    kbdStatus[idx] = input;
+    }
 }
 
-void Keyboard::poll()
+void ToeStuds::poll()
 {
     uint8_t line;
 
-    digitalWrite(PIN_EN1, HIGH);
+    for (line = 0; line < 4; line ++) {
+        digitalWrite(OUTPUT_PINS[line], HIGH);
 
-    for (line = 0; line < 7; line++) {
-        readLine(0, line);        
+        delayMicroseconds(1500);
+
+        readLine(line);
+
+        digitalWrite(OUTPUT_PINS[line], LOW);
     }
-
-    digitalWrite(PIN_EN1, LOW);
-    digitalWrite(PIN_EN2, HIGH);
-
-    for (line = 0; line < 7; line++) {
-        readLine(1, line);        
-    }
-
-    digitalWrite(PIN_EN2, LOW);
-
 }

@@ -12,7 +12,6 @@
 
 #include <inttypes.h>
 #include <avr/io.h>
-#include <avr/eeprom.h>
 
 #include <avrlib.h>
 
@@ -20,140 +19,139 @@
 
 #include "config.h"
 
-static uint8_t kbdStatus[NUM_KEYBOARDS * NUM_LINES];
-
-static EEMEM uint8_t eeKeyMap = 0x04;
-
-void Keyboard::setHandleKeyChange( void(*handler)(uint8_t kbd, uint8_t note, uint8_t velocity) ) {
-    mKeyChangeHandler = handler;
-}
-
-void Keyboard::loadKeyMap() {
-    uint8_t v = eeprom_read_byte(&eeKeyMap);
-    if (v == 0xFF) {
-        // not initialized, load default map
-        for (uint8_t i = 0; i < NUM_KEYBOARDS * NUM_LINES * 8; i++) {
-            mKeyMap[i] = LOWEST_NOTE + i;
-        }
-    } else {
-        for (uint8_t i = 0; i < NUM_KEYBOARDS * NUM_LINES * 8; i++) {
-            mKeyMap[i] = eeprom_read_byte(&eeKeyMap + i);
-        }
-    }
-}
-
-void Keyboard::storeKeyMap() {
-    for (uint8_t i = 0; i < NUM_KEYBOARDS * NUM_LINES * 8; i++) {
-        eeprom_write_byte(&eeKeyMap + i, mKeyMap[i]);
-    }
-}
-
-void Keyboard::begin()
+Pistons::Pistons()
+: mNumKeyboards(0)
 {
-    uint8_t i;
+    reset();
+}
+
+void Pistons::setPressEvent( void(*handler)(uint8_t kbd, uint8_t btn, bool longPress) ) {
+    mPressEvent = handler;
+}
+
+uint8_t Pistons::getBtnNumber(uint8_t addr, uint8_t pin)
+{
+    // reverse the lower and higher 4 pins each
+    uint8_t pinOrdered = pin > 3 ? 7 - (pin - 4) : 3 - pin;    
+
+    return pinOrdered * 6 + addr;
+}
+
+uint8_t Pistons::getLEDNumber(uint8_t addr, uint8_t pin)
+{
+    // rotate by 1
+    uint8_t pinOrdered = pin == 0 ? 7 : pin - 1;
+
+    return pinOrdered * 6 + addr;
+}
+
+uint8_t Pistons::getBitValue(const uint8_t* array, uint8_t btnNumber)
+{
+    uint8_t idx = btnNumber / 8;
+    uint8_t value = array[idx];
+    return (value >> (btnNumber % 8)) & 0x01;
+}
+
+void Pistons::setLEDs(uint8_t kbd, uint8_t mask1, uint8_t mask2, uint8_t mask3, uint8_t mask4)
+{
+    mLEDs[kbd*3 + 0] = mask4;
+    mLEDs[kbd*3 + 1] = mask3;
+    mLEDs[kbd*3 + 2] = mask2;
+    if (mNumKeyboards == 1 && kbd == 0) {
+        mLEDs[3] = mask1;
+    }
+}
+
+void Pistons::reset()
+{
+    for (uint8_t i = 0; i < 6; i++) {
+        mLEDs[i] = 0;
+    }
+    for (uint8_t i = 0; i < NUM_BUTTONS; i++) {
+        mButtons[i] = 0;
+    }
+}
+
+void Pistons::begin(uint8_t numKeyboards)
+{
+    mNumKeyboards = numKeyboards;
 
     // init ports (in port without pullups, out ports, all disabled)
     IO_DDR(PORT_IN) = 0x00;
     IO_PORT(PORT_IN) = 0x00;
 
-    pinMode(PIN_S0, OUTPUT);
-    pinMode(PIN_S1, OUTPUT);
-    pinMode(PIN_S2, OUTPUT);
-    pinMode(PIN_EN1, OUTPUT);
-    pinMode(PIN_EN2, OUTPUT);
+    IO_DDR(PORT_OUT) = 0xFF;
+    IO_PORT(PORT_OUT) = 0x00;
 
-    digitalWrite(PIN_S0, LOW);
-    digitalWrite(PIN_S1, LOW);
-    digitalWrite(PIN_S2, LOW);
+    pinMode(PIN_ADDR1,   OUTPUT);
+    pinMode(PIN_ADDR2,   OUTPUT);
+    pinMode(PIN_ADDR3,   OUTPUT);
 
-    digitalWrite(PIN_EN1, LOW);
-    digitalWrite(PIN_EN2, LOW);
-
-    for (i = 0; i < NUM_KEYBOARDS * NUM_LINES; i++) {
-        kbdStatus[i] = 0x00;
-    }
-
-    loadKeyMap();
+    digitalWrite(PIN_ADDR1, LOW);
+    digitalWrite(PIN_ADDR2, LOW);
+    digitalWrite(PIN_ADDR3, LOW);
 }
 
-void Keyboard::startLearning(const uint8_t kbd) {
-    mLearning = kbd;
-    mLearnNextNote = LOWEST_NOTE;
-    mCurrentInput = 0xFF;
-}
 
-void Keyboard::learnNextKey(const uint8_t kbd, const uint8_t key) {
-    if (key == mCurrentInput) {
-        // repeated press of the same key, ignore
-        return;
-    }
-
-    // The input key for note 'mLearnNextKey' is 'key'..
-    mKeyMap[key] = mLearnNextNote;
-
-    mCurrentInput = key;
-    mLearnNextNote++;
-    if (mLearnNextNote >= NUM_KEYS) {
-        storeKeyMap();
-        mLearning = 0xFF;
-    }
-}
-
-void Keyboard::readLine(const uint8_t kbd, const uint8_t line) {
-    uint8_t idx = kbd * NUM_KEYBOARDS + line;
-    uint8_t oldStatus = kbdStatus[idx];
-
-    // Select line
-    digitalWrite(PIN_S0, (line & 0x01) > 0 ? HIGH : LOW);
-    digitalWrite(PIN_S1, (line & 0x02) > 0 ? HIGH : LOW);
-    digitalWrite(PIN_S2, (line & 0x04) > 0 ? HIGH : LOW);
-
-    // wait for response
-    delayMicroseconds(20);
-
-    // read status from current line
-    char input = IO_PIN(PORT_IN);
+void Pistons::readLine(const uint8_t line) {
+    uint8_t in = IO_PORT(PORT_IN);
 
     for (uint8_t i = 0; i < 8; i++) {
-        uint8_t key = line * 8 + i;
+        uint8_t btn = getBtnNumber(line, i);
+        uint8_t pressed = (in >> i) & 0x01;
 
-        if ( (input & (1<<i)) && !(oldStatus & (1<<i)) ) {
-            // Key was pressed
-            if (mLearning == kbd) {
-                learnNextKey(kbd, key);         
-            } else {
-                mKeyChangeHandler(kbd, mKeyMap[key], KEY_VELOCITY);
+        if (pressed) {
+            // Increase counter, to measure duration of button press
+            if (mButtons[btn] < 0xFF) {
+                mButtons[btn]++;
             }
-        } else if ( !(input & (1<<i)) && (oldStatus & (1<<i)) ) {
-            // Key was released
-            if (mLearning == kbd) {
-                // ignored
-            } else {
-                mKeyChangeHandler(kbd, mKeyMap[key], 0);
+        } else {
+            if (mButtons[btn] > 0 && mPressEvent) {
+                // Button was pressed, is now released
+                if (mNumKeyboards > 1) {
+                    // for 2 keyboards, we use 3 bytes per keyboard
+                    mPressEvent(btn / BITS_PER_KEYBOARD, 
+                                btn % BITS_PER_KEYBOARD, 
+                                mButtons[btn] > LONG_PRESS_DURATION);
+                } else {
+                    mPressEvent(0, btn, mButtons[btn] > LONG_PRESS_DURATION);
+                }
+                mButtons[btn] = 0;
             }
         }
-    } 
 
-    kbdStatus[idx] = input;
+    }
 }
 
-void Keyboard::poll()
+void Pistons::writeLEDs(const uint8_t line)
+{
+    uint8_t out = 0x00;
+
+    for (uint8_t i = 0; i < 8; i++) {
+        uint8_t btn = getLEDNumber(line, i);
+        out |= (getBitValue(mLEDs, btn) << i);
+    }
+
+    IO_PORT(PORT_OUT) = out;
+}
+
+void Pistons::poll()
 {
     uint8_t line;
 
-    digitalWrite(PIN_EN1, HIGH);
+    for (line = 0; line < 6; line++) {
+        // clear LEDs before switching
+        IO_PORT(PORT_OUT) = 0x00;
 
-    for (line = 0; line < 7; line++) {
-        readLine(0, line);        
+        // select new line
+        digitalWrite(PIN_ADDR1, (line     ) & 0x01);
+        digitalWrite(PIN_ADDR2, (line >> 1) & 0x01);
+        digitalWrite(PIN_ADDR2, (line >> 2) & 0x01);
+
+        writeLEDs(line);
+
+        delayMicroseconds(1500);
+
+        readLine(line);
     }
-
-    digitalWrite(PIN_EN1, LOW);
-    digitalWrite(PIN_EN2, HIGH);
-
-    for (line = 0; line < 7; line++) {
-        readLine(1, line);        
-    }
-
-    digitalWrite(PIN_EN2, LOW);
-
 }

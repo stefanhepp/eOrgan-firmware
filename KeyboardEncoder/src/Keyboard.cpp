@@ -29,7 +29,7 @@ void Keyboard::setHandleKeyChange( void(*handler)(uint8_t kbd, uint8_t note, uin
 }
 
 void Keyboard::loadKeyMap() {
-    uint8_t v = eeprom_read_byte(&eeKeyMap);
+    uint8_t v = eeprom_read_byte(eeKeyMap);
     if (v == 0xFF) {
         // not initialized, load default map
         for (uint8_t i = 0; i < NUM_KEYBOARDS * NUM_LINES * 8; i++) {
@@ -37,14 +37,14 @@ void Keyboard::loadKeyMap() {
         }
     } else {
         for (uint8_t i = 0; i < NUM_KEYBOARDS * NUM_LINES * 8; i++) {
-            mKeyMap[i] = eeprom_read_byte(&eeKeyMap + i);
+            mKeyMap[i] = eeprom_read_byte(eeKeyMap + i);
         }
     }
 }
 
 void Keyboard::storeKeyMap() {
     for (uint8_t i = 0; i < NUM_KEYBOARDS * NUM_LINES * 8; i++) {
-        eeprom_write_byte(&eeKeyMap + i, mKeyMap[i]);
+        eeprom_write_byte(eeKeyMap + i, mKeyMap[i]);
     }
 }
 
@@ -109,7 +109,7 @@ void Keyboard::readLine(const uint8_t kbd, const uint8_t line) {
     digitalWrite(PIN_S2, (line & 0x04) > 0 ? HIGH : LOW);
 
     // wait for response
-    delayMicroseconds(20);
+    delayMicroseconds(50);
 
     // read status from current line
     char input = IO_PIN(PORT_IN);
@@ -143,14 +143,14 @@ void Keyboard::poll()
 
     digitalWrite(PIN_EN1, HIGH);
 
-    for (line = 0; line < 7; line++) {
+    for (line = 0; line < 8; line++) {
         readLine(0, line);        
     }
 
     digitalWrite(PIN_EN1, LOW);
     digitalWrite(PIN_EN2, HIGH);
 
-    for (line = 0; line < 7; line++) {
+    for (line = 0; line < 8; line++) {
         readLine(1, line);        
     }
 

@@ -1,7 +1,7 @@
 /**
  * Author: Stefan hepp (stefan@stefant.org)
  *
- * Analog input sensor with calibrated 
+ * Analog input sensor with range calibration.
  **/
 
 #ifndef __CalibratedAnalogInput_H__
@@ -38,11 +38,14 @@ class CalibratedAnalogInput
 
         bool mCalibrating;
 
-        void (*mOnCalibration)(void) = nullptr;
-        void (*mOnChange)(int value) = nullptr;
+        void (*mOnCalibration)(void* payload) = nullptr;
+        void (*mOnChange)(int value, void* payload) = nullptr;
+
+        void* mCalibrationPayload = nullptr;
+        void* mChangePayload = nullptr;
 
     public:
-        explicit CalibratedAnalogInput(uint8_t pin);
+        explicit CalibratedAnalogInput();
 
         void setCalibrationData(const AICalibrationData &data);
 
@@ -52,15 +55,15 @@ class CalibratedAnalogInput
 
         void stopCalibration();
 
-        void onCalibrating( void(*callback)(void) );
+        void onCalibrating( void(*callback)(void* payload), void* payload = nullptr);
 
-        void onChange( void(*callback)(int value) );
+        void onChange( void(*callback)(int value, void* payload), void* payload = nullptr);
 
         int value() const;
 
         int center() const;
 
-        void begin();
+        void begin(uint8_t pin);
 
         void poll();
 };

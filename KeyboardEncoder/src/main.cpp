@@ -55,8 +55,6 @@ static void updateMIDIChannel(uint8_t kbd, uint8_t channel) {
         MIDI.setInputChannel(channel);
     }
     settings.setMIDIChannel(kbd, channel);
-
-    // TODO pull ready pin to indicate MIDI channel change
 }
 
 static void resetEncoder(void)
@@ -118,21 +116,17 @@ void setup() {
 
     // Set output pin modes
     // Set pin value first before turing on output mode, to prevent spurious signals
-    digitalWrite(PIN_INTERRUPT, LOW);
+    digitalWrite(PIN_INTERRUPT, HIGH);
     pinMode(PIN_INTERRUPT, OUTPUT);
-
-    pinMode(PIN_S0,   OUTPUT);
-    pinMode(PIN_S1,   OUTPUT);
-    pinMode(PIN_S2,   OUTPUT);
-    pinMode(PIN_EN1,  OUTPUT);
-    pinMode(PIN_EN2,  OUTPUT);
 
     MIDIChannel[0] = settings.getMIDIChannel(0);
     MIDIChannel[1] = settings.getMIDIChannel(1);
 
-    MIDI.turnThruOff();
+    MIDI.turnThruOn(midi::Thru::Full);
     MIDI.begin(MIDIChannel[0]);
 
+    Wire.onReceive(i2cReceive);
+    Wire.onRequest(i2cRequest);
     Wire.begin(I2C_ADDR_KEYBOARD);
 
     kbd.setHandleKeyChange(onKeyChange);

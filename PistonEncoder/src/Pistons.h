@@ -15,42 +15,50 @@
 
 #include "config.h"
 
-static const uint8_t NUM_KEYBOARDS = 2;
-static const uint8_t NUM_LINES = 8;
-static const uint8_t NUM_KEYS = 61;
+// We use 3 bytes = 24 bits per keyboard
+static const uint8_t BITS_PER_KEYBOARD = 24;
+static const uint8_t NUM_BUTTONS = BITS_PER_KEYBOARD * 2;
 
-class Keyboard
+// Number of ticks for long press, in 6*1.5 us per tick, about 2 seconds.
+static const uint8_t LONG_PRESS_DURATION = 220;
+
+class Pistons
 {
     private:
-        uint8_t mLearning;
-        uint8_t mCurrentInput;
-        uint8_t mLearnNextNote;
-
-        uint8_t mKeyMap[NUM_KEYBOARDS * NUM_LINES * 8];
-
         // callback for key changes
-        void (*mKeyChangeHandler)(uint8_t kbd, uint8_t note, uint8_t velocity);
+        void (*mPressEvent)(uint8_t kbd, uint8_t btn, bool longPress) = nullptr;
 
-        void loadKeyMap();
+        uint8_t mLEDs[6];
 
-        void storeKeyMap();
+        uint8_t mButtons[NUM_BUTTONS];
 
-        void learnNextKey(const uint8_t kbd, const uint8_t key);
+        uint8_t mNumKeyboards;
 
-        void readLine(const uint8_t kbd, const uint8_t line);
+        uint8_t getBtnNumber(uint8_t addr, uint8_t pin);
+
+        uint8_t getLEDNumber(uint8_t addr, uint8_t pin);
+
+        uint8_t getBitValue(const uint8_t* array, uint8_t btnNumber);
+
+        void readLine(const uint8_t line);
+
+        void writeLEDs(const uint8_t line);
     public:
-        explicit Keyboard() : mLearning(0xFF), mKeyChangeHandler(NULL) {}
+        explicit Pistons();
 
-        void setHandleKeyChange(void (*handler)(uint8_t kbd, uint8_t note, uint8_t velocity) );
+        void setPressEvent(void (*handler)(uint8_t kbd, uint8_t btn, bool longPress) );
+
+        void setLEDs(uint8_t kbd, uint8_t mask1, uint8_t mask2, uint8_t mask3, uint8_t mask4);
+
+        /**
+         * Reset the encoder.
+         */
+        void reset();
 
         /**
          * Initialize all pins and routines.
          **/
-        void begin();
-
-        bool isLearning() const { return mLearning != 0xFF; }
-
-        void startLearning(uint8_t kbd);
+        void begin(uint8_t numKeyboards);
 
         /** 
          * poll input ports for changes, call handler on changed notes.
