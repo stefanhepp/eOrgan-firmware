@@ -33,13 +33,15 @@ MegaWire Wire;
 Settings settings;
 ToeStuds toestuds;
 
-static uint8_t PEDAL_CHOIR = 0;
-static uint8_t PEDAL_SWELL = 1;
-static uint8_t PEDAL_CRESCENDO = 2;
+static const uint8_t PEDAL_CHOIR = 0;
+static const uint8_t PEDAL_SWELL = 1;
+static const uint8_t PEDAL_CRESCENDO = 2;
 
 CalibratedAnalogInput pedals[3];
 
 static uint8_t MIDIChannel;
+static uint8_t MIDIChannelSwell;
+static uint8_t MIDIChannelChoir;
 
 static const uint8_t BUFFER_SIZE = 16;
 static uint8_t ToeStudBuffer[BUFFER_SIZE];
@@ -69,16 +71,15 @@ static void clearIRQ(uint8_t flag)
     }
 }
 
-static void updateMIDIChannel(uint8_t channel) {
+static void updateMIDIChannel(uint8_t channel, uint8_t channelSwell, uint8_t channelChoir) {
     MIDIChannel = channel;
-    settings.setMIDIChannel(channel);
+    MIDIChannelSwell = channelSwell;
+    MIDIChannelChoir = channelChoir;
+    settings.setMIDIChannel(channel, channelSwell, channelChoir);
 }
 
 static void resetEncoder(void)
 {
-    // Reset channel
-    updateMIDIChannel(MIDI_CHANNEL_TOESTUDS);
-
     toestuds.reset();
 
     clearIRQ(IRQ_PEDALS);
@@ -86,18 +87,27 @@ static void resetEncoder(void)
 }
 
 void onPedalCalibrate(void* payload) {
-    uint8_t pedal = *((uint8_t *)payload);
+    const uint8_t pedal = *((const uint8_t *)payload);
     AICalibrationData data;
     pedals[pedal].getCalibrationData(data);
     settings.setCalibrationData(pedal, data);
 }
 
 void onPedalChange(int value, void* payload) {
-    uint8_t pedal = *((uint8_t *)payload);
+    const uint8_t pedal = *((const uint8_t *)payload);
 
     if (SendMode & MODE_MIDI) {
-        // TODO send MIDI event
-
+        switch (pedal) {
+            case PEDAL_CHOIR:
+                MIDI.sendPitchBend(value * 16, MIDIChannelChoir);
+                break;
+            case PEDAL_SWELL:
+                MIDI.sendPitchBend(value * 16, MIDIChannelSwell);
+                break;
+            case PEDAL_CRESCENDO:
+                MIDI.sendControlChange(MIDI_CONTROL_CRESCENDO, value >> 4, MIDIChannel);
+                break;
+        }
     }
 
     if (SendMode & MODE_I2C) {
@@ -110,6 +120,8 @@ void onToeStudPress(uint8_t button, bool longPress) {
     if (SendMode & MODE_MIDI) {
 
         // TODO send event
+        //MIDI.sendProgramChange(button, MIDIChannel);
+
     }
 
     if (SendMode & MODE_I2C) {
@@ -124,16 +136,17 @@ void onToeStudPress(uint8_t button, bool longPress) {
 
 void i2cReceive(uint8_t length) {
     uint8_t cmd = Wire.read();
-    uint8_t value;
 
     switch (cmd) {
         case I2C_CMD_RESET: 
             resetEncoder();
             break;
         case I2C_CMD_SET_CHANNEL:
-            if (Wire.available()) {
-                value = Wire.read();
-                updateMIDIChannel(value);
+            if (Wire.available() > 2) {
+                uint8_t channel = Wire.read();
+                uint8_t channelSwell = Wire.read();
+                uint8_t channelChoir = Wire.read();
+                updateMIDIChannel(channel, channelSwell, channelChoir);
             }
             break;
         case I2C_CMD_CALIBRATE:
@@ -148,7 +161,7 @@ void i2cReceive(uint8_t length) {
             break;
         case I2C_CMD_SET_MODE:
             if (Wire.available()) {
-                value = Wire.read();
+                uint8_t value = Wire.read();
                 SendMode = value;
                 settings.setSendMode(value);
             }
@@ -156,8 +169,10 @@ void i2cReceive(uint8_t length) {
     }
 }
 
-void i2cRequest() {
+void i2cRequest()
+{
     Wire.write(MIDIChannel);
+
     for (uint8_t i = 0; i < 3; i++) {
         Wire.write((uint8_t)(pedals[i].value() >> 8));
         Wire.write((uint8_t)(pedals[i].value() & 0xFF));
@@ -165,6 +180,7 @@ void i2cRequest() {
     clearIRQ(IRQ_PEDALS);
 
     Wire.write(ToeStudBufferLength);
+    
     for (uint8_t i = 0; i < ToeStudBufferLength; i++) {
         Wire.write(ToeStudBuffer[i]);
     }
@@ -173,10 +189,10 @@ void i2cRequest() {
     clearIRQ(IRQ_TOESTUDS);
 }
 
-void setupPedal(uint8_t *pedal, uint8_t pin)
+void setupPedal(const uint8_t *pedal, uint8_t pin)
 {
-    pedals[*pedal].onCalibrating(onPedalCalibrate, pedal);
-    pedals[*pedal].onChange(onPedalChange, pedal);
+    pedals[*pedal].onCalibrating(onPedalCalibrate, (void*) pedal);
+    pedals[*pedal].onChange(onPedalChange, (void*) pedal);
     if (settings.hasCalibrationData()) {
         AICalibrationData data;
         settings.getCalibrationData(*pedal, data);
@@ -199,6 +215,8 @@ void setup() {
     pinMode(PIN_INTERRUPT, OUTPUT);
 
     MIDIChannel = settings.getMIDIChannel();
+    MIDIChannelSwell = settings.getMIDIChannelSwell();
+    MIDIChannelChoir = settings.getMIDIChannelChoir();
 
     SendMode = settings.getSendMode(MODE_MIDI | MODE_I2C);
 

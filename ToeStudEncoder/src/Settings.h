@@ -9,8 +9,7 @@
  * License: GPL v3
  * See 'COPYRIGHT.txt' for copyright and licensing information.
  */
-#ifndef __SETUP_H__
-#define __SETUP_H__
+#pragma once
 
 #include <inttypes.h>
 
@@ -23,7 +22,11 @@ class Settings
 
         uint8_t getMIDIChannel();
 
-        void setMIDIChannel(uint8_t channel);
+        uint8_t getMIDIChannelSwell();
+
+        uint8_t getMIDIChannelChoir();
+
+        void setMIDIChannel(uint8_t channel, uint8_t channelSwell, uint8_t channelChoir);
 
         bool hasCalibrationData();
 
@@ -35,5 +38,3 @@ class Settings
 
         void setSendMode(uint8_t mode);
 };
-
-#endif

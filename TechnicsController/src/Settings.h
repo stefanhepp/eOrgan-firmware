@@ -9,8 +9,7 @@
  * License: GPL v3
  * See 'COPYRIGHT.txt' for copyright and licensing information.
  */
-#ifndef __SETTINGS_H__
-#define __SETTINGS_H__
+#pragma once
 
 #include <inttypes.h>
 
@@ -31,5 +30,3 @@ class Settings
 
         void setWheelSettings(const AICalibrationData &data);
 };
-
-#endif

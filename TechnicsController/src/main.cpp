@@ -19,7 +19,7 @@
  **/
 
 #include <Arduino.h>
-#include <MIDI.h>
+#include <MiniMIDI.h>
 #include <CalibratedAnalogInput.h>
 #include <MegaWire.h>
 
@@ -30,7 +30,7 @@
 #include "TechnicsKeyboard.h"
 
 // Create device driver instances
-MIDI_CREATE_DEFAULT_INSTANCE();
+MiniMIDI MIDI;
 MegaWire Wire;
 
 Settings         settings;
@@ -43,13 +43,9 @@ static uint8_t MIDIChannel;
  * send notes off for all pressed notes.
  * @param force if non-zero, send a note-off controller msg on the current channel.
  **/
-static void sendAllNotesOff(uint8_t force)
+static void sendAllNotesOff()
 {
-    if ( force ) {
-       MIDI.sendControlChange(midi::AllSoundOff, 0, MIDIChannel);
-    } else {
-       MIDI.sendControlChange(midi::AllNotesOff, 0, MIDIChannel);
-    }
+    MIDI.sendAllNotesOff(MIDIChannel);
 }
 
 static void updateMIDIChannel(uint8_t channel) {
@@ -61,7 +57,7 @@ static void updateMIDIChannel(uint8_t channel) {
 static void resetEncoder(void)
 {
     // disable all notes on current channel
-    sendAllNotesOff(1);
+    sendAllNotesOff();
 
     // Reset channel
     updateMIDIChannel(MIDI_CHANNEL_TECHNICS);
@@ -83,7 +79,7 @@ void onWheelCalibrate(void* payload) {
 }
 
 void onWheelChange(int value, void* payload) {
-
+    MIDI.sendPitchBend(value * 16, MIDIChannel);
 }
 
 void i2cReceive(uint8_t length) {
@@ -129,7 +125,7 @@ void setup() {
     pinMode(PIN_INTERRUPT, OUTPUT);
 
     MIDIChannel = settings.getMIDIChannel();
-    MIDI.turnThruOn(midi::Thru::Full);
+    MIDI.turnThruOn(ThruMode::Full);
     MIDI.begin(MIDIChannel);
 
     wheel.onCalibrating(onWheelCalibrate);

@@ -8,8 +8,7 @@
  * License: GPL v3
  * See 'COPYRIGHT.txt' for copyright and licensing information.
  */
-#ifndef __CONFIG_TOESTUD_H__
-#define __CONFIG_TOESTUD_H__
+#pragma once
 
 #include <Arduino.h>
 
@@ -38,6 +37,3 @@ static const uint8_t PIN_CRESCENDO = PC2;
 
 // midi number of lowest key on pedal (great C)
 static const uint8_t LOWEST_NOTE    = 36;
-
-#endif
-

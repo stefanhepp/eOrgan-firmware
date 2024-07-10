@@ -26,11 +26,14 @@ static const uint8_t I2C_CMD_SET_LEDS       = 0x06;
 static const uint8_t I2C_CMD_SET_MODE       = 0x07;
 
 // Default MIDI channels
-static const uint8_t MIDI_CHANNEL_KEYBOARD_1 = 6;
-static const uint8_t MIDI_CHANNEL_KEYBOARD_2 = 5;
-static const uint8_t MIDI_CHANNEL_TECHNICS   = 4;
-static const uint8_t MIDI_CHANNEL_PEDAL	     = 3;
-static const uint8_t MIDI_CHANNEL_TOESTUDS   = 7;
+static const uint8_t MIDI_CHANNEL_KEYBOARD_1 = 5;  // Swell
+static const uint8_t MIDI_CHANNEL_KEYBOARD_2 = 6;  // Solo
+static const uint8_t MIDI_CHANNEL_TECHNICS   = 4;  // Choir
+static const uint8_t MIDI_CHANNEL_PEDAL	     = 3;  // Pedal
+static const uint8_t MIDI_CHANNEL_TOESTUDS   = 7; 
+
+// Crescendo pedal CC
+static const uint8_t MIDI_CONTROL_CRESCENDO =  11; // ExpressionPedal
 
 // Velocity for digital keys
 static const uint8_t KEY_VELOCITY = 64;

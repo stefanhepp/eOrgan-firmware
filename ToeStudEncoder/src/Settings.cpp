@@ -15,6 +15,8 @@
 #include <common_config.h>
 
 uint8_t EEMEM confChannel;
+uint8_t EEMEM confChannelSwell;
+uint8_t EEMEM confChannelChoir;
 uint8_t EEMEM confMode;
 
 uint16_t EEMEM confCalibrationData[6];
@@ -29,9 +31,23 @@ uint8_t Settings::getMIDIChannel()
     return (v == 0xFF) ? MIDI_CHANNEL_TOESTUDS : v;
 }
 
-void Settings::setMIDIChannel(uint8_t channel)
+uint8_t Settings::getMIDIChannelSwell()
+{
+    uint8_t v = eeprom_read_byte(&confChannel);
+    return (v == 0xFF) ? MIDI_CHANNEL_KEYBOARD_1 : v;
+}
+
+uint8_t Settings::getMIDIChannelChoir()
+{
+    uint8_t v = eeprom_read_byte(&confChannel);
+    return (v == 0xFF) ? MIDI_CHANNEL_TECHNICS : v;
+}
+
+void Settings::setMIDIChannel(uint8_t channel, uint8_t channelSwell, uint8_t channelChoir)
 {
     eeprom_write_byte(&confChannel, channel);
+    eeprom_write_byte(&confChannelSwell, channelSwell);
+    eeprom_write_byte(&confChannelChoir, channelChoir);
 }
 
 bool Settings::hasCalibrationData()
