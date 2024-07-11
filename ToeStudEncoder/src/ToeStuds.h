@@ -8,8 +8,7 @@
  * License: GPL v3
  * See 'COPYRIGHT.txt' for copyright and licensing information.
  */
-#ifndef __TOESTUDS_H__
-#define __TOESTUDS_H__
+#pragma once
 
 #include <inttypes.h>
 
@@ -44,5 +43,3 @@ class ToeStuds
          **/
         void poll();
 };
-
-#endif
