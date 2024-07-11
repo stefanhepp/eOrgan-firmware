@@ -19,6 +19,9 @@ class TechnicsKeyboard
 
         // callback for key changes
         void (*mKeyChangeHandler)(uint8_t key, uint8_t velocity);
+
+        uint8_t readData();
+        
     public:
         explicit TechnicsKeyboard();
 
