@@ -43,8 +43,8 @@ static uint8_t MIDIChannel;
 static uint8_t MIDIChannelSwell;
 static uint8_t MIDIChannelChoir;
 
-static const uint8_t BUFFER_SIZE = 16;
-static uint8_t ToeStudBuffer[BUFFER_SIZE];
+static const uint8_t TX_BUFFER_SIZE = 16;
+static uint8_t ToeStudBuffer[TX_BUFFER_SIZE];
 static uint8_t ToeStudBufferLength = 0;
 
 static const uint8_t IRQ_PEDALS = 0;
@@ -126,7 +126,7 @@ void onToeStudPress(uint8_t button, bool longPress) {
 
     if (SendMode & MODE_I2C) {
         noInterrupts();
-        if (ToeStudBufferLength < BUFFER_SIZE) {
+        if (ToeStudBufferLength < TX_BUFFER_SIZE) {
             ToeStudBuffer[ToeStudBufferLength++] = (button << 1) | longPress;
         }
         sendIRQ(IRQ_TOESTUDS);

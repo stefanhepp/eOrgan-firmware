@@ -8,8 +8,7 @@
  * License: GPL v3
  * See 'COPYRIGHT.txt' for copyright and licensing information.
  */
-#ifndef __CONFIG_PISTON_H__
-#define __CONFIG_PISTON_H__
+#pragma once
 
 #include <Arduino.h>
 
@@ -31,6 +30,4 @@ static const uint8_t PIN_INTERRUPT   = PIN_PC3;
 static const uint8_t PIN_ADDR1       = PIN_PC2;
 static const uint8_t PIN_ADDR2       = PIN_PC1;
 static const uint8_t PIN_ADDR3       = PIN_PC0;
-
-#endif
 

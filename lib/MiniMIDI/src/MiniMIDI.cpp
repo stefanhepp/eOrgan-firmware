@@ -9,43 +9,118 @@
 #include <avr/interrupt.h>
 
 
-static const uint8_t BUFFER_SIZE = 64;
+static const uint8_t RX_BUFFER_SIZE = 4;
+static const uint8_t TX_BUFFER_SIZE = 64;
 
-static uint8_t Buffer[BUFFER_SIZE];
-static uint8_t BufferLength = 0;
-static uint8_t BufferPos = 0;
+static uint8_t RxBuffer[RX_BUFFER_SIZE];
+static uint8_t RxBufferLength = 0;
+
+static uint8_t RxExpectedLength = 0;
+
+static ThruMode MidiThruMode = ThruMode::Off;
+static uint8_t MidiChannel = 0;
+
+static uint8_t TxBuffer[TX_BUFFER_SIZE];
+static uint8_t TxBufferLength = 0;
+static uint8_t TxBufferPos = 0;
+
+/**
+ * Get the number of data bytes for a particular MIDI status byte
+ */
+static uint8_t midiMessageLength(uint8_t status) {
+    if (status & 0xF8) {
+        // System Real-time message
+        return 0;
+    }
+    if (status & 0xF0) {
+        if (status == 0xF2) {
+            // Song Position Pointer
+            return 2;
+        }
+        if (status == 0xF1 || status == 0xF3) {
+            // MIDI Time Quarter Code, Song Select
+            return 1;
+        }
+        if (status == 0XF0) {
+            // System Exclusive.. unknown size.
+            return 0;
+        }
+        // Any other System message is 0 bytes;
+        return 0;
+    }
+    uint8_t opcode = status & 0xF0;
+    if (opcode == 0xC0 || opcode == 0xD0) {
+        // Program Change or Channel Pressure
+        return 1;
+    }
+    // Any other voice message is 2 bytes
+    return 2;
+}
 
 static void writeByte(uint8_t data)
 {
-    uint8_t head = (BufferPos + BufferLength) % BUFFER_SIZE;
-    Buffer[head] = data;
-    BufferLength++;
+    uint8_t head = (TxBufferPos + TxBufferLength) % TX_BUFFER_SIZE;
+    TxBuffer[head] = data;
+    TxBufferLength++;
+
+    // Make sure to trigger an interrupt to send the queued data
+    UCSR0B |= (1<<UDRIE0);
+}
+
+/**
+ * We finished receiving a message in the receive buffer, process it.
+ */
+static void receivedMessage() 
+{    
+    uint8_t channel = RxBuffer[0] & 0x0F;
+    uint8_t opcode = RxBuffer[0] & 0xF0;
+
+    bool forward = (MidiThruMode == ThruMode::Full)
+                // Forward depending on the current channel
+                || (MidiThruMode == ThruMode::DifferentChannel && opcode != 0xF0 && channel != MidiChannel)                
+                || (MidiThruMode == ThruMode::SameChannel      && opcode != 0xF0 && channel == MidiChannel)
+                // System real-time messages are forwarded in all modes
+                || (MidiThruMode != ThruMode::Off              && opcode == 0xF0);
+
+    // Forward the whole message to the transmit buffer
+    if (forward) {
+        for (uint8_t i = 0; i < RxBufferLength; i++) {
+            writeByte(RxBuffer[i]);
+        }
+    }
+
+    // TODO add receive handler here
+
+    // clear the buffer
+    RxBufferLength = 0;
+    RxExpectedLength = 0;
 }
 
 MiniMIDI::MiniMIDI()
-: mChannel(0), mThruMode(ThruMode::Off)
+: mChannel(0)
 {
 }
 
 void MiniMIDI::turnThruOff()
 {
-    mThruMode = ThruMode::Off;
+    MidiThruMode = ThruMode::Off;
 }
 
 void MiniMIDI::turnThruOn(ThruMode mode)
 {
-    mThruMode = mode;
+    MidiThruMode = mode;
 }
 
 void MiniMIDI::setInputChannel(uint8_t channel)
 {
     mChannel = channel;
+    MidiChannel = channel;
 }
 
 void MiniMIDI::writeMessage2(uint8_t opcode, uint8_t channel, uint8_t data1)
 {
     cli();
-    if (BufferLength + 2 <= BUFFER_SIZE) {
+    if (TxBufferLength + 2 <= TX_BUFFER_SIZE) {
         if (channel == 0xFF) {
             channel = mChannel;
         }
@@ -58,7 +133,7 @@ void MiniMIDI::writeMessage2(uint8_t opcode, uint8_t channel, uint8_t data1)
 void MiniMIDI::writeMessage3(uint8_t opcode, uint8_t channel, uint8_t data1, uint8_t data2)
 {
     cli();
-    if (BufferLength + 3 <= BUFFER_SIZE) {
+    if (TxBufferLength + 3 <= TX_BUFFER_SIZE) {
         if (channel == 0xFF) {
             channel = mChannel;
         }
@@ -71,11 +146,20 @@ void MiniMIDI::writeMessage3(uint8_t opcode, uint8_t channel, uint8_t data1, uin
 
 void MiniMIDI::begin(uint8_t channel)
 {
-    mChannel = channel;
+    setInputChannel(channel);
 
-    // Setup UART for sending at 31250 baud, 8N1
+    // Setup UART for sending at 31250 baud (at 8Mhz system clock)
+    UBRR0H = 0;
+    // for 8Mhz system clock:
+    UBRR0L = 15; 
+    // For 1Mhz default system clock:
+    //UBRR0L = 1;
 
+    // Format 8N1, async mode
+    UCSR0C = (1 << UCSZ01) | (1 << UCSZ00);
 
+    // Enabler RX and TX, enable interrupts
+    UCSR0B = (1 << RXCIE0)|(1 << RXEN0)|(1 << TXEN0);
 }
 
 void MiniMIDI::sendNoteOn(uint8_t note,  uint8_t velocity, uint8_t channel)
@@ -111,4 +195,62 @@ void MiniMIDI::sendAllSoundOff(uint8_t channel)
 void MiniMIDI::sendAllNotesOff(uint8_t channel)
 {
     sendControlChange(123, 0);
+}
+
+ISR(USART_RX_vect)
+{
+
+    if ((UCSR0A & (1<<DOR0)) || (UCSR0A & (1<<FE0)) ) {
+        // Got a frame error or data overrun
+        // Clear the data and reset the receive message
+        (void)UDR0;
+        RxExpectedLength = 0;
+        RxBufferLength = 0;
+        return;
+    }
+
+    uint8_t data = UDR0;
+
+    if (data == 0xF0) {
+        // Ignore System Exlusive messages here for now. Ignore any data.
+        RxExpectedLength = 0;
+    }
+    else if (data & 0x80) {
+        // we received a new message. If there is anything still in the receive buffer, ignore it.
+        RxBuffer[0] = data;
+        RxBufferLength = 1;
+
+        // check how many data bytes are expected
+        RxExpectedLength = midiMessageLength(data);
+
+        // single-byte message, then process immediately.
+        if (RxExpectedLength == 0) {
+            receivedMessage();
+        }
+    }
+    else if (RxExpectedLength > 0) {
+        // got additional data byte
+        RxBuffer[RxBufferLength++] = data;
+        RxExpectedLength--;
+
+        // Full message received?
+        if (RxExpectedLength == 0) {
+            receivedMessage();
+        }
+    }
+}
+
+ISR(USART_UDRE_vect)
+{
+    if (TxBufferLength > 0) {
+        // enqueue the next byte for transmission
+        UDR0 = TxBuffer[TxBufferPos];
+
+        // Move buffer start to next byte
+        TxBufferLength--;
+        TxBufferPos = (TxBufferPos + 1) % TX_BUFFER_SIZE;
+    } else {
+        // Buffer empty, stop queuing data
+        UCSR0B &= ~(1<<UDRIE0);
+    }
 }

@@ -27,8 +27,6 @@ class MiniMIDI
     private:
         uint8_t mChannel;
 
-        uint8_t mThruMode;
-
         void writeMessage2(uint8_t opcode, uint8_t channel, uint8_t data1);
 
         void writeMessage3(uint8_t opcode, uint8_t channel, uint8_t data1, uint8_t data2);

@@ -8,8 +8,7 @@
  * License: GPL v3
  * See 'COPYRIGHT.txt' for copyright and licensing information.
  */
-#ifndef __PISTONS_H__
-#define __PISTONS_H__
+#pragma once
 
 #include <inttypes.h>
 
@@ -65,5 +64,3 @@ class Pistons
          **/
         void poll();
 };
-
-#endif
