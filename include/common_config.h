@@ -3,8 +3,7 @@
  *
  * Common settings for all organ controllers.
  **/
-#ifndef __Common_H__
-#define __Common_H__
+#pragma once
 
 #include <inttypes.h>
 
@@ -37,5 +36,3 @@ static const uint8_t MIDI_CONTROL_CRESCENDO =  11; // ExpressionPedal
 
 // Velocity for digital keys
 static const uint8_t KEY_VELOCITY = 64;
-
-#endif

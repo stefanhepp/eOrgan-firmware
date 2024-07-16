@@ -6,18 +6,17 @@
 
 #include <Arduino.h>
 
+#include "Cmdline.h"
 #include "MIDIRouter.h"
 #include "ConfigController.h"
 
 // Serial6: UART Panel
 
-
+Cmdline cmdline;
 MIDIRouter MIDI;
 ConfigController Config;
 
 void setup() {
-    // Serial over USB. Speed is ignored.
-    Serial.begin(9600);
 
     Config.begin();
     MIDI.begin();
