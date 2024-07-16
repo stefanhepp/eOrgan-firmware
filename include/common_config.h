@@ -7,6 +7,16 @@
 
 #include <inttypes.h>
 
+enum MIDIDivision 
+{
+    Pedal,
+    Choir,
+    Great,
+    Swell,
+    Solo,
+    Control
+};
+
 // I2C Addresses
 static const uint8_t I2C_ADDR_KEYBOARD = 0x50;
 static const uint8_t I2C_ADDR_TECHNICS = 0x51;

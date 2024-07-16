@@ -35,8 +35,53 @@ static const int I2C_PORT_I2C2      = 7;
 
 ConfigController::ConfigController() 
 {
-
 }
+
+void ConfigController::resetAll()
+{
+}
+
+void ConfigController::readAll()
+{
+}
+
+void ConfigController::setPedalChannel(uint8_t channel)
+{
+}
+
+void ConfigController::setPedalLEDIntensity(uint8_t intensity)
+{
+}
+
+void ConfigController::setToestudChannels(uint8_t channel, uint8_t swellChannel, uint8_t choirChannel)
+{
+}
+
+void ConfigController::setToestudMode(uint8_t mode)
+{
+}
+
+void ConfigController::setTechnicsChannel(uint8_t channel)
+{
+}
+
+void ConfigController::setKeyboardChannels(uint8_t channel1, uint8_t channel2)
+{
+}
+
+void ConfigController::startCalibrateAnalogInputs()
+{
+}
+
+void ConfigController::stopCalibrateAnalogInputs()
+{
+}
+
+void ConfigController::trainKeyboard(uint8_t keyboard)
+{
+}
+
+
 
 void ConfigController::begin()
 {

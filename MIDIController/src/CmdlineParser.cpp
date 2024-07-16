@@ -16,9 +16,29 @@
 
 #include <common_config.h>
 
-CmdlineParser::CmdlineParser()
+bool CommandParser::parseDivision(const char* arg, MIDIDivision &division)
 {
 
+    return false;
+}
+
+bool CommandParser::parseInteger(const char* arg, int &value, int minValue, int maxValue)
+{
+    return false;
+}
+
+CmdlineParser::CmdlineParser()
+{
+}
+
+void CmdlineParser::addCommand(const char* cmd, CommandParser* parser)
+{
+    if (mNumCommands >= MAX_PARSERS) {
+        return;
+    }
+    mCommands[mNumCommands] = cmd;
+    mParsers[mNumCommands] = parser;
+    mNumCommands++;
 }
 
 void CmdlineParser::begin()
