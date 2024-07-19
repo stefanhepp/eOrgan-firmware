@@ -46,6 +46,10 @@ class ChannelParser: public CommandParser
     public:
         ChannelParser() {}
 
+        virtual CmdErrorCode printArguments() { 
+            Serial.print("<division> <channel>");
+        }
+
         virtual CmdErrorCode startCommand(const char* cmd) {
             return CmdErrorCode::CmdNextArgument;
         }
@@ -95,6 +99,10 @@ class CalibrationParser: public CommandParser
 {
     public:
         CalibrationParser() {}
+
+        virtual CmdErrorCode printArguments() { 
+            Serial.print("<division>");
+        }
 
         virtual CmdErrorCode startCommand(const char* cmd) {
             return CmdErrorCode::CmdNextArgument;

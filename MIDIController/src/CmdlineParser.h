@@ -14,11 +14,17 @@
 #include <common_config.h>
 
 #include <MIDI.h>
+#include <
 
 enum CmdErrorCode
 {
+    // Command successfully completed
     CmdOK,
+    // Command expects another argument
     CmdNextArgument,
+    // Command processing failed (invalid arguments), either too much or wrong arguments
+    CmdInvalidArgument,
+    // Command execution failed.
     CmdError
 };
 
@@ -30,6 +36,10 @@ class CommandParser
         bool parseInteger(const char* arg, int &value, int minValue, int maxValue);
 
     public:
+        virtual CmdErrorCode printArguments() { }
+
+        virtual CmdErrorCode resetCommand() { }
+    
         /**
          * Start parsing a new command "cmd".
          * 
@@ -37,10 +47,11 @@ class CommandParser
          */
         virtual CmdErrorCode startCommand(const char* cmd) = 0;
 
-        virtual CmdErrorCode parseNextArgument(int argNo, const char* arg) { return CmdErrorCode::CmdError; }
+        virtual CmdErrorCode parseNextArgument(int argNo, const char* arg) { return CmdErrorCode::CmdInvalidArgument; }
 };
 
 static const int MAX_PARSERS = 8;
+static const int MAX_TOKEN_LENGTH = 8;
 
 class CmdlineParser
 {
@@ -48,6 +59,25 @@ class CmdlineParser
         CommandParser* mParsers[MAX_PARSERS];
         const char* mCommands[MAX_PARSERS];
         int mNumCommands = 0;
+
+        char mToken[MAX_TOKEN_LENGTH];
+        int  mTokenLength = 0;
+
+        int  mCurrentCommand = -1;
+        int  mArgumentNo = 0;
+        bool mExpectCommand = true;
+
+        void printHelp();
+
+        void printCommandHelp(int cmd);
+
+        void selectCommand();
+
+        void processArgument();
+
+        void abortCommand();
+
+        void processToken(bool eol);
 
     public:
         explicit CmdlineParser();
