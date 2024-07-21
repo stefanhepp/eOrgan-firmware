@@ -9,12 +9,14 @@
 #include "CommandLine.h"
 #include "MIDIRouter.h"
 #include "ControllerDriver.h"
+#include "OrganStateManager.h"
 
 // Serial6: UART Panel
 
 CommandLine Cmdline;
 MIDIRouter MIDI;
-ControllerDriver Config;
+ControllerDriver Control;
+OrganStateManager StateMngr(MIDI, Control);
 
 class ResetParser: public CommandParser
 {
@@ -22,7 +24,7 @@ class ResetParser: public CommandParser
         ResetParser() {}
 
         virtual CmdErrorCode startCommand(const char* cmd) {
-            Config.resetAll();
+            Control.resetAll();
             return CmdErrorCode::CmdOK;
         }
 };
@@ -33,7 +35,10 @@ class StatusParser: public CommandParser
         StatusParser() {}
 
         virtual CmdErrorCode startCommand(const char* cmd) {
-            Config.readAll();
+            // Setup mngr for printing next status
+            StateMngr.printNextStatus();
+            // Trigger a status read
+            Control.readAll();
             return CmdErrorCode::CmdOK;
         }
 };
@@ -65,26 +70,9 @@ class ChannelParser: public CommandParser
                 case 1:
                     int channel;
                     if (parseInteger(arg, channel, 0, 15)) {
-                        switch (mDivision) {
-                            case MIDIDivision::MD_Pedal:
-                                Config.setPedalChannel(channel);
-                                break;
-                            case MIDIDivision::MD_Choir:
-                                Config.setTechnicsChannel(channel);
-                                break;
-                            case MIDIDivision::MD_Great:
 
-                                break;
-                            case MIDIDivision::MD_Swell:
+                        StateMngr.setDivisionChannel(mDivision, channel);
 
-                                break;
-                            case MIDIDivision::MD_Solo:
-
-                                break;
-                            case MIDIDivision::MD_Control:
-
-                                break;
-                        }
                         return CmdErrorCode::CmdOK;
                     } else {
                         return CmdErrorCode::CmdError;
@@ -101,7 +89,7 @@ class CalibrationParser: public CommandParser
         CalibrationParser() {}
 
         virtual void printArguments() { 
-            Serial.print("<division>");
+            Serial.print("analog|kb1|kb2");
         }
 
         virtual CmdErrorCode startCommand(const char* cmd) {
@@ -109,25 +97,19 @@ class CalibrationParser: public CommandParser
         }
 
         virtual CmdErrorCode parseNextArgument(int argNo, const char* arg) {
-            switch (argNo) {
-                case 0:
-                    MIDIDivision division;
-                    if (parseDivision(arg, division)) {
-                        switch (division) {
-                            case MIDIDivision::MD_Choir:
-                                
-                                break;
-                            default:
-                                return CmdErrorCode::CmdError;
-                        }
-
-                        return CmdErrorCode::CmdOK;
-                    } else {
-                        return CmdErrorCode::CmdError;
-                    }
-                default:
-                    return CmdErrorCode::CmdError;
+            if (strcmp(arg, "analog") == 0) {
+                Control.startCalibrateAnalogInputs();
+                return CmdErrorCode::CmdOK;
             }
+            if (strcmp(arg, "kb1") == 0) {
+                Control.trainKeyboard(0);
+                return CmdErrorCode::CmdOK;
+            }
+            if (strcmp(arg, "kb2") == 0) {
+                Control.trainKeyboard(1);
+                return CmdErrorCode::CmdOK;
+            }
+            return CmdErrorCode::CmdInvalidArgument;
         }
 };
 
@@ -139,12 +121,12 @@ void setup()
     Cmdline.addCommand("calibrate", new CalibrationParser());
 
     Cmdline.begin();
-    Config.begin();
+    Control.begin();
     MIDI.begin();
 }
 
 void loop() {
     Cmdline.loop();
-    Config.loop();
+    Control.loop();
     MIDI.loop();
 }

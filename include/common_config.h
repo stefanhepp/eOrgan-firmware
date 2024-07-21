@@ -14,27 +14,30 @@
 /**
  * Organ Divisions. Enum value represents default MIDI channel.
  */
-enum MIDIDivision : uint8_t 
+enum MIDIDivision : uint8_t
 {
     MD_Pedal   = 3,
     MD_Choir   = 4,
-    MD_Great   = 1,
     MD_Swell   = 5,
     MD_Solo    = 6,
     MD_Control = 7
 };
 
+// Highest number of Division channels. Sparse index!
+static const int MAX_DIVISION_CHANNEL = 7;
+
+
 /**
  * MIDI Controller. Enum values are indexes, in same index range of MIDIPort.
  */
-enum Controller
+enum Controller : int
 {
     MC_Technics    = 0,
     MC_Keyboard    = 1,
     MC_Pedal       = 2
 };
 
-enum MIDIPort
+enum MIDIPort : int
 {
     MP_MIDI1       = 3,
     MP_MIDI2       = 4,
@@ -44,6 +47,9 @@ enum MIDIPort
     MP_MIDI_RTP    = 8,
     MP_MIDI_Teensy = 9
 };
+
+// Number of both Controller and MIDI ports
+static const int NUM_MIDI_PORTS = 10;
 
 /* ==============================================================
  * I2C addresses and commands
