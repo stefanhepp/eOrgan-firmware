@@ -28,17 +28,27 @@ static const int MAX_DIVISION_CHANNEL = 7;
 
 
 /**
- * MIDI Controller. Enum values are indexes, in same index range of MIDIPort.
+ * MIDI and I2C Controller.
  */
-enum Controller : int
+enum Controller : uint8_t
 {
-    MC_Technics    = 0,
-    MC_Keyboard    = 1,
-    MC_Pedal       = 2
+    MC_Technics        = 0,
+    MC_Keyboard        = 1,
+    MC_Pedal           = 2,
+    MC_ToeStud         = 4,
+    MC_Piston_Keyboard = 5,
+    MC_Piston_Technics = 6,
+    MC_Panel           = 7,
+    MC_PowerControl    = 8
 };
 
 enum MIDIPort : int
 {
+    // MIDI ports with fixed controller assignment,s input only
+    MP_Technics    = 0,
+    MP_Keyboard    = 1,
+    MP_Pedal       = 2,
+    // Ports for input and output, general devices
     MP_MIDI1       = 3,
     MP_MIDI2       = 4,
     MP_MIDI3       = 5,

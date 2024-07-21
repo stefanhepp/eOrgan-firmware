@@ -24,8 +24,12 @@ static uint8_t kbdStatus[NUM_KEYBOARDS * NUM_LINES];
 
 static uint8_t EEMEM eeKeyMap[NUM_KEYBOARDS * NUM_LINES];
 
-void Keyboard::setHandleKeyChange( void(*handler)(uint8_t kbd, uint8_t note, uint8_t velocity) ) {
-    mKeyChangeHandler = handler;
+void Keyboard::setHandleKeyChange( KeyChangeCallback callback ) {
+    mKeyChangeCallback = callback;
+}
+
+void Keyboard::setLearnCompleteCallback( LearnCompleteCallback callback ) {
+    mLearnCompleteCallback = callback;
 }
 
 void Keyboard::loadKeyMap() {
@@ -95,6 +99,9 @@ void Keyboard::learnNextKey(const uint8_t kbd, const uint8_t key) {
     mLearnNextNote++;
     if (mLearnNextNote >= NUM_KEYS) {
         storeKeyMap();
+        if (mLearnCompleteCallback) {
+            mLearnCompleteCallback(mLearning);
+        }
         mLearning = 0xFF;
     }
 }
@@ -122,14 +129,14 @@ void Keyboard::readLine(const uint8_t kbd, const uint8_t line) {
             if (mLearning == kbd) {
                 learnNextKey(kbd, key);         
             } else {
-                mKeyChangeHandler(kbd, mKeyMap[key], KEY_VELOCITY);
+                mKeyChangeCallback(kbd, mKeyMap[key], KEY_VELOCITY);
             }
         } else if ( !(input & (1<<i)) && (oldStatus & (1<<i)) ) {
             // Key was released
             if (mLearning == kbd) {
                 // ignored
             } else {
-                mKeyChangeHandler(kbd, mKeyMap[key], 0);
+                mKeyChangeCallback(kbd, mKeyMap[key], 0);
             }
         }
     } 

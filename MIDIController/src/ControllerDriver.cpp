@@ -37,6 +37,24 @@ ControllerDriver::ControllerDriver()
 {
 }
 
+void ControllerDriver::selectController(Controller controller)
+{
+    switch (controller) {
+        case Controller::MC_Keyboard:
+
+            break;
+        case Controller::MC_Pedal:
+
+            break;
+        case Controller::MC_Technics:
+
+            break;
+        case Controller::MC_ToeStud:
+
+            break;
+    }
+}
+
 void ControllerDriver::resetAll()
 {
 }
@@ -81,6 +99,13 @@ void ControllerDriver::trainKeyboard(uint8_t keyboard)
 {
 }
 
+bool ControllerDriver::isPistonPressed(MIDIDivision division, uint8_t piston)
+{
+}
+
+void ControllerDriver::setPistonLED(MIDIDivision division, uint8_t piston, bool ledOn)
+{
+}
 
 
 void ControllerDriver::begin()
@@ -91,5 +116,4 @@ void ControllerDriver::begin()
 
 void ControllerDriver::loop()
 {
-
 }

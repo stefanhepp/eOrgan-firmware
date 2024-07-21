@@ -34,6 +34,25 @@ Keyboard kbd;
 
 static uint8_t MIDIChannel[2];
 
+static const uint8_t IRQ_LEARN = 0;
+
+static uint16_t IRQFlags = 0x00;
+
+static void sendIRQ(uint8_t flag)
+{
+    IRQFlags |= (1<<flag);
+    digitalWrite(PIN_INTERRUPT, LOW);
+}
+
+static void clearIRQ(uint8_t flag)
+{
+    IRQFlags &= ~(1<<flag);
+    if (IRQFlags == 0x00) {
+        digitalWrite(PIN_INTERRUPT, HIGH);
+    }
+}
+
+
 /**
  * send notes off for all pressed notes.
  * @param force if non-zero, send a note-off controller msg on the current channel.
@@ -65,6 +84,8 @@ static void resetEncoder(void)
     // Reset channel
     updateMIDIChannel(0, MIDI_CHANNEL_KEYBOARD_1);
     updateMIDIChannel(1, MIDI_CHANNEL_KEYBOARD_2);
+
+    clearIRQ(IRQ_LEARN);
 }
 
 void onKeyChange(uint8_t kbd, uint8_t note, uint8_t velocity) {
@@ -74,6 +95,10 @@ void onKeyChange(uint8_t kbd, uint8_t note, uint8_t velocity) {
 	    // this is a note off event (velocity is 0)
         MIDI.sendNoteOff( note, velocity, MIDIChannel[kbd] );
     }
+}
+
+void onLearnComplete() {
+    sendIRQ(IRQ_LEARN);
 }
 
 void i2cReceive(uint8_t length) {
@@ -104,6 +129,8 @@ void i2cReceive(uint8_t length) {
 void i2cRequest() {
     Wire.write(MIDIChannel[0]);
     Wire.write(MIDIChannel[1]);
+    Wire.write(kbd.isLearning());
+    clearIRQ(IRQ_LEARN);
 }
 
 void setup() {
@@ -130,6 +157,7 @@ void setup() {
     Wire.begin(I2C_ADDR_KEYBOARD);
 
     kbd.setHandleKeyChange(onKeyChange);
+    kbd.setLearnCompleteCallback(onLearnComplete);
     kbd.begin();
 }
 
