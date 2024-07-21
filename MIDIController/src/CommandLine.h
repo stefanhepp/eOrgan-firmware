@@ -14,7 +14,6 @@
 #include <common_config.h>
 
 #include <MIDI.h>
-#include <
 
 enum CmdErrorCode
 {
@@ -36,9 +35,9 @@ class CommandParser
         bool parseInteger(const char* arg, int &value, int minValue, int maxValue);
 
     public:
-        virtual CmdErrorCode printArguments() { }
+        virtual void printArguments() { }
 
-        virtual CmdErrorCode resetCommand() { }
+        virtual void resetCommand() { }
     
         /**
          * Start parsing a new command "cmd".
@@ -53,7 +52,7 @@ class CommandParser
 static const int MAX_PARSERS = 8;
 static const int MAX_TOKEN_LENGTH = 8;
 
-class CmdlineParser
+class CommandLine
 {
     private:
         CommandParser* mParsers[MAX_PARSERS];
@@ -71,6 +70,8 @@ class CmdlineParser
 
         void printCommandHelp(int cmd);
 
+        void handleRetCode(CmdErrorCode ret);
+
         void selectCommand();
 
         void processArgument();
@@ -80,7 +81,7 @@ class CmdlineParser
         void processToken(bool eol);
 
     public:
-        explicit CmdlineParser();
+        explicit CommandLine();
 
         void addCommand(const char* cmd, CommandParser *parser);
 

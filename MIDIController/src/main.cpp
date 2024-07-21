@@ -6,15 +6,15 @@
 
 #include <Arduino.h>
 
-#include "CmdlineParser.h"
+#include "CommandLine.h"
 #include "MIDIRouter.h"
-#include "ConfigController.h"
+#include "ControllerDriver.h"
 
 // Serial6: UART Panel
 
-CmdlineParser Cmdline;
+CommandLine Cmdline;
 MIDIRouter MIDI;
-ConfigController Config;
+ControllerDriver Config;
 
 class ResetParser: public CommandParser
 {
@@ -46,7 +46,7 @@ class ChannelParser: public CommandParser
     public:
         ChannelParser() {}
 
-        virtual CmdErrorCode printArguments() { 
+        virtual void printArguments() { 
             Serial.print("<division> <channel>");
         }
 
@@ -66,22 +66,22 @@ class ChannelParser: public CommandParser
                     int channel;
                     if (parseInteger(arg, channel, 0, 15)) {
                         switch (mDivision) {
-                            case MIDIDivision::Pedal:
+                            case MIDIDivision::MD_Pedal:
                                 Config.setPedalChannel(channel);
                                 break;
-                            case MIDIDivision::Choir:
+                            case MIDIDivision::MD_Choir:
                                 Config.setTechnicsChannel(channel);
                                 break;
-                            case MIDIDivision::Great:
+                            case MIDIDivision::MD_Great:
 
                                 break;
-                            case MIDIDivision::Swell:
+                            case MIDIDivision::MD_Swell:
 
                                 break;
-                            case MIDIDivision::Solo:
+                            case MIDIDivision::MD_Solo:
 
                                 break;
-                            case MIDIDivision::Control:
+                            case MIDIDivision::MD_Control:
 
                                 break;
                         }
@@ -100,7 +100,7 @@ class CalibrationParser: public CommandParser
     public:
         CalibrationParser() {}
 
-        virtual CmdErrorCode printArguments() { 
+        virtual void printArguments() { 
             Serial.print("<division>");
         }
 
@@ -114,7 +114,7 @@ class CalibrationParser: public CommandParser
                     MIDIDivision division;
                     if (parseDivision(arg, division)) {
                         switch (division) {
-                            case MIDIDivision::Choir:
+                            case MIDIDivision::MD_Choir:
                                 
                                 break;
                             default:
@@ -136,7 +136,7 @@ void setup()
     Cmdline.addCommand("reset", new ResetParser());
     Cmdline.addCommand("status", new StatusParser());
     Cmdline.addCommand("channel", new ChannelParser());
-
+    Cmdline.addCommand("calibrate", new CalibrationParser());
 
     Cmdline.begin();
     Config.begin();

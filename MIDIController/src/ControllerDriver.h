@@ -12,12 +12,12 @@
 
 #include <inttypes.h>
 
-class ConfigController
+class ControllerDriver
 {
     private:
 
     public:
-        explicit ConfigController();
+        explicit ControllerDriver();
 
         void resetAll();
 

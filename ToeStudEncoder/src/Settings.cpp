@@ -28,19 +28,19 @@ Settings::Settings()
 uint8_t Settings::getMIDIChannel()
 {
     uint8_t v = eeprom_read_byte(&confChannel);
-    return (v == 0xFF) ? MIDI_CHANNEL_TOESTUDS : v;
+    return (v == 0xFF) ? MIDI_CHANNEL_TOESTUD : v;
 }
 
 uint8_t Settings::getMIDIChannelSwell()
 {
     uint8_t v = eeprom_read_byte(&confChannel);
-    return (v == 0xFF) ? MIDI_CHANNEL_KEYBOARD_1 : v;
+    return (v == 0xFF) ? MIDI_CHANNEL_TOESTUD_SWELL : v;
 }
 
 uint8_t Settings::getMIDIChannelChoir()
 {
     uint8_t v = eeprom_read_byte(&confChannel);
-    return (v == 0xFF) ? MIDI_CHANNEL_TECHNICS : v;
+    return (v == 0xFF) ? MIDI_CHANNEL_TOESTUD_CHOIR : v;
 }
 
 void Settings::setMIDIChannel(uint8_t channel, uint8_t channelSwell, uint8_t channelChoir)

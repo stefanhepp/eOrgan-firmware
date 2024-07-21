@@ -8,7 +8,7 @@
  * License: GPL v3
  * See 'COPYRIGHT.txt' for copyright and licensing information.
  */
-#include "ConfigController.h"
+#include "ControllerDriver.h"
 
 #include <Arduino.h>
 #include <Wire.h>
@@ -33,63 +33,63 @@ static const int I2C_PORT_KEYBOARD  = 6;
 static const int I2C_PORT_I2C2      = 7;
 
 
-ConfigController::ConfigController() 
+ControllerDriver::ControllerDriver() 
 {
 }
 
-void ConfigController::resetAll()
+void ControllerDriver::resetAll()
 {
 }
 
-void ConfigController::readAll()
+void ControllerDriver::readAll()
 {
 }
 
-void ConfigController::setPedalChannel(uint8_t channel)
+void ControllerDriver::setPedalChannel(uint8_t channel)
 {
 }
 
-void ConfigController::setPedalLEDIntensity(uint8_t intensity)
+void ControllerDriver::setPedalLEDIntensity(uint8_t intensity)
 {
 }
 
-void ConfigController::setToestudChannels(uint8_t channel, uint8_t swellChannel, uint8_t choirChannel)
+void ControllerDriver::setToestudChannels(uint8_t channel, uint8_t swellChannel, uint8_t choirChannel)
 {
 }
 
-void ConfigController::setToestudMode(uint8_t mode)
+void ControllerDriver::setToestudMode(uint8_t mode)
 {
 }
 
-void ConfigController::setTechnicsChannel(uint8_t channel)
+void ControllerDriver::setTechnicsChannel(uint8_t channel)
 {
 }
 
-void ConfigController::setKeyboardChannels(uint8_t channel1, uint8_t channel2)
+void ControllerDriver::setKeyboardChannels(uint8_t channel1, uint8_t channel2)
 {
 }
 
-void ConfigController::startCalibrateAnalogInputs()
+void ControllerDriver::startCalibrateAnalogInputs()
 {
 }
 
-void ConfigController::stopCalibrateAnalogInputs()
+void ControllerDriver::stopCalibrateAnalogInputs()
 {
 }
 
-void ConfigController::trainKeyboard(uint8_t keyboard)
+void ControllerDriver::trainKeyboard(uint8_t keyboard)
 {
 }
 
 
 
-void ConfigController::begin()
+void ControllerDriver::begin()
 {
     Wire.begin();
     MP.begin();
 }
 
-void ConfigController::loop()
+void ControllerDriver::loop()
 {
 
 }

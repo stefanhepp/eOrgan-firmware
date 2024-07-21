@@ -8,7 +8,7 @@
  * License: GPL v3
  * See 'COPYRIGHT.txt' for copyright and licensing information.
  */
-#include "CmdlineParser.h"
+#include "CommandLine.h"
 
 #include <Arduino.h>
 
@@ -21,23 +21,23 @@
 bool CommandParser::parseDivision(const char* arg, MIDIDivision &division)
 {
     if (strcmp(arg, "pedal")) {
-        division = MIDIDivision::Pedal;
+        division = MIDIDivision::MD_Pedal;
         return true;
     }
     if (strcmp(arg, "choir")) {
-        division = MIDIDivision::Choir;
+        division = MIDIDivision::MD_Choir;
         return true;
     }
     if (strcmp(arg, "Swell")) {
-        division = MIDIDivision::Swell;
+        division = MIDIDivision::MD_Swell;
         return true;
     }
     if (strcmp(arg, "solo")) {
-        division = MIDIDivision::Solo;
+        division = MIDIDivision::MD_Solo;
         return true;
     }
     if (strcmp(arg, "control")) {
-        division = MIDIDivision::Control;
+        division = MIDIDivision::MD_Control;
         return true;
     }
     return false;
@@ -45,27 +45,29 @@ bool CommandParser::parseDivision(const char* arg, MIDIDivision &division)
 
 bool CommandParser::parseInteger(const char* arg, int &value, int minValue, int maxValue)
 {
-    try {
-        value = std::stoi(arg);
-
-        if (value < minValue || value > maxValue) {
+    const char* c = arg;
+    while (*c != '\0') {
+        if (*c < '0' || *c > '9') {
             return false;
         }
+        c++;
+    }
 
-        // conversion and range check successful
-        return true;
-    } catch (...)
-    {
+    value = std::stoi(arg);
+
+    if (value < minValue || value > maxValue) {
         return false;
     }
-    return false;
+
+    // conversion and range check successful
+    return true;
 }
 
-CmdlineParser::CmdlineParser()
+CommandLine::CommandLine()
 {
 }
 
-void CmdlineParser::addCommand(const char* cmd, CommandParser* parser)
+void CommandLine::addCommand(const char* cmd, CommandParser* parser)
 {
     if (mNumCommands >= MAX_PARSERS) {
         return;
@@ -75,7 +77,7 @@ void CmdlineParser::addCommand(const char* cmd, CommandParser* parser)
     mNumCommands++;
 }
 
-void CmdlineParser::printCommandHelp(int cmd)
+void CommandLine::printCommandHelp(int cmd)
 {
     Serial.print(mCommands[cmd]);
     Serial.print(' ');
@@ -83,14 +85,14 @@ void CmdlineParser::printCommandHelp(int cmd)
     Serial.println();
 }
 
-void CmdlineParser::printHelp()
+void CommandLine::printHelp()
 {
     for (int i = 0; i < mNumCommands; i++) {
         printCommandHelp(i);
     }
 }
 
-void CmdlineParser::handleRetCode(CmdErrorCode ret)
+void CommandLine::handleRetCode(CmdErrorCode ret)
 {
     switch (ret) {
         case CmdErrorCode::CmdOK:
@@ -118,7 +120,7 @@ void CmdlineParser::handleRetCode(CmdErrorCode ret)
     }
 }
 
-void CmdlineParser::selectCommand()
+void CommandLine::selectCommand()
 {
     for (int i = 0; i < mNumCommands; i++) {
         if (strcmp(mToken, mCommands[i]) == 0) {
@@ -143,19 +145,19 @@ void CmdlineParser::selectCommand()
     mCurrentCommand = -1;
 }
 
-void CmdlineParser::processArgument()
+void CommandLine::processArgument()
 {
     if (mCurrentCommand == -1) {
         return;
     }
     
-    CmdErrorCode ret = mParsers[i]->parseNextArgument(mArgumentNo++, mToken);
+    CmdErrorCode ret = mParsers[mCurrentCommand]->parseNextArgument(mArgumentNo++, mToken);
 
     // OK, continue, fail?
     handleRetCode(ret);
 }
 
-void CmdlineParser::abortCommand()
+void CommandLine::abortCommand()
 {
     if (mCurrentCommand != -1) {
         mParsers[mCurrentCommand]->resetCommand();
@@ -164,7 +166,7 @@ void CmdlineParser::abortCommand()
     }
 }
 
-void CmdlineParser::processToken(bool eol)
+void CommandLine::processToken(bool eol)
 {
     // zero-terminate token
     if (mTokenLength < MAX_TOKEN_LENGTH) {
@@ -209,13 +211,13 @@ void CmdlineParser::processToken(bool eol)
     }
 }
 
-void CmdlineParser::begin()
+void CommandLine::begin()
 {
     // Serial over USB. Speed is ignored.
     Serial.begin(9600);
 }
 
-void CmdlineParser::loop()
+void CommandLine::loop()
 {
     while (Serial.available()) {
         char c = Serial.read();
