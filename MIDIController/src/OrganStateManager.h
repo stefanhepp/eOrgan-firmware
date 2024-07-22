@@ -36,4 +36,8 @@ class OrganStateManager
 
         void setDivisionChannel(MIDIDivision division, uint8_t channel);
 
+        void begin();
+
+        void loop();
+
 };

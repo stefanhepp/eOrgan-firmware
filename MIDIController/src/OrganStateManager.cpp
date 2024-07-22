@@ -68,3 +68,13 @@ void OrganStateManager::setDivisionChannel(MIDIDivision division, uint8_t channe
             break;
     }
 }
+
+void OrganStateManager::begin()
+{
+
+}
+
+void OrganStateManager::loop()
+{
+
+}

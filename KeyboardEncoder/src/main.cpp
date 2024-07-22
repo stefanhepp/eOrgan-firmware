@@ -16,7 +16,7 @@
  **/
 
 #include <Arduino.h>
-#include <MIDI.h>
+#include <MiniMIDI.h>
 #include <MegaWire.h>
 
 #include <common_config.h>
@@ -26,7 +26,9 @@
 #include "Keyboard.h"
 
 // Create device driver instances
-MIDI_CREATE_DEFAULT_INSTANCE();
+//MIDI_CREATE_DEFAULT_INSTANCE();
+
+MiniMIDI MIDI;
 MegaWire Wire;
 
 Settings settings;
@@ -57,15 +59,10 @@ static void clearIRQ(uint8_t flag)
  * send notes off for all pressed notes.
  * @param force if non-zero, send a note-off controller msg on the current channel.
  **/
-static void sendAllNotesOff(uint8_t force)
+static void sendAllNotesOff()
 {
-    if ( force ) {
-       MIDI.sendControlChange(midi::AllSoundOff, 0, MIDIChannel[0]);
-       MIDI.sendControlChange(midi::AllSoundOff, 0, MIDIChannel[1]);
-    } else {
-       MIDI.sendControlChange(midi::AllNotesOff, 0, MIDIChannel[0]);
-       MIDI.sendControlChange(midi::AllNotesOff, 0, MIDIChannel[1]);
-    }
+    MIDI.sendControlChange(MidiControlChangeNumber::AllNotesOff, 0, MIDIChannel[0]);
+    MIDI.sendControlChange(MidiControlChangeNumber::AllNotesOff, 0, MIDIChannel[1]);
 }
 
 static void updateMIDIChannel(uint8_t kbd, uint8_t channel) {
@@ -79,7 +76,7 @@ static void updateMIDIChannel(uint8_t kbd, uint8_t channel) {
 static void resetEncoder(void)
 {
     // disable all notes on current channel
-    sendAllNotesOff(1);
+    sendAllNotesOff();
 
     // Reset channel
     updateMIDIChannel(0, MIDI_CHANNEL_KEYBOARD_1);
@@ -97,7 +94,7 @@ void onKeyChange(uint8_t kbd, uint8_t note, uint8_t velocity) {
     }
 }
 
-void onLearnComplete() {
+void onLearnComplete(uint8_t kbd) {
     sendIRQ(IRQ_LEARN);
 }
 
@@ -149,12 +146,12 @@ void setup() {
     MIDIChannel[0] = settings.getMIDIChannel(0);
     MIDIChannel[1] = settings.getMIDIChannel(1);
 
-    MIDI.turnThruOn(midi::Thru::Full);
+    MIDI.turnThruOn(ThruMode::Full);
     MIDI.begin(MIDIChannel[0]);
 
     Wire.onReceive(i2cReceive);
     Wire.onRequest(i2cRequest);
-    Wire.begin(I2C_ADDR_KEYBOARD);
+    Wire.begin(Controller::MC_Keyboard);
 
     kbd.setHandleKeyChange(onKeyChange);
     kbd.setLearnCompleteCallback(onLearnComplete);

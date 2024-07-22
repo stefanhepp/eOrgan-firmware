@@ -139,7 +139,7 @@ void setup() {
 
     Wire.onReceive(i2cReceive);
     Wire.onRequest(i2cRequest);
-    Wire.begin(I2C_ADDR_TECHNICS);
+    Wire.begin(Controller::MC_Technics);
 
     kbd.setHandleKeyChange(onKeyChange);
     kbd.begin();

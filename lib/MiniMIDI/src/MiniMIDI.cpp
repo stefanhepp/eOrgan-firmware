@@ -172,7 +172,7 @@ void MiniMIDI::sendNoteOff(uint8_t note,  uint8_t velocity, uint8_t channel)
     writeMessage3(0x80, channel, note, velocity);
 }
 
-void MiniMIDI::sendControlChange(uint8_t controller, uint8_t value, uint8_t channel)
+void MiniMIDI::sendControlChange(MidiControlChangeNumber controller, uint8_t value, uint8_t channel)
 {
     writeMessage3(0xB0, channel, controller, value);
 }
@@ -189,12 +189,12 @@ void MiniMIDI::sendProgramChange(uint8_t program, uint8_t channel)
 
 void MiniMIDI::sendAllSoundOff(uint8_t channel)
 {
-    sendControlChange(120, 0);
+    sendControlChange(MidiControlChangeNumber::AllSoundOff, 0);
 }
 
 void MiniMIDI::sendAllNotesOff(uint8_t channel)
 {
-    sendControlChange(123, 0);
+    sendControlChange(MidiControlChangeNumber::AllNotesOff, 0);
 }
 
 ISR(USART_RX_vect)

@@ -17,7 +17,7 @@
  **/
 
 #include <Arduino.h>
-#include <MIDI.h>
+#include <MiniMIDI.h>
 #include <MegaWire.h>
 
 #include <common_config.h>
@@ -28,7 +28,9 @@
 #include "LED.h"
 
 // Create device driver instances
-MIDI_CREATE_DEFAULT_INSTANCE();
+//MIDI_CREATE_DEFAULT_INSTANCE();
+
+MiniMIDI MIDI;
 MegaWire Wire;
 
 Settings   settings;
@@ -49,7 +51,6 @@ static inline char getNote( char pedalKey )
     return pedalKey + LOWEST_NOTE;
 }
 
-
 static void sendIRQ(uint8_t flag)
 {
     IRQFlags |= (1<<flag);
@@ -68,13 +69,9 @@ static void clearIRQ(uint8_t flag)
  * send notes off for all pressed notes.
  * @param force if non-zero, send a note-off controller msg on the current channel.
  **/
-static void sendAllNotesOff(uint8_t force)
+static void sendAllNotesOff()
 {
-    if ( force ) {
-       MIDI.sendControlChange(midi::AllSoundOff, 0, MIDIChannel);
-    } else {
-       MIDI.sendControlChange(midi::AllNotesOff, 0, MIDIChannel);
-    }
+    MIDI.sendControlChange(MidiControlChangeNumber::AllNotesOff, 0, MIDIChannel);
 }
 
 /**
@@ -82,7 +79,7 @@ static void sendAllNotesOff(uint8_t force)
  **/
 static void startConfig(void)
 {
-    sendAllNotesOff(0);
+    sendAllNotesOff();
 
     led.setMode(LEDModeBlink);
 }
@@ -123,7 +120,7 @@ static void increaseLEDIntensity() {
 static void resetEncoder(void)
 {
     // disable all notes on current channel
-    sendAllNotesOff(1);
+    sendAllNotesOff();
 
     led.reset();
     settings.setLEDIntensity(led.getIntensity());
@@ -147,14 +144,17 @@ static void processConfigInput(uint8_t key, uint8_t velocity)
         MIDIChannel = key;
         MIDI.setInputChannel(MIDIChannel);
         settings.setMIDIChannel(MIDIChannel);
+        sendIRQ(IRQ_CHANNEL);
 	}
     // highest notes for config
 	if ( key == 28 ) {
 	    resetEncoder();
 	} else if ( key == 24 ) {
 	    decreaseLEDIntensity();
+        sendIRQ(IRQ_CONFIG);
 	} else if ( key == 26 ) {
 	    increaseLEDIntensity();
+        sendIRQ(IRQ_CONFIG);
     } else {
     	// TODO transpose
     }
@@ -224,14 +224,14 @@ void setup() {
     pinMode(PIN_CONFIG, INPUT);
 
     MIDIChannel = settings.getMIDIChannel();
-    MIDI.turnThruOn(midi::Thru::Full);
+    MIDI.turnThruOn(ThruMode::Full);
     MIDI.begin(MIDIChannel);
 
     led.begin(settings.getLEDIntensity());
 
     Wire.onReceive(i2cReceive);
     Wire.onRequest(i2cRequest);
-    Wire.begin(I2C_ADDR_PEDAL);
+    Wire.begin(Controller::MC_Pedal);
 
     pedal.setHandleKeyChange(onKeyChange);
     pedal.begin();

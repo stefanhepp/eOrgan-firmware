@@ -112,10 +112,10 @@ void setup() {
     pistons.setPressEvent(onButtonPress);
 
 #ifdef PISTON_TECHNICS
-    Wire.begin(I2C_ADDR_PISTON_TECHNICS);
+    Wire.begin(Controller::MC_Piston_Technics);
     pistons.begin(1);
 #else
-    Wire.begin(I2C_ADDR_PISTON_KEYBOARD);
+    Wire.begin(Controller::MC_Piston_Keyboard);
     pistons.begin(2);
 #endif
 }

@@ -123,10 +123,12 @@ void setup()
     Cmdline.begin();
     Control.begin();
     MIDI.begin();
+    StateMngr.begin();
 }
 
 void loop() {
     Cmdline.loop();
     Control.loop();
     MIDI.loop();
+    StateMngr.loop();
 }

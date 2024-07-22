@@ -26,20 +26,19 @@ enum MIDIDivision : uint8_t
 // Highest number of Division channels. Sparse index!
 static const int MAX_DIVISION_CHANNEL = 7;
 
-
 /**
- * MIDI and I2C Controller.
+ * I2C Controller. Enum value represents I2C address.
  */
 enum Controller : uint8_t
 {
-    MC_Technics        = 0,
-    MC_Keyboard        = 1,
-    MC_Pedal           = 2,
-    MC_ToeStud         = 4,
-    MC_Piston_Keyboard = 5,
-    MC_Piston_Technics = 6,
-    MC_Panel           = 7,
-    MC_PowerControl    = 8
+    MC_Keyboard        = 0x50,
+    MC_Technics        = 0x51,
+    MC_ToeStud         = 0x52,
+    MC_Pedal           = 0x53,
+    MC_Panel           = 0x54,
+    MC_PowerControl    = 0x55,
+    MC_Piston_Keyboard = 0x5A,
+    MC_Piston_Technics = 0x5B
 };
 
 enum MIDIPort : int
@@ -62,18 +61,17 @@ enum MIDIPort : int
 static const int NUM_MIDI_PORTS = 10;
 
 /* ==============================================================
- * I2C addresses and commands
+ * Various Constants
+ * ============================================================== */
+
+// Maximum number of pistons in a division
+static const uint8_t MAX_PISTONS = 26;
+
+/* ==============================================================
+ * I2C Commands
  * ============================================================== */
 
 // I2C Addresses
-static const uint8_t I2C_ADDR_KEYBOARD = 0x50;
-static const uint8_t I2C_ADDR_TECHNICS = 0x51;
-static const uint8_t I2C_ADDR_TOESTUD  = 0x52;
-static const uint8_t I2C_ADDR_PEDAL    = 0x53;
-static const uint8_t I2C_ADDR_PANEL    = 0x54;
-static const uint8_t I2C_ADDR_PISTON_KEYBOARD  = 0x5A;
-static const uint8_t I2C_ADDR_PISTON_TECHNICS  = 0x5B;
-
 static const uint8_t I2C_CMD_RESET          = 0x01;
 static const uint8_t I2C_CMD_SET_CHANNEL    = 0x02;
 static const uint8_t I2C_CMD_CALIBRATE      = 0x03;
@@ -82,9 +80,9 @@ static const uint8_t I2C_CMD_LED_INTENSITY  = 0x05;
 static const uint8_t I2C_CMD_SET_LEDS       = 0x06;
 static const uint8_t I2C_CMD_SET_MODE       = 0x07;
 
-/*
- * MIDI channels and messages
- */
+/* ==============================================================
+ * MIDI Channels and Constants
+ * ============================================================== */
 
 // Default MIDI channels for controllers
 static const uint8_t MIDI_CHANNEL_PEDAL         = MIDIDivision::MD_Pedal;

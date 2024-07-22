@@ -25,8 +25,8 @@
 			"path": "PistonEncoder"
 		},
 		{
-			"name": "TechnicsController",
-			"path": "TechnicsController"
+			"name": "TechnicsEncoder",
+			"path": "TechnicsEncoder"
 		},
 		{
 			"name": "ToeStudEncoder",

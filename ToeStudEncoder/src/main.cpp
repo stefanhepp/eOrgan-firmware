@@ -228,7 +228,7 @@ void setup() {
 
     Wire.onReceive(i2cReceive);
     Wire.onRequest(i2cRequest);
-    Wire.begin(I2C_ADDR_TOESTUD);
+    Wire.begin(Controller::MC_ToeStud);
 
     toestuds.setHandleButton(onToeStudPress);
     toestuds.begin();
