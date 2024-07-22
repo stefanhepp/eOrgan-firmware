@@ -133,7 +133,7 @@ void ControllerDriver::resetAll()
 void ControllerDriver::readStatusKeyboard()
 {
     requestTransmission(Controller::MC_Keyboard, 3);
-    if (Wire.available() > 3) {
+    if (Wire.available() >= 3) {
         uint8_t channel1 = Wire.read();
         uint8_t channel2 = Wire.read();
         uint8_t training = Wire.read();
@@ -144,18 +144,15 @@ void ControllerDriver::readStatusKeyboard()
     }
     
     requestTransmission(Controller::MC_Piston_Keyboard, 16);
-    if (Wire.available() > 1) {
-        uint8_t count = Wire.read();
-        while (Wire.available()) {
-            uint8_t btn = Wire.read();
+    while (Wire.available()) {
+        uint8_t btn = Wire.read();
 
-            MIDIDivision division = (btn & (1<<7)) ? MIDIDivision::MD_Solo : MIDIDivision::MD_Swell;
-            uint8_t index = (btn & ~(1<<7))>>1;
-            uint8_t longPress = btn & 0x01;
+        MIDIDivision division = (btn & (1<<7)) ? MIDIDivision::MD_Solo : MIDIDivision::MD_Swell;
+        uint8_t index = (btn & ~(1<<7))>>1;
+        uint8_t longPress = btn & 0x01;
 
-            if (mPistonPressCallback) {
-                mPistonPressCallback(division, index, longPress > 0);
-            }
+        if (mPistonPressCallback) {
+            mPistonPressCallback(division, index, longPress > 0);
         }
     }
 }
@@ -163,7 +160,7 @@ void ControllerDriver::readStatusKeyboard()
 void ControllerDriver::readStatusTechnics()
 {
     requestTransmission(Controller::MC_Technics, 3);
-    if (Wire.available() > 3) {
+    if (Wire.available() >= 3) {
         uint8_t channel   = Wire.read();
         uint8_t wheelHigh = Wire.read();
         uint8_t wheelLow  = Wire.read();
@@ -176,23 +173,20 @@ void ControllerDriver::readStatusTechnics()
     }
     
     requestTransmission(Controller::MC_Piston_Technics, 16);
-    if (Wire.available() > 1) {
-        uint8_t count = Wire.read();
-        while (Wire.available()) {
-            uint8_t btn = Wire.read();
+    while (Wire.available()) {
+        uint8_t btn = Wire.read();
 
-            uint8_t index = (btn & ~(1<<7))>>1;
-            MIDIDivision division = index < CHOIR_PISTON_OFFSET 
-                                  ? MIDIDivision::MD_Pedal : MIDIDivision::MD_Choir;
-            // Lower part of buttons are Pedal buttons
-            if (index >= CHOIR_PISTON_OFFSET) {
-                index -= CHOIR_PISTON_OFFSET;
-            }
-            uint8_t longPress = btn & 0x01;
+        uint8_t index = (btn & ~(1<<7))>>1;
+        MIDIDivision division = index < CHOIR_PISTON_OFFSET 
+                                ? MIDIDivision::MD_Pedal : MIDIDivision::MD_Choir;
+        // Lower part of buttons are Pedal buttons
+        if (index >= CHOIR_PISTON_OFFSET) {
+            index -= CHOIR_PISTON_OFFSET;
+        }
+        uint8_t longPress = btn & 0x01;
 
-            if (mPistonPressCallback) {
-                mPistonPressCallback(division, index, longPress > 0);
-            }
+        if (mPistonPressCallback) {
+            mPistonPressCallback(division, index, longPress > 0);
         }
     }
 }
@@ -200,7 +194,7 @@ void ControllerDriver::readStatusTechnics()
 void ControllerDriver::readStatusPedal()
 {
     requestTransmission(Controller::MC_Pedal, 2);
-    if (Wire.available() > 2) {
+    if (Wire.available() >= 2) {
         uint8_t channel   = Wire.read();
         uint8_t intensity = Wire.read();
 
@@ -210,7 +204,7 @@ void ControllerDriver::readStatusPedal()
     }
     
     requestTransmission(Controller::MC_ToeStud, 32);
-    if (Wire.available() > 8) {
+    if (Wire.available() >= 7) {
         uint8_t channel    = Wire.read();
         uint8_t pedal1High = Wire.read();
         uint8_t pedal1Low  = Wire.read();
@@ -227,7 +221,6 @@ void ControllerDriver::readStatusPedal()
             mToeStudStatusCallback(channel, pedalCrescendo, pedalSwell, pedalChoir);
         }
 
-        uint8_t count = Wire.read();
         while (Wire.available()) {
             uint8_t btn = Wire.read();
 

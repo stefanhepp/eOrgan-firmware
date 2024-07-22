@@ -118,6 +118,7 @@ void i2cReceive(uint8_t length) {
             if (Wire.available()) {
                 value = Wire.read();
                 kbd.startLearning(value);
+                sendIRQ(IRQ_LEARN);
             }
             break;
     }

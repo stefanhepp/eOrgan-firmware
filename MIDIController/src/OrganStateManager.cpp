@@ -26,11 +26,6 @@ OrganStateManager::OrganStateManager(MIDIRouter &router, ControllerDriver &drive
     mDivisionChannels[MIDIDivision::MD_Control] = MIDIDivision::MD_Control;
 }
 
-void OrganStateManager::printNextStatus()
-{
-    
-}
-
 void OrganStateManager::setDivisionChannel(MIDIDivision division, uint8_t channel)
 {
     mDivisionChannels[division] = channel;

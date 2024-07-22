@@ -105,7 +105,7 @@ void onPedalChange(int value, void* payload) {
                 MIDI.sendPitchBend(value * 16, MIDIChannelSwell);
                 break;
             case PEDAL_CRESCENDO:
-                MIDI.sendControlChange(MIDI_CONTROL_CRESCENDO, value >> 4, MIDIChannel);
+                MIDI.sendControlChange(MidiControlChangeNumber::ExpressionController, value >> 4, MIDIChannel);
                 break;
         }
     }
@@ -179,8 +179,6 @@ void i2cRequest()
     }
     clearIRQ(IRQ_PEDALS);
 
-    Wire.write(ToeStudBufferLength);
-    
     for (uint8_t i = 0; i < ToeStudBufferLength; i++) {
         Wire.write(ToeStudBuffer[i]);
     }

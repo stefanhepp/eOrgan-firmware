@@ -29,11 +29,6 @@ class OrganStateManager
     public:
         explicit OrganStateManager(MIDIRouter &router, ControllerDriver &driver);
 
-        /**
-         * Print the next status messages received via I2C
-         */
-        void printNextStatus();
-
         void setDivisionChannel(MIDIDivision division, uint8_t channel);
 
         void begin();
