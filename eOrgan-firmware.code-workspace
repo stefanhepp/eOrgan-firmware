@@ -35,5 +35,10 @@
 		{
 			"path": "MIDIController"
 		}
-	]
+	],
+	"settings": {
+		"files.associations": {
+			"istream": "cpp"
+		}
+	}
 }

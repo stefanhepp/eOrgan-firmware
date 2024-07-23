@@ -10,19 +10,47 @@
  */
 #pragma once
 
+#include <MIDI.h>
+
 #include <inttypes.h>
 
+#include <common_config.h>
+
+struct RouteSettings {
+    bool enabled;
+    // Mapping of input channel -> output channel
+    uint8_t channelMap[16];
+};
+
+typedef midi::Message<midi::DefaultSettings::SysExMaxSize> MidiMessage;
 
 class MIDIRouter
 {
     private:
 
+        // Routing settings, for each input channel -> for each output channel.
+        RouteSettings mRoutes[NUM_MIDI_PORTS][NUM_MIDI_OUTPUT_PORTS];
+
+        /**
+         * Send a message to an output port (no filtering or routing)
+         */
+        void sendMessage(MIDIPort outPort, const MidiMessage &msg);
+
+        /**
+         * Forward mesage from input to output port, applying the route filters
+         */
+        void forwardMessage(MIDIPort inPort, MIDIPort outPort, const MidiMessage &msg);
+
     public:
         explicit MIDIRouter();
+
+        void resetRoutes();
 
         // TODO enable/disable routes
 
         // TODO set channel mapping per input -> output
+
+        void routeMessage(MIDIPort inPort, const MidiMessage &msg);
 
         void begin();
 

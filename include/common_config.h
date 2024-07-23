@@ -43,19 +43,22 @@ enum Controller : uint8_t
 
 enum MIDIPort : int
 {
+    // Ports for input and output, general devices. Output ports must be first in this enum.
+    MP_MIDI1       = 0,
+    MP_MIDI2       = 1,
+    MP_MIDI3       = 2,
+    MP_MIDI4       = 3,
+    MP_MIDI_USB    = 4,
+    MP_MIDI_RTP    = 5,
+    MP_MIDI_Teensy = 6,
     // MIDI ports with fixed controller assignment,s input only
-    MP_Technics    = 0,
-    MP_Keyboard    = 1,
-    MP_Pedal       = 2,
-    // Ports for input and output, general devices
-    MP_MIDI1       = 3,
-    MP_MIDI2       = 4,
-    MP_MIDI3       = 5,
-    MP_MIDI4       = 6,
-    MP_MIDI_USB    = 7,
-    MP_MIDI_RTP    = 8,
-    MP_MIDI_Teensy = 9
+    MP_Technics    = 7,
+    MP_Keyboard    = 8,
+    MP_Pedal       = 9
 };
+
+// Number of MIDI output ports.
+static const int NUM_MIDI_OUTPUT_PORTS = 7;
 
 // Number of both Controller and MIDI ports
 static const int NUM_MIDI_PORTS = 10;
