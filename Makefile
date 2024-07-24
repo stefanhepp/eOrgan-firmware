@@ -8,7 +8,7 @@ keyboard:
 	cd KeyboardEncoder && platformio run
 
 technics:
-	cd TechnicsController && platformio run
+	cd TechnicsEncoder && platformio run
 
 piston:
 	cd PistonEncoder && platformio run -e PistonTechnics
