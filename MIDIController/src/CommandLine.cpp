@@ -168,14 +168,6 @@ void CommandLine::abortCommand()
 
 void CommandLine::processToken(bool eol)
 {
-    // zero-terminate token
-    if (mTokenLength < MAX_TOKEN_LENGTH) {
-        mToken[mTokenLength++] = '\0';
-    } else {
-        // Forcefully terminate at the end. Should never be reached.
-        mToken[MAX_TOKEN_LENGTH-1] = '\0';
-    }
-
     if (mExpectCommand) {
         if (mCurrentCommand == -1) {
             // We are starting a new command
@@ -228,7 +220,17 @@ void CommandLine::loop()
             case ' ':
             case '\n':
                 if (mTokenLength > 0) {
+                    // zero-terminate token
+                    if (mTokenLength < MAX_TOKEN_LENGTH) {
+                        mToken[mTokenLength++] = '\0';
+                    } else {
+                        // Forcefully terminate at the end. Should never be reached.
+                        mToken[MAX_TOKEN_LENGTH-1] = '\0';
+                    }
+
                     processToken(c == '\n');
+                    
+                    mTokenLength = 0;
                 }
                 break;
             default:
