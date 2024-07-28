@@ -11,7 +11,9 @@
 #include "ControllerDriver.h"
 #include "OrganStateManager.h"
 
-// Serial6: UART Panel
+#ifdef TEENSY_DEBUG
+  #include "TeensyDebug.h"
+#endif
 
 CommandLine Cmdline;
 MIDIRouter MIDI;
@@ -207,6 +209,14 @@ void onPistonPress(MIDIDivision division, uint8_t button, bool longPress)
 
 void setup()
 {
+#ifdef TEENSY_DEBUG
+    debug.begin(SerialUSB1);
+
+    // stop on startup; if not, Teensy keeps running and you
+    // have to set a breakpoint or use Ctrl-C.
+    halt_cpu(); 
+#endif
+
     Cmdline.addCommand("reset", new ResetParser());
     Cmdline.addCommand("status", new StatusParser());
     Cmdline.addCommand("channel", new ChannelParser());

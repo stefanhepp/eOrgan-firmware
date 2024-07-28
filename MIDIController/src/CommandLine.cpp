@@ -137,9 +137,14 @@ void CommandLine::selectCommand()
             return;
         }
     }
-    
+
+    if (strcmp(mToken, "help") == 0) {
+        printHelp();
+        return;
+    }
+
     // only reached if no command matched
-    Serial.println("Invalid command! See 'help'.");
+    Serial.printf("Invalid command '%s'! See 'help'.\n", mToken);
 
     mExpectCommand = false;
     mCurrentCommand = -1;
@@ -213,6 +218,10 @@ void CommandLine::loop()
 {
     while (Serial.available()) {
         char c = Serial.read();
+
+        // echo inputs
+        Serial.write(c);
+        Serial.flush();
 
         switch (c) {
             case '\r':
