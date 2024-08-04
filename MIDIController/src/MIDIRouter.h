@@ -27,9 +27,14 @@ typedef midi::Message<midi::DefaultSettings::SysExMaxSize> MidiMessage;
 class MIDIRouter
 {
     private:
+        bool mEchoMIDI;
 
         // Routing settings, for each input channel -> for each output channel.
         RouteSettings mRoutes[NUM_MIDI_PORTS][NUM_MIDI_OUTPUT_PORTS];
+
+        void printNote(int note) const;
+
+        void printMessage(const MidiMessage &msg) const;
 
         /**
          * Send a message to an output port (no filtering or routing)
@@ -43,6 +48,8 @@ class MIDIRouter
 
     public:
         explicit MIDIRouter();
+
+        void echoMIDIMessages(bool enable);
 
         void resetRoutes();
 

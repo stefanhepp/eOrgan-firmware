@@ -92,16 +92,21 @@ void CommandLine::printHelp()
     }
 }
 
-void CommandLine::handleRetCode(CmdErrorCode ret)
+void CommandLine::handleRetCode(CmdErrorCode ret, bool eol)
 {
     switch (ret) {
         case CmdErrorCode::CmdOK:
-            Serial.println("OK");
-
+            if (eol) {
+                Serial.println("OK");
+            }
             // no arguments expected
             mExpectCommand = false;
             break;
         case CmdErrorCode::CmdNextArgument:
+            if (eol) {
+                Serial.print("Missing arguments: ");
+                printCommandHelp(mCurrentCommand);
+            }
             mExpectCommand = true;
             break;
         case CmdErrorCode::CmdInvalidArgument:
@@ -131,7 +136,7 @@ void CommandLine::selectCommand()
             CmdErrorCode ret = mParsers[i]->startCommand(mToken);
 
             // OK, continue, fail?
-            handleRetCode(ret);
+            handleRetCode(ret, false);
 
             // found a command, abort
             return;
@@ -155,23 +160,31 @@ void CommandLine::processArgument()
     if (mCurrentCommand == -1) {
         return;
     }
-    
-    CmdErrorCode ret = mParsers[mCurrentCommand]->parseNextArgument(mArgumentNo++, mToken);
 
-    // OK, continue, fail?
-    handleRetCode(ret);
+    if (mTokenLength > 0) {    
+       CmdErrorCode ret = mParsers[mCurrentCommand]->parseNextArgument(mArgumentNo++, mToken);
+
+        // OK, continue, fail?
+        handleRetCode(ret, false);
+    }
 }
 
-void CommandLine::abortCommand()
+void CommandLine::completeCommand()
 {
     if (mCurrentCommand != -1) {
-        mParsers[mCurrentCommand]->resetCommand();
+        CmdErrorCode ret = mParsers[mCurrentCommand]->completeCommand(mExpectCommand);
+        handleRetCode(ret, true);
+
+        if (ret != CmdErrorCode::CmdOK) {
+            mParsers[mCurrentCommand]->resetCommand();
+        }
+
         mExpectCommand = false;
         mCurrentCommand = -1;
     }
 }
 
-void CommandLine::processToken(bool eol)
+void CommandLine::processToken()
 {
     if (mExpectCommand) {
         if (mCurrentCommand == -1) {
@@ -195,17 +208,15 @@ void CommandLine::processToken(bool eol)
             // Silently ignore any other arguments. Error was already reported.
         }
     }
-    if (eol) {
-        if (mExpectCommand && mCurrentCommand != -1) {
-            // We are still waiting for arguments, but end of line. Terminate current command.
-            Serial.print("Missing arguments: ");
-            printCommandHelp(mCurrentCommand);
+}
 
-            abortCommand();
-        }
-        mExpectCommand = true;
-        mCurrentCommand = -1;
+void CommandLine::processEOL()
+{
+    if (mCurrentCommand != -1) {
+        completeCommand();       
     }
+    mExpectCommand = true;
+    mCurrentCommand = -1;
 }
 
 void CommandLine::begin()
@@ -227,6 +238,7 @@ void CommandLine::loop()
             case '\r':
                 break;
             case ' ':
+            case '\t':
             case '\n':
                 if (mTokenLength > 0) {
                     // zero-terminate token
@@ -237,9 +249,12 @@ void CommandLine::loop()
                         mToken[MAX_TOKEN_LENGTH-1] = '\0';
                     }
 
-                    processToken(c == '\n');
+                    processToken();
                     
                     mTokenLength = 0;
+                }
+                if (c == '\n') {
+                    processEOL();
                 }
                 break;
             default:

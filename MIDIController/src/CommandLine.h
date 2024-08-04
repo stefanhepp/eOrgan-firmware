@@ -47,6 +47,10 @@ class CommandParser
         virtual CmdErrorCode startCommand(const char* cmd) = 0;
 
         virtual CmdErrorCode parseNextArgument(int argNo, const char* arg) { return CmdErrorCode::CmdInvalidArgument; }
+
+        virtual CmdErrorCode completeCommand(bool expectArgument) { return expectArgument ? CmdErrorCode::CmdNextArgument 
+                                                                                          : CmdErrorCode::CmdOK; 
+                                                                  }
 };
 
 static const int MAX_PARSERS = 8;
@@ -70,15 +74,17 @@ class CommandLine
 
         void printCommandHelp(int cmd);
 
-        void handleRetCode(CmdErrorCode ret);
+        void handleRetCode(CmdErrorCode ret, bool eol);
 
         void selectCommand();
 
         void processArgument();
 
-        void abortCommand();
+        void completeCommand();
 
-        void processToken(bool eol);
+        void processToken();
+
+        void processEOL();
 
     public:
         explicit CommandLine();

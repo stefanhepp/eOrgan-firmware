@@ -44,7 +44,62 @@ void processMIDIMessage(const MidiMessage &msg) {
 
 MIDIRouter::MIDIRouter()
 {
+    mEchoMIDI = false;
     resetRoutes();
+}
+
+void MIDIRouter::echoMIDIMessages(bool enabled) {
+    mEchoMIDI = enabled;
+}
+
+void MIDIRouter::printNote(int note) const {
+    Serial.printf("N%d");
+}
+
+void MIDIRouter::printMessage(const MidiMessage &msg) const {
+    if (msg.type < midi::MidiType::SystemExclusive) {
+        // Channel message 
+        Serial.printf("C%hhu ", msg.channel);
+    }
+    int pitch = 0;
+    switch (msg.type) {
+        case midi::MidiType::InvalidType:
+            Serial.println("Invalid");
+            break;
+        case midi::MidiType::NoteOn:
+            Serial.print("NoteOn ");
+            printNote(msg.data1);
+            Serial.printf(" V%hhu\n", msg.data2);
+            break;
+        case midi::MidiType::NoteOff:
+            Serial.print("NoteOn ");
+            printNote(msg.data1);
+            Serial.printf(" V%hhu\n", msg.data2);
+            break;
+        case midi::MidiType::AfterTouchPoly:
+            Serial.print("Aftertouch ");
+            printNote(msg.data1);
+            Serial.printf(" V%hhu\n", msg.data2);
+            break;
+        case midi::MidiType::ControlChange:
+            Serial.printf("CC %hhu=%hhu\n", msg.data1, msg.data2);
+            break;
+        case midi::MidiType::ProgramChange:
+            Serial.printf("PC %hhu\n", msg.data1);
+            break;
+        case midi::MidiType::AfterTouchChannel:
+            Serial.printf("Channel Aftertouch V%hhu\n", msg.data1);
+            break;
+        case midi::MidiType::PitchBend:
+            pitch = (((int)(msg.data1)<<8)|(int)msg.data2) - 0x2000;
+            Serial.printf("Bend %d\n", pitch);
+            break;
+        default:
+            // System message
+            Serial.printf("Sys T%02hhX D1:%hhu D2:%hhu", msg.type, msg.data1, msg.data2);
+            break;
+    }
+    Serial.flush();
 }
 
 void MIDIRouter::resetRoutes()
@@ -138,6 +193,11 @@ void MIDIRouter::forwardMessage(MIDIPort inPort, MIDIPort outPort, const MidiMes
 
 void MIDIRouter::routeMessage(MIDIPort inPort, const MidiMessage &msg)
 {
+    if (mEchoMIDI) {
+        Serial.printf("MIDI In %d: ", inPort);
+        printMessage(msg);
+        Serial.println();
+    }
     forwardMessage(inPort, MIDIPort::MP_MIDI1, msg);
     forwardMessage(inPort, MIDIPort::MP_MIDI2, msg);
     forwardMessage(inPort, MIDIPort::MP_MIDI3, msg);

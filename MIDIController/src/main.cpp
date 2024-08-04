@@ -57,17 +57,78 @@ class ResetParser: public CommandParser
         }
 };
 
+class DebugParser: public CommandParser
+{
+    public:
+        DebugParser() {}
+
+        virtual void printArguments() { 
+            Serial.print("off|on");
+        }
+
+        virtual CmdErrorCode startCommand(const char* cmd) {
+            return CmdErrorCode::CmdNextArgument;
+        }
+
+        virtual CmdErrorCode parseNextArgument(int argNo, const char* arg) {
+            if (strcmp("on", arg) == 0) {
+                MIDI.echoMIDIMessages(true);
+            } else if (strcmp("off", arg) == 0) {
+                MIDI.echoMIDIMessages(false);
+            } else {
+                return CmdErrorCode::CmdInvalidArgument;
+            }
+            return CmdErrorCode::CmdOK;
+        }
+};
+
 class StatusParser: public CommandParser
 {
     public:
         StatusParser() {}
 
-        virtual CmdErrorCode startCommand(const char* cmd) {
-            // Setup mngr for printing next status
-            PrintNextStatus = PRINT_ALL;
+        virtual void printArguments() { 
+            Serial.print("all|technics|keyboard|toestud|pedal");
+        }
 
-            // Trigger a status read
-            Control.readAll();
+        virtual CmdErrorCode startCommand(const char* cmd) {
+            return CmdErrorCode::CmdNextArgument;
+        }
+
+        virtual CmdErrorCode parseNextArgument(int argNo, const char* arg) {
+            if (strcmp("all", arg) == 0) {
+                // Setup mngr for printing next status
+                PrintNextStatus = PRINT_ALL;
+
+                // Trigger a status read
+                Control.readAll();
+            } else if (strcmp("keyboard", arg) == 0) {
+                PrintNextStatus |= PRINT_KEYBOARD;
+
+                Control.readStatusKeyboard();
+            } else if (strcmp("technics", arg) == 0) {
+                PrintNextStatus |= PRINT_TECHNICS;
+
+                Control.readStatusTechnics();
+            } else if (strcmp("pedal", arg) == 0 || strcmp("toestud", arg) == 0) {
+                PrintNextStatus |= PRINT_PEDAL | PRINT_TOESTUD;
+
+                Control.readStatusPedal();
+            } else {
+                return CmdErrorCode::CmdInvalidArgument;
+            }
+
+            return CmdErrorCode::CmdOK;
+        }
+
+        virtual CmdErrorCode completeCommand(bool expectArgument) {
+            if (expectArgument) {
+                // no argument given, read all
+                PrintNextStatus = PRINT_ALL;
+
+                // Trigger a status read
+                Control.readAll();
+            }
             return CmdErrorCode::CmdOK;
         }
 };
@@ -217,6 +278,7 @@ void setup()
     halt_cpu(); 
 #endif
 
+    Cmdline.addCommand("debug", new DebugParser());
     Cmdline.addCommand("reset", new ResetParser());
     Cmdline.addCommand("status", new StatusParser());
     Cmdline.addCommand("channel", new ChannelParser());
