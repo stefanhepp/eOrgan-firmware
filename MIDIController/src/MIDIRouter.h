@@ -44,7 +44,7 @@ class MIDIRouter
         /**
          * Forward mesage from input to output port, applying the route filters
          */
-        void forwardMessage(MIDIPort inPort, MIDIPort outPort, const MidiMessage &msg);
+        void forwardMessage(MIDIPort inPort, MIDIPort outPort, const MidiMessage &msg, bool echo);
 
     public:
         explicit MIDIRouter();

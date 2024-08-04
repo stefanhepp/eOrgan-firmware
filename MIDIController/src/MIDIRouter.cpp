@@ -159,7 +159,7 @@ void MIDIRouter::sendMessage(MIDIPort outPort, const MidiMessage &msg)
     }
 }
 
-void MIDIRouter::forwardMessage(MIDIPort inPort, MIDIPort outPort, const MidiMessage &msg)
+void MIDIRouter::forwardMessage(MIDIPort inPort, MIDIPort outPort, const MidiMessage &msg, bool echo)
 {
     // Check for valid and enabled input
     if (!mRoutes[inPort][outPort].enabled || !msg.valid || msg.type == midi::MidiType::InvalidType) {
@@ -168,9 +168,12 @@ void MIDIRouter::forwardMessage(MIDIPort inPort, MIDIPort outPort, const MidiMes
 
     // TODO filter message types ?!
     
-    if (msg.type > midi::MidiType::PitchBend) {
+    if (msg.type >= midi::MidiType::SystemExclusive) {
         // System message, no channel
         // Forward as-is on all ports
+        if (echo) {
+            Serial.printf(" O%hhu", outPort); 
+        }
         sendMessage(outPort, msg);
     } else {
         // Channel message
@@ -182,10 +185,16 @@ void MIDIRouter::forwardMessage(MIDIPort inPort, MIDIPort outPort, const MidiMes
 
             if (mappedMsg.channel != MIDI_CHANNEL_OFF) {
                 // Forward mapped message, if the input channel is not disabled
+                if (echo) {
+                    Serial.printf(" O%hhu:C%hhu", outPort, mappedMsg.channel); 
+                }
                 sendMessage(outPort, mappedMsg);
             }
         } else {
             // Forward message as-is
+            if (echo) {
+                Serial.printf(" O%hhu", outPort); 
+            }
             sendMessage(outPort, msg);
         }
     }
@@ -193,16 +202,24 @@ void MIDIRouter::forwardMessage(MIDIPort inPort, MIDIPort outPort, const MidiMes
 
 void MIDIRouter::routeMessage(MIDIPort inPort, const MidiMessage &msg)
 {
-    if (mEchoMIDI) {
+    // get echo mode in the beginning, to print consistently if the mode is changed mid-sending.
+    bool echo = mEchoMIDI;
+
+    if (echo) {
         Serial.printf("MIDI In %d: ", inPort);
         printMessage(msg);
+        Serial.print(" ->");
+    }
+
+    forwardMessage(inPort, MIDIPort::MP_MIDI1, msg, echo);
+    forwardMessage(inPort, MIDIPort::MP_MIDI2, msg, echo);
+    forwardMessage(inPort, MIDIPort::MP_MIDI3, msg, echo);
+    forwardMessage(inPort, MIDIPort::MP_MIDI4, msg, echo);
+    forwardMessage(inPort, MIDIPort::MP_MIDI_USB, msg, echo);
+
+    if (echo) {
         Serial.println();
     }
-    forwardMessage(inPort, MIDIPort::MP_MIDI1, msg);
-    forwardMessage(inPort, MIDIPort::MP_MIDI2, msg);
-    forwardMessage(inPort, MIDIPort::MP_MIDI3, msg);
-    forwardMessage(inPort, MIDIPort::MP_MIDI4, msg);
-    forwardMessage(inPort, MIDIPort::MP_MIDI_USB, msg);
 }
 
 void MIDIRouter::begin()

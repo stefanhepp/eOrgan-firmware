@@ -41,7 +41,7 @@ enum Controller : uint8_t
     MC_Piston_Technics = 0x5B
 };
 
-enum MIDIPort : int
+enum MIDIPort : uint8_t
 {
     // Ports for input and output, general devices. Output ports must be first in this enum.
     MP_MIDI1       = 0,
