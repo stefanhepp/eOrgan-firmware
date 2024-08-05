@@ -118,10 +118,11 @@ void setup() {
     pinMode(PIN_PC3, INPUT_PULLUP);
     pinMode(PIN_PC6, INPUT_PULLUP);
     pinMode(PIN_PD2, INPUT_PULLUP);
+    pinMode(PIN_PD4, INPUT_PULLUP);
 
     // Set output pin modes
     // Set pin value first before turing on output mode, to prevent spurious signals
-    digitalWrite(PIN_INTERRUPT, LOW);
+    digitalWrite(PIN_INTERRUPT, HIGH);
     pinMode(PIN_INTERRUPT, OUTPUT);
 
     MIDIChannel = settings.getMIDIChannel();

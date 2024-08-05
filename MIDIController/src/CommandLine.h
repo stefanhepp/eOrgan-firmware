@@ -53,8 +53,8 @@ class CommandParser
                                                                   }
 };
 
-static const int MAX_PARSERS = 8;
-static const int MAX_TOKEN_LENGTH = 8;
+static const int MAX_PARSERS = 16;
+static const int MAX_TOKEN_LENGTH = 32;
 
 class CommandLine
 {
