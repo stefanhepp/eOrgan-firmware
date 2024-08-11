@@ -72,15 +72,22 @@ static void writeByte(uint8_t data)
  */
 static void receivedMessage() 
 {    
-    uint8_t channel = RxBuffer[0] & 0x0F;
+    uint8_t channel = (RxBuffer[0] & 0x0F) + 1;
     uint8_t opcode = RxBuffer[0] & 0xF0;
+    bool sysExMsg = false;
+    if (opcode == 0xF0) {
+        // System message
+        opcode = RxBuffer[0];
+        channel = 0;
+        sysExMsg = true;
+    }
 
     bool forward = (MidiThruMode == ThruMode::Full)
                 // Forward depending on the current channel
-                || (MidiThruMode == ThruMode::DifferentChannel && opcode != 0xF0 && channel != MidiChannel)                
-                || (MidiThruMode == ThruMode::SameChannel      && opcode != 0xF0 && channel == MidiChannel)
+                || (MidiThruMode == ThruMode::DifferentChannel && !sysExMsg && channel != MidiChannel)                
+                || (MidiThruMode == ThruMode::SameChannel      && !sysExMsg && channel == MidiChannel)
                 // System real-time messages are forwarded in all modes
-                || (MidiThruMode != ThruMode::Off              && opcode == 0xF0);
+                || (MidiThruMode != ThruMode::Off              && sysExMsg);
 
     // Forward the whole message to the transmit buffer
     if (forward) {
@@ -90,6 +97,8 @@ static void receivedMessage()
     }
 
     // TODO add receive handler here
+
+
 
     // clear the buffer
     RxBufferLength = 0;
@@ -117,14 +126,25 @@ void MiniMIDI::setInputChannel(uint8_t channel)
     MidiChannel = channel;
 }
 
+uint8_t MiniMIDI::getStatusByte(uint8_t opcode, uint8_t channel) const
+{
+    if ( (opcode & 0xF0) == 0xF0 ) {
+        // SysEx message
+        return opcode;
+    } else {
+        if (channel == 0xFF) {
+            channel = mChannel;
+        }
+        // Channel message
+        return opcode | ((channel & 0x0F) - 1);
+    }
+}
+
 void MiniMIDI::writeMessage2(uint8_t opcode, uint8_t channel, uint8_t data1)
 {
     cli();
     if (TxBufferLength + 2 <= TX_BUFFER_SIZE) {
-        if (channel == 0xFF) {
-            channel = mChannel;
-        }
-        writeByte(opcode | (channel & 0x0F));
+        writeByte(getStatusByte(opcode, channel));
         writeByte(data1 & 0x7F);
     }
     sei();
@@ -134,10 +154,7 @@ void MiniMIDI::writeMessage3(uint8_t opcode, uint8_t channel, uint8_t data1, uin
 {
     cli();
     if (TxBufferLength + 3 <= TX_BUFFER_SIZE) {
-        if (channel == 0xFF) {
-            channel = mChannel;
-        }
-        writeByte(opcode | (channel & 0x0F));
+        writeByte(getStatusByte(opcode, channel));
         writeByte(data1 & 0x7F);
         writeByte(data2 & 0x7F);
     }

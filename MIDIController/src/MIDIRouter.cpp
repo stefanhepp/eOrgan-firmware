@@ -20,9 +20,9 @@
 
 
 // MIDI Devices
-MIDI_CREATE_INSTANCE(HardwareSerial, Serial7,    MIDI1);
+MIDI_CREATE_INSTANCE(HardwareSerial, Serial5,    MIDI1);
 MIDI_CREATE_INSTANCE(HardwareSerial, Serial1,    MIDI2);
-MIDI_CREATE_INSTANCE(HardwareSerial, Serial3,    MIDI3);
+MIDI_CREATE_INSTANCE(HardwareSerial, Serial7,    MIDI3);
 MIDI_CREATE_INSTANCE(HardwareSerial, Serial4,    MIDI4);
 // TXD8 is not connected
 MIDI_CREATE_INSTANCE(HardwareSerial, Serial8,    MIDIPedal);

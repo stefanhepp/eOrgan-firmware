@@ -13,6 +13,8 @@
 
 /**
  * Organ Divisions. Enum value represents default MIDI channel.
+ * 
+ * Note: MIDI channel is 1..16
  */
 enum MIDIDivision : uint8_t
 {

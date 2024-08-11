@@ -104,6 +104,11 @@ class MiniMIDI
     private:
         uint8_t mChannel;
 
+        /**
+         * Get the MIDI status byte (first byte of message) from opcode and channel.
+         */
+        uint8_t getStatusByte(uint8_t opcode, uint8_t channel) const;
+
         void writeMessage2(uint8_t opcode, uint8_t channel, uint8_t data1);
 
         void writeMessage3(uint8_t opcode, uint8_t channel, uint8_t data1, uint8_t data2);
