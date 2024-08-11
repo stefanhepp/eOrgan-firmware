@@ -38,7 +38,11 @@
 	],
 	"settings": {
 		"files.associations": {
-			"istream": "cpp"
+			"istream": "cpp",
+			"*.tcc": "cpp",
+			"string": "cpp",
+			"unordered_map": "cpp",
+			"random": "cpp"
 		}
 	}
 }

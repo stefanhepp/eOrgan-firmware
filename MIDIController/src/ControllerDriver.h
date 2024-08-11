@@ -50,6 +50,8 @@ class ControllerDriver
     public:
         explicit ControllerDriver();
 
+        void printIRQStatus();
+
         void setKeyboardStatusCallback(KeyboardStatusCallback callback) { mKeyboardStatusCallback = callback; }
 
         void setTechnicsStatusCallback(TechnicsStatusCallback callback) { mTechnicsStatusCallback = callback; }

@@ -70,7 +70,7 @@ void TechnicsKeyboard::poll()
     uint8_t BufferLength = 0;
 
     // Read data from Technics keyboard controller
-    while (true) {
+    for (int i = 0; i < BUFFER_SIZE; i++) {
         uint8_t note = readData();
         uint8_t velocity = readData();
 

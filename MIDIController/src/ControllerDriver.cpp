@@ -32,12 +32,12 @@ static const int I2C_PORT_TECHNICS  = 5;
 static const int I2C_PORT_KEYBOARD  = 6;
 static const int I2C_PORT_I2C2      = 7;
 
-static const int PIN_INT_KEYBOARD   = 24;
-static const int PIN_INT_TECHNICS   = 23;
+static const int PIN_INT_KEYBOARD   = 32;
+static const int PIN_INT_TECHNICS   = 31;
 static const int PIN_INT_STOP_RIGHT = 41;
 static const int PIN_INT_STOP_LEFT  = 40;
-static const int PIN_INT_TOESTUD    = 22;
-static const int PIN_INT_PANEL      = 28;
+static const int PIN_INT_TOESTUD    = 30;
+static const int PIN_INT_PANEL      = 36;
 
 
 ControllerDriver::ControllerDriver() 
@@ -375,6 +375,20 @@ void ControllerDriver::setPistonLED(MIDIDivision division, uint8_t piston, bool 
     }
 }
 
+void ControllerDriver::printIRQStatus()
+{
+    uint8_t irqKeyboard  = digitalRead(PIN_INT_KEYBOARD);
+    uint8_t irqTechnics  = digitalRead(PIN_INT_TECHNICS);
+    uint8_t irqToestud   = digitalRead(PIN_INT_TOESTUD);
+    uint8_t irqPanel     = digitalRead(PIN_INT_PANEL);
+    uint8_t irqStopLeft  = digitalRead(PIN_INT_STOP_LEFT);
+    uint8_t irqStopRight = digitalRead(PIN_INT_STOP_RIGHT);
+
+    Serial.printf("IRQ: Kbd=%s Technics=%s", irqKeyboard ? "HI":"LO", irqTechnics ? "HI":"LO");
+    Serial.printf(" ToeStud=%s Panel=%s", irqToestud ? "HI":"LO", irqPanel ? "HI":"LO");
+    Serial.printf(" StopLeft=%s StopRight=%s", irqStopLeft ? "HI":"LO", irqStopRight ? "HI":"LO");
+    Serial.println();
+}
 
 void ControllerDriver::begin()
 {

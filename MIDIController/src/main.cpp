@@ -129,6 +129,8 @@ class StatusParser: public CommandParser
                 // Trigger a status read
                 Control.readAll();
             }
+            Control.printIRQStatus();
+            
             return CmdErrorCode::CmdOK;
         }
 };

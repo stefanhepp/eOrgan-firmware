@@ -53,7 +53,7 @@ void MIDIRouter::echoMIDIMessages(bool enabled) {
 }
 
 void MIDIRouter::printNote(int note) const {
-    Serial.printf("N%d");
+    Serial.printf("N%d", note);
 }
 
 void MIDIRouter::printMessage(const MidiMessage &msg) const {
