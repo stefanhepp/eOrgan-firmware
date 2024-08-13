@@ -116,6 +116,11 @@ class MiniMIDI
     public:
         MiniMIDI();
 
+        /**
+         * Return true if there is data currently being sent.
+         */
+        bool sending() const;
+
         void turnThruOff();
 
         void turnThruOn(ThruMode mode);

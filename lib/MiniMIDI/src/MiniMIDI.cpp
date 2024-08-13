@@ -179,6 +179,12 @@ void MiniMIDI::begin(uint8_t channel)
     UCSR0B = (1 << RXCIE0)|(1 << RXEN0)|(1 << TXEN0);
 }
 
+bool MiniMIDI::sending() const
+{
+    // Check if there is any data still in the buffer or UART being sent.
+    return TxBufferLength > 0 || !(UCSR0A & (1<<UDRE0));
+}
+
 void MiniMIDI::sendNoteOn(uint8_t note,  uint8_t velocity, uint8_t channel)
 {
     writeMessage3(0x90, channel, note, velocity);
@@ -196,7 +202,7 @@ void MiniMIDI::sendControlChange(MidiControlChangeNumber controller, uint8_t val
 
 void MiniMIDI::sendPitchBend(int pitch, uint8_t channel)
 {
-    writeMessage3(0xE0, channel, (pitch >> 7), pitch & 0x7F);
+    writeMessage3(0xE0, channel, pitch & 0x7F, (pitch >> 7) & 0x7F);
 }
 
 void MiniMIDI::sendProgramChange(uint8_t program, uint8_t channel)

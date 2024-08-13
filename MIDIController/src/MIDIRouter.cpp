@@ -41,6 +41,10 @@ void processMIDIMessage(const MidiMessage &msg) {
     Router->routeMessage(inPort, msg);
 }
 
+template<MIDIPort inPort>
+void processMIDIError(int8_t error) {
+    //Serial.printf("MIDI Error %hhu: %hhd\n", inPort, error);
+}
 
 MIDIRouter::MIDIRouter()
 {
@@ -244,6 +248,8 @@ void MIDIRouter::begin()
     MIDIPedal.setHandleMessage(processMIDIMessage<MIDIPort::MP_Pedal>);
     MIDIKbd.setHandleMessage(processMIDIMessage<MIDIPort::MP_Keyboard>);
     MIDITechnics.setHandleMessage(processMIDIMessage<MIDIPort::MP_Technics>);
+
+    MIDITechnics.setHandleError(processMIDIError<MIDIPort::MP_Technics>);
 
     // Listen on all channels, filtering done by this router
     MIDI1.begin(MIDI_CHANNEL_OMNI);

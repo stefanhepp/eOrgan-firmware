@@ -8,9 +8,11 @@
 #include <Arduino.h>
 
 CalibratedAnalogInput::CalibratedAnalogInput()
-: mPin(0), mRangeMax(1023)
+: mPin(0), mRangeMax(1023), mCalibrating(false)
 {
-    resetCalibration();
+    mInputMin = 0;
+    mInputMax = 1023;
+    mCalibrating = false;
     mLastValue = center();
 }
 
@@ -69,18 +71,21 @@ void CalibratedAnalogInput::begin(uint8_t pin)
 void CalibratedAnalogInput::poll()
 {
     int input = analogRead(mPin);
+
     if (mCalibrating) {
         bool updated = false;
         if (input < mInputMin) {
             mInputMin = input;
             updated = true;
         }
-        if (input < mInputMax) {
+        if (input > mInputMax) {
             mInputMax = input;
             updated = true;
         }
         if (updated) {
-            mOnCalibration(mCalibrationPayload);
+            if (mOnCalibration != nullptr) {
+                mOnCalibration(mCalibrationPayload);
+            }
         }
     }
 
@@ -88,6 +93,8 @@ void CalibratedAnalogInput::poll()
 
     if (newValue != mLastValue) {
         mLastValue = newValue;
-        mOnChange(newValue, mChangePayload);
+        if (mOnChange != nullptr) {
+            mOnChange(newValue, mChangePayload);
+        }
     }
 }
