@@ -222,26 +222,26 @@ ISR(TWI_vect) {
             }
             // Expect ACK or NACK depending on if there is remaining data
             if (BufferPos < BufferLength) {
-                TWCR |= (1<<TWEN);
+                TWCR |= (1<<TWEA);
             } else {
                 // Last byte sent, expect NACK
-                TWCR &= ~(1<<TWEN);
+                TWCR &= ~(1<<TWEA);
             }
             TWCR |= (1<<TWINT);
             break;
         case 0xC0: // Data byte transmitted, NOT ACK received
             // No more data received, finish transmission
             // Return to ready state
-            TWCR |= (1<<TWINT)|(1<<TWEN);
+            TWCR |= (1<<TWINT)|(1<<TWEA);
             break;
         case 0xC8: // Last data byte transmitted, ACK received
             // Master wants more data, but we have no more to send.
             // Return to not addressed state
-            TWCR |= (1<<TWINT)|(1<<TWEN);
+            TWCR |= (1<<TWINT)|(1<<TWEA);
             break;
         default:
             // Any other state: Clear interrupt flag, reset status by setting STOP bit
-            TWCR = (1<<TWINT)|(1<<TWSTO)|(1<<TWEN)|(1<<TWIE);
+            TWCR = (1<<TWINT)|(1<<TWSTO)|(1<<TWEN)|(1<<TWIE)|(1<<TWEA);
             break;
     }
 }
