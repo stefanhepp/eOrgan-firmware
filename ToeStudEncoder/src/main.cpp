@@ -237,4 +237,10 @@ void loop() {
     for (uint8_t i = 0; i < 2; i++) {
         pedals[i].poll();
     }
+    
+    // wait for any MIDI messages being sent and add a small gap to resync
+    while (MIDI.sending()) {
+        delayMicroseconds(50);
+    }
+    delayMicroseconds(400);
 }
