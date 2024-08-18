@@ -24,6 +24,8 @@ static uint8_t TxBuffer[TX_BUFFER_SIZE];
 static uint8_t TxBufferLength = 0;
 static uint8_t TxBufferPos = 0;
 
+static MiniMIDI* MIDI = nullptr;
+
 /**
  * Get the number of data bytes for a particular MIDI status byte
  */
@@ -96,9 +98,16 @@ static void receivedMessage()
         }
     }
 
-    // TODO add receive handler here
+    // Call receive handler
+    MIDIMessage msg;
+    msg.Opcode = opcode;
+    msg.Channel = channel;
+    msg.Data1 = (RxBufferLength > 1) ? RxBuffer[1] : 0x00;
+    msg.Data1 = (RxBufferLength > 2) ? RxBuffer[2] : 0x00;
 
-
+    if (MIDI != nullptr) {
+        MIDI->_processRxMessage(msg);
+    }
 
     // clear the buffer
     RxBufferLength = 0;
@@ -106,8 +115,22 @@ static void receivedMessage()
 }
 
 MiniMIDI::MiniMIDI()
-: mChannel(0)
+: mChannel(0), mReceiveCallback(nullptr)
 {
+    // Register this instance for callbacks
+    MIDI = this;
+}
+
+void MiniMIDI::_processRxMessage(const MIDIMessage &msg)
+{
+    if (mReceiveCallback != nullptr) {
+        mReceiveCallback(msg);
+    }
+}
+
+void MiniMIDI::setReceiveCallback(MIDIReceiveCallback callback)
+{
+    mReceiveCallback = callback;
 }
 
 void MiniMIDI::turnThruOff()

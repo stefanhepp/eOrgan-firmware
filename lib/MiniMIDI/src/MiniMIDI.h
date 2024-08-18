@@ -93,6 +93,18 @@ enum MidiControlChangeNumber: uint8_t
     PolyModeOn                  = 127
 };
 
+typedef struct {
+    uint8_t Opcode;
+
+    uint8_t Channel;
+
+    uint8_t Data1;
+
+    uint8_t Data2;
+} MIDIMessage;
+
+using MIDIReceiveCallback = void (*)(const MIDIMessage &msg);
+
 /**
  * Implementation of the Wire interface for AtMega 8bit controllers.
  * 
@@ -104,6 +116,8 @@ class MiniMIDI
     private:
         uint8_t mChannel;
 
+        MIDIReceiveCallback mReceiveCallback;
+
         /**
          * Get the MIDI status byte (first byte of message) from opcode and channel.
          */
@@ -114,7 +128,17 @@ class MiniMIDI
         void writeMessage3(uint8_t opcode, uint8_t channel, uint8_t data1, uint8_t data2);
 
     public:
+        /**
+         * Protected function, callback for ISR handler.
+         * 
+         * Process a received MIDI message, read from ISR handler buffer.
+         */
+        void _processRxMessage(const MIDIMessage &msg);
+
+    public:
         MiniMIDI();
+
+        void setReceiveCallback(MIDIReceiveCallback callback);
 
         /**
          * Return true if there is data currently being sent.
