@@ -1,0 +1,43 @@
+o) Implementation
+- Bendwheels: Stop calibration (?)
+- Bendwheels: Calibrate Center point
+- Bendwheels: Larger deadspot center
+- MiniMIDI: receive message handler
+- MegaWire: I2C master mode
+- ToeStuds: MIDI events studs
+- MIDI controller: Piston button events
+- MIDI Controller: Toestud pedal events
+- MIDI Controller: Toestud studs events
+- MIDI Controller: Setup Channel mapping, channel filtering (presets?!)
+
+o) Features
+- Power Controller: Implementation
+- Teensy MIDI Synthesizer
+- Teensy Audio Capture
+- Teensy Audio FX-processor
+
+o) Bugfixing, Testing
+- Technics Keyboard
+    - Technics Keyboard: scanning keyboard
+    - MIDI In -> MIDI out
+- Technics Pistons
+    - Technics Pistons: scanning, I2C reporting
+- Pedal
+    - MIDI In (ToeStud) -> MIDI out
+    - MIDI out Pedal
+    - I2C Channel, LED settings
+    - Configuration Switch
+- Toestuds
+    - ToeStuds I2C
+    - Pedals I2C, MIDI
+    - I2C settings MIDI/I2C
+    - Calibration
+- Keyboard
+    - Keyboard Scanner
+    - Training Keyboard
+- Keyboard Pistons
+    - Piston I2C cmds
+- MIDI Controller
+    - Audio In (USB) -> Audio Out (Line)
+    - Audio In (Line) -> Audio Out (USB)
+
