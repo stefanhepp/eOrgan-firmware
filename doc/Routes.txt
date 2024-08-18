@@ -1,0 +1,117 @@
+MIDI
+====
+
+MIDI Ports IO Board
+-------------------
+
+- UART Ports:
+  - Keyboard: Channel 5/6
+  - Technics: Channel 4
+
+- MIDI Pedal: 
+  - Pedal: Channel 3
+
+- MIDI1:
+  - In:  Side Panel
+  - Out: Side Panel
+- MIDI2:
+  - In:  Fantom: Chanel 1/2/..
+  - Out: Fantom
+- MIDI3:
+  - In:  Zynthian
+  - Out: Zynthian
+- MIDI4:
+  - In:  Front Panel
+  - Out: Roland SE-02; Channel 8
+
+MIDI Routes
+-----------
+
+- Merged Inputs:
+  - MIDI Keyboard
+  - MIDI Technics
+  - MIDI Pedal
+  - MIDI 1 In
+  - MIDI 2 In
+  - MIDI 3 In
+  - MIDI 4 In
+- Merged MIDI Output:
+  - MIDI 1 Out: Side
+  - MIDI 2 Out: Fantom
+    Filter: Not MIDI In 2
+  - MIDI 3 Out: Zynthian
+    Filter: Not MIDI In 3
+  - MIDI 4 Out: SE-02
+    Channel Remap: 8/x -> 8
+  - MIDI USB Out:
+    Filter: Not USB In
+
+I2C
+===
+
+I2C Devices
+-----------
+
+Addresses as 7-bit values
+
+- I2S Audio:		0x0A / 0x2A
+- TCA9548:		0x70 - 0x77
+  - Port 0: Panel
+  - Port 1: Header
+  - Port 2: StopLeft
+    - LEDControl AtMega	0x56
+  - Port 3: StopRight
+  - Port 4: ToeStuds
+    - ToeStud AtMega:	0x52
+    - Pedal AtMega:	0x54
+  - Port 5: Technics
+    - Technics AtMega:	0x53
+    - Piston AtMega:	0x5A
+  - Port 6: Keyboard
+    - Keyboard AtMega:	0x52
+    - Piston AtMega:	0x5B
+  - Port 7: Header
+
+I2C Commands
+------------
+
+- Common Format
+  - Write: <opcode> <data> ...
+  - Read: <Channel> <status> ...
+
+- Command Write Opcodes
+  - Reset:	    0x01
+  - Set Channel:    0x02 <channel>
+
+- KeyboardEncoder
+  - W: Reset		0x01
+  - W: Set Channel:	0x02 <channel1> <channel2>
+  - W: Start Training:	0x03 <keyboardNr>
+  - R: Status		<channel1> <channel2> <0:OK|1:training>
+
+- TechnicsEncoder
+  - W: Reset		0x01
+  - W: Set Channel:	0x02 <channel>
+  - W: Calibrate Wheel: 0x03
+  - R: Status		<channel> <wheel:high> <wheel:low>
+
+- PistonEncoder
+  - W: Reset		0x01
+  - W: Set LEDs		0x03 <7:kbd|6:0:bitmask4> <bitmask3> <bitmask2> <bitmask1>
+  - R: Read Pistons:    <7:kbd|6:1:btn|0:long> ..
+
+- ToestudEncoder
+  - W: Reset		0x01
+  - W: Set Channel:	0x02 <channel> <channelSwell> <channelChoir>
+  - W: Calibrate Pedal: 0x03
+  - W: Set Mode:        0x04 <mode>
+    - mode 0x01: Send I2C
+    - mode 0x02: Send MIDI
+  - R: <channel> <pedal1:high> <pedal1:low> <pedal2:high> <pedal2:low> <pedal3:high> <pedal3:low> <7:1 btn|0:long>..
+
+- PedalEncodero
+  - W: Reset		0x01
+  - W: Set Channel:	0x02 <channel>
+  - W: LED Intensity:   0x03 <intensity>
+  - R: Status           <channel> <intensity> 
+
