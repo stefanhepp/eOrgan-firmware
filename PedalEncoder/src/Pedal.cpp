@@ -54,16 +54,18 @@ void Pedal::poll()
     uint8_t newline = (line + 1) % 4;
 
     uint8_t i;
-    char bit = 1;
+    uint8_t bit;
 
     // read status from current line
-    char input = IO_PIN(PORT_IN);
+    uint8_t input = IO_PIN(PORT_IN);
 
     // enable next line 
     IO_PORT(PORT_LINE) |= (1<<(line + PIN_LINE0));
     IO_PORT(PORT_LINE) &= ~(1<<(newline + PIN_LINE0));
 
     for (i = 0; i < 8; i++) {
+        bit = (1 << i);
+
 	    if ( (input & bit) && !(mPedalState[line] & bit) ) {
             // Key is being pressed
             mKeyChangeHandler( (line<<3) | i, KEY_VELOCITY);
@@ -71,8 +73,6 @@ void Pedal::poll()
             // Key is being released
             mKeyChangeHandler( (line<<3) | i, 0);
 	    }
-
-	    bit <<= 1;
     }
 
     // update pedal states

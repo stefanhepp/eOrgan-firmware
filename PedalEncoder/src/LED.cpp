@@ -40,15 +40,14 @@ void StatusLED::begin(uint8_t intensity)
     updateIntensity();
 
     // disable output pin, 8-bit PWM
-    TCCR1A &= ~((1<<COM1A1)|(1<<COM1A0)|(1<<WGM11));
-    TCCR1A |= (1<<WGM10);
+    TCCR1A = (1<<WGM10);
 
-    // set prescaler to CK/8
-    TCCR1B &= ~((1<<CS12)|(1<<CS10));
-    TCCR1B |= (1<<CS11);
+    // set prescaler to CK/64
+    TCCR1B &= ~(1<<CS12);
+    TCCR1B |= (1<<CS11)|(1<<CS10);
 
     // Enable interrupts
-    TIMSK0 |= (1<<OCIE1A)|(1<<TOIE1);
+    TIMSK1 |= (1<<OCIE1A)|(1<<TOIE1);
 
     // enable led output
     pinMode(PIN_LED, OUTPUT);
@@ -82,12 +81,10 @@ void StatusLED::setIntensity(uint8_t intensity)
 
 ISR(TIMER1_OVF_vect)
 {
-    sei();
-
     ledState &= ~STATE_LED_ON;
 
     if ( ledState & STATE_BLINK ) {
-        if (ledCount > 600) {
+        if (ledCount > 400) {
             ledCount = 0;
         } else {
             ledCount++;
@@ -97,13 +94,11 @@ ISR(TIMER1_OVF_vect)
 
 ISR(TIMER1_COMPA_vect) 
 {
-    sei();
-
     if ( ledState & STATE_LED_ON ) {
 	
 	    ledState &= ~STATE_LED_ON;
 
-	    if ( ledCount < 320 ) {
+	    if ( ledCount < 200 ) {
 	        digitalWrite(PIN_LED, HIGH);
 	    }
 

@@ -223,6 +223,9 @@ void ControllerDriver::readStatusPedal()
 
         while (Wire.available()) {
             uint8_t btn = Wire.read();
+            if (btn == 0xFF) {
+                break;
+            }
 
             uint8_t index = (btn & ~(1<<7))>>1;
             MIDIDivision division = MIDIDivision::MD_Control;
