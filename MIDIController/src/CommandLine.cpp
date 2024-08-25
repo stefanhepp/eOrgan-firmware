@@ -20,23 +20,23 @@
 
 bool CommandParser::parseDivision(const char* arg, MIDIDivision &division)
 {
-    if (strcmp(arg, "pedal")) {
+    if (strcmp(arg, "pedal") == 0) {
         division = MIDIDivision::MD_Pedal;
         return true;
     }
-    if (strcmp(arg, "choir")) {
+    if (strcmp(arg, "choir") == 0) {
         division = MIDIDivision::MD_Choir;
         return true;
     }
-    if (strcmp(arg, "Swell")) {
+    if (strcmp(arg, "swell") == 0) {
         division = MIDIDivision::MD_Swell;
         return true;
     }
-    if (strcmp(arg, "solo")) {
+    if (strcmp(arg, "solo") == 0) {
         division = MIDIDivision::MD_Solo;
         return true;
     }
-    if (strcmp(arg, "control")) {
+    if (strcmp(arg, "control") == 0) {
         division = MIDIDivision::MD_Control;
         return true;
     }

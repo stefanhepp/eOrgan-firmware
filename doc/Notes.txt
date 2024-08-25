@@ -1,0 +1,10 @@
+Debugging 
+---------
+Dump MIDI message on Linux:
+```
+# Show MIDI devices
+aseqdump -l
+# print all MIDI messages, use the correct port for Teensy MIDI
+aseqdump -p 20:0
+
+
