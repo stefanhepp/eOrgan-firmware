@@ -33,9 +33,10 @@ MegaWire Wire;
 Settings settings;
 ToeStuds toestuds;
 
-static const uint8_t PEDAL_CHOIR = 0;
+// Index into the pedals array below. Defines the order on I2C.
+static const uint8_t PEDAL_CRESCENDO = 0;
 static const uint8_t PEDAL_SWELL = 1;
-static const uint8_t PEDAL_CRESCENDO = 2;
+static const uint8_t PEDAL_CHOIR = 2;
 
 CalibratedAnalogInput pedals[3];
 
@@ -51,9 +52,6 @@ static const uint8_t IRQ_PEDALS = 0;
 static const uint8_t IRQ_TOESTUDS = 1;
 
 static uint16_t IRQFlags = 0x00;
-
-static const uint8_t MODE_MIDI = 0x01;
-static const uint8_t MODE_I2C  = 0x02;
 
 static uint8_t SendMode;
 
@@ -96,7 +94,7 @@ void onPedalCalibrate(void* payload) {
 void onPedalChange(int value, void* payload) {
     const uint8_t pedal = *((const uint8_t *)payload);
 
-    if (SendMode & MODE_MIDI) {
+    if (SendMode & ToeStudMode::TSM_MIDI) {
         switch (pedal) {
             case PEDAL_CHOIR:
                 MIDI.sendPitchBend(value * 16, MIDIChannelChoir);
@@ -110,21 +108,21 @@ void onPedalChange(int value, void* payload) {
         }
     }
 
-    if (SendMode & MODE_I2C) {
+    if (SendMode & ToeStudMode::TSM_I2C) {
         // Just set IRQ, read latest values via I2C
         sendIRQ(IRQ_PEDALS);
     }
 }
 
 void onToeStudPress(uint8_t button, bool longPress) {
-    if (SendMode & MODE_MIDI) {
+    if (SendMode & ToeStudMode::TSM_MIDI) {
 
         // TODO send event
         //MIDI.sendProgramChange(button, MIDIChannel);
 
     }
 
-    if (SendMode & MODE_I2C) {
+    if (SendMode & ToeStudMode::TSM_I2C) {
         noInterrupts();
         if (ToeStudBufferLength < BUFFER_SIZE) {
             ToeStudBuffer[ToeStudBufferLength++] = (button << 1) | longPress;
@@ -216,13 +214,13 @@ void setup() {
     MIDIChannelSwell = settings.getMIDIChannelSwell();
     MIDIChannelChoir = settings.getMIDIChannelChoir();
 
-    SendMode = settings.getSendMode(MODE_MIDI | MODE_I2C);
+    SendMode = settings.getSendMode(ToeStudMode::TSM_MIDI);
 
     MIDI.begin(MIDIChannel);
 
-    setupPedal(&PEDAL_CHOIR, PIN_PEDAL_CHOIR);
-    setupPedal(&PEDAL_SWELL, PIN_PEDAL_SWELL);
     setupPedal(&PEDAL_CRESCENDO, PIN_CRESCENDO);
+    setupPedal(&PEDAL_SWELL, PIN_PEDAL_SWELL);
+    setupPedal(&PEDAL_CHOIR, PIN_PEDAL_CHOIR);
 
     Wire.onReceive(i2cReceive);
     Wire.onRequest(i2cRequest);
@@ -234,7 +232,7 @@ void setup() {
 
 void loop() {
     toestuds.poll();
-    for (uint8_t i = 0; i < 2; i++) {
+    for (uint8_t i = 0; i < 3; i++) {
         pedals[i].poll();
     }
     

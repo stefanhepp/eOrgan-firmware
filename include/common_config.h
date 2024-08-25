@@ -72,6 +72,13 @@ static const int NUM_MIDI_PORTS = 10;
 // Maximum number of pistons in a division
 static const uint8_t MAX_PISTONS = 26;
 
+// Mode flags for ToeStud Encoder. Used as a bitmask.
+enum ToeStudMode : uint8_t
+{
+    TSM_MIDI = 0x01,
+    TSM_I2C  = 0x02
+};
+
 /* ==============================================================
  * I2C Commands
  * ============================================================== */

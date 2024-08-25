@@ -28,6 +28,8 @@ static const int PRINT_ALL = PRINT_KEYBOARD | PRINT_TECHNICS | PRINT_PEDAL | PRI
 
 static int PrintNextStatus = 0;
 
+static int PrintI2C = 0;
+
 static bool KeyboardIsLearning = false;
 
 static const char* divisionName(MIDIDivision division) {
@@ -63,7 +65,7 @@ class DebugParser: public CommandParser
         DebugParser() {}
 
         virtual void printArguments() { 
-            Serial.print("off|on");
+            Serial.print("off|on|i2c");
         }
 
         virtual CmdErrorCode startCommand(const char* cmd) {
@@ -73,8 +75,13 @@ class DebugParser: public CommandParser
         virtual CmdErrorCode parseNextArgument(int argNo, const char* arg) {
             if (strcmp("on", arg) == 0) {
                 MIDI.echoMIDIMessages(true);
+                PrintI2C = PRINT_ALL;
             } else if (strcmp("off", arg) == 0) {
                 MIDI.echoMIDIMessages(false);
+                PrintI2C = 0;
+            } else if (strcmp("i2c", arg) == 0) {
+                MIDI.echoMIDIMessages(false);
+                PrintI2C = PRINT_ALL;
             } else {
                 return CmdErrorCode::CmdInvalidArgument;
             }
@@ -228,9 +235,48 @@ class PedalLEDParser: public CommandParser
         }
 };
 
+class ToeStudModeParser: public CommandParser
+{
+
+    public:
+        ToeStudModeParser() {}
+
+        virtual void printArguments() { 
+            Serial.print("mode midi|i2c|both");
+        }
+
+        virtual CmdErrorCode startCommand(const char* cmd) {
+            return CmdErrorCode::CmdNextArgument;
+        }
+
+        virtual CmdErrorCode parseNextArgument(int argNo, const char* arg) {
+            if (argNo == 0) {
+                if (strcmp(arg, "mode") == 0) {
+                    return CmdErrorCode::CmdNextArgument;
+                }
+            }
+            if (argNo == 1) {
+                // In "mode" command
+                if (strcmp(arg, "midi") == 0) {
+                    Control.setToestudMode(ToeStudMode::TSM_MIDI);
+                    return CmdErrorCode::CmdOK;
+                }
+                if (strcmp(arg, "i2c") == 0) {
+                    Control.setToestudMode(ToeStudMode::TSM_I2C);
+                    return CmdErrorCode::CmdOK;
+                }
+                if (strcmp(arg, "both") == 0) {
+                    Control.setToestudMode(ToeStudMode::TSM_I2C | ToeStudMode::TSM_MIDI);
+                    return CmdErrorCode::CmdOK;
+                }
+            }
+            return CmdErrorCode::CmdInvalidArgument;
+        }
+};
+
 void onKeyboardStatus(uint8_t channel1, uint8_t channel2, bool training)
 {
-    if (PrintNextStatus & PRINT_KEYBOARD) {
+    if (PrintNextStatus & PRINT_KEYBOARD || PrintI2C & PRINT_KEYBOARD) {
         PrintNextStatus &= ~PRINT_KEYBOARD;
         Serial.printf("Keyboard: chan1=%d chan2=%d", channel1, channel2);
         if (training) {
@@ -251,7 +297,7 @@ void onKeyboardStatus(uint8_t channel1, uint8_t channel2, bool training)
 
 void onTechnicsStatus(uint8_t channel, uint16_t wheel)
 {
-    if (PrintNextStatus & PRINT_TECHNICS) {
+    if (PrintNextStatus & PRINT_TECHNICS || PrintI2C & PRINT_TECHNICS) {
         PrintNextStatus &= ~PRINT_TECHNICS;
         Serial.printf("Technics: chan=%d wheel=%d", channel, wheel);
         Serial.println();
@@ -262,7 +308,7 @@ void onTechnicsStatus(uint8_t channel, uint16_t wheel)
 
 void onToeStudStatus(uint8_t channel, uint16_t crescendo, uint16_t swell, uint16_t choir)
 {
-    if (PrintNextStatus & PRINT_TOESTUD) {
+    if (PrintNextStatus & PRINT_TOESTUD || PrintI2C & PRINT_TOESTUD) {
         PrintNextStatus &= ~PRINT_TOESTUD;
         Serial.printf("ToeStuds: chan=%d cresendo=%d swell=%d choir=%d", channel, crescendo, swell, choir);
         Serial.println();
@@ -274,12 +320,14 @@ void onToeStudStatus(uint8_t channel, uint16_t crescendo, uint16_t swell, uint16
 
 void onPedalStatus(uint8_t channel, uint8_t ledIntensity)
 {
-    if (PrintNextStatus & PRINT_PEDAL) {
+    if (PrintNextStatus & PRINT_PEDAL || PrintI2C & PRINT_PEDAL) {
         PrintNextStatus &= ~PRINT_PEDAL;
         Serial.printf("Pedal: chan=%d leds=%d", channel, ledIntensity);
         Serial.println();
     }
 }
+
+
 
 void onPistonPress(MIDIDivision division, uint8_t button, bool longPress)
 {
@@ -309,6 +357,7 @@ void setup()
     Cmdline.addCommand("channel", new ChannelParser());
     Cmdline.addCommand("calibrate", new CalibrationParser());
     Cmdline.addCommand("led", new PedalLEDParser());
+    Cmdline.addCommand("toestud", new ToeStudModeParser());
 
     Control.setKeyboardStatusCallback(onKeyboardStatus);
     Control.setTechnicsStatusCallback(onTechnicsStatus);

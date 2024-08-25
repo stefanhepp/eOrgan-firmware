@@ -34,6 +34,3 @@ static const uint8_t PIN_PEDAL_CHOIR = PC0;
 static const uint8_t PIN_PEDAL_SWELL = PC1;
 static const uint8_t PIN_CRESCENDO = PC2;
 
-
-// midi number of lowest key on pedal (great C)
-static const uint8_t LOWEST_NOTE    = 36;
