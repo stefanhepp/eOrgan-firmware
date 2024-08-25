@@ -17,10 +17,8 @@
 
 #include <avrlib.h>
 
-// ledState: bit 0: led on/off; bit 1: blink state; bit 2: blink mode
-#define STATE_LED_ON	0x01
-#define STATE_BLINK_ON	0x02
-#define STATE_BLINK	    0x04
+// ledState: bit 0: blink mode
+#define STATE_BLINK	    0x01
 
 static uint8_t ledState;
 
@@ -28,7 +26,11 @@ static uint16_t ledCount;
 
 void StatusLED::updateIntensity() 
 {
-    OCR1A = (mIntensity << 4) + 5;
+    if (mIntensity == 0) {
+        OCR2B = 0;
+    } else {
+        OCR2B = (mIntensity << 4) + 15;
+    }
 }
 
 void StatusLED::begin(uint8_t intensity)
@@ -39,34 +41,37 @@ void StatusLED::begin(uint8_t intensity)
     mIntensity = intensity;
     updateIntensity();
 
-    // disable output pin, 8-bit PWM
-    TCCR1A = (1<<WGM10);
+    // enable led output, disabled by default
+    pinMode(PIN_LED, OUTPUT);
+    digitalWrite(PIN_LED, LOW);
 
-    // set prescaler to CK/64
-    TCCR1B &= ~(1<<CS12);
-    TCCR1B |= (1<<CS11)|(1<<CS10);
+    // enable OC2B (PD3) output pin (clear on upcount), 8-bit phase-correct PWM
+    TCCR2A = (1<<COM2B1)|(1<<WGM20); 
+
+    // set prescaler to CK/32
+    TCCR2B = (1<<CS21)|(1<<CS20);
 
     // Enable interrupts
-    TIMSK1 |= (1<<OCIE1A)|(1<<TOIE1);
-
-    // enable led output
-    pinMode(PIN_LED, OUTPUT);
+    TIMSK2 |= (1<<TOIE2);
 }
 
 void StatusLED::reset() 
 {
-    mIntensity = 0x0F;
+    mIntensity = 15;
     updateIntensity();
 }
 
 void StatusLED::setMode(LEDMode mode)
 {
     if (mode == LEDModeNormal) {
-    	ledState &= ~(STATE_BLINK|STATE_BLINK_ON);
+    	ledState &= ~(STATE_BLINK);
 	    ledCount = 0;
     } else {
 	    ledState |= STATE_BLINK;
     }
+
+    // Ensure PWM output is on initially
+    TCCR2A |= (1<<COM2B1);
 }
 
 void StatusLED::setIntensity(uint8_t intensity)
@@ -79,34 +84,17 @@ void StatusLED::setIntensity(uint8_t intensity)
 	updateIntensity();
 }
 
-ISR(TIMER1_OVF_vect)
+ISR(TIMER2_OVF_vect)
 {
-    ledState &= ~STATE_LED_ON;
-
     if ( ledState & STATE_BLINK ) {
-        if (ledCount > 400) {
+        ledCount++;
+        if (ledCount > 600) {
             ledCount = 0;
-        } else {
-            ledCount++;
+            // enable PWM output
+            TCCR2A |= (1<<COM2B1);
+        } else if (ledCount > 300) {
+            // disable PWM output
+            TCCR2A &= ~(1<<COM2B1);
         }
-    }
-}
-
-ISR(TIMER1_COMPA_vect) 
-{
-    if ( ledState & STATE_LED_ON ) {
-	
-	    ledState &= ~STATE_LED_ON;
-
-	    if ( ledCount < 200 ) {
-	        digitalWrite(PIN_LED, HIGH);
-	    }
-
-    } else {
-
-	    ledState |= STATE_LED_ON;
-
-	    digitalWrite(PIN_LED, LOW);
-
     }
 }
