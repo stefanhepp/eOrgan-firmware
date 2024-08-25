@@ -205,6 +205,29 @@ class CalibrationParser: public CommandParser
         }
 };
 
+class PedalLEDParser: public CommandParser
+{
+    public:
+        PedalLEDParser() {}
+
+        virtual void printArguments() { 
+            Serial.print("0..15");
+        }
+
+        virtual CmdErrorCode startCommand(const char* cmd) {
+            return CmdErrorCode::CmdNextArgument;
+        }
+
+        virtual CmdErrorCode parseNextArgument(int argNo, const char* arg) {
+            int intensity;
+            if (parseInteger(arg, intensity, 0, 15)) {
+                Control.setPedalLEDIntensity(intensity);
+                return CmdErrorCode::CmdOK;
+            }
+            return CmdErrorCode::CmdInvalidArgument;
+        }
+};
+
 void onKeyboardStatus(uint8_t channel1, uint8_t channel2, bool training)
 {
     if (PrintNextStatus & PRINT_KEYBOARD) {
@@ -285,6 +308,7 @@ void setup()
     Cmdline.addCommand("status", new StatusParser());
     Cmdline.addCommand("channel", new ChannelParser());
     Cmdline.addCommand("calibrate", new CalibrationParser());
+    Cmdline.addCommand("led", new PedalLEDParser());
 
     Control.setKeyboardStatusCallback(onKeyboardStatus);
     Control.setTechnicsStatusCallback(onTechnicsStatus);
