@@ -15,6 +15,7 @@
 class AICalibrationData 
 {
     public:
+        int center;
         int min;
         int max;
 };
@@ -29,10 +30,17 @@ class CalibratedAnalogInput
 {
     private:
         uint8_t mPin;
+        // Maximum output range
         int mRangeMax;
 
+        // Following values are in raw input scale
         int mInputMin;
         int mInputMax;
+        int mCenter;
+
+        // Following values are in output scale
+        int mCenterDeadspot;
+        int mHysteresis;
 
         int mLastValue;
 
@@ -46,6 +54,10 @@ class CalibratedAnalogInput
 
     public:
         explicit CalibratedAnalogInput();
+
+        void setRange(int maxRange);
+
+        void setSensitivy(int hysteresis, int deadspot = 0);
 
         void setCalibrationData(const AICalibrationData &data);
 

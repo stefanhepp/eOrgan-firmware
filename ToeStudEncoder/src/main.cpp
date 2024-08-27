@@ -94,6 +94,8 @@ void onPedalCalibrate(void* payload) {
 void onPedalChange(int value, void* payload) {
     const uint8_t pedal = *((const uint8_t *)payload);
 
+    static uint8_t lastControlValue = 0;
+
     if (SendMode & ToeStudMode::TSM_MIDI) {
         switch (pedal) {
             case PEDAL_CHOIR:
@@ -103,7 +105,12 @@ void onPedalChange(int value, void* payload) {
                 MIDI.sendPitchBend(value * 16, MIDIChannelSwell);
                 break;
             case PEDAL_CRESCENDO:
-                MIDI.sendControlChange(MidiControlChangeNumber::ExpressionController, value >> 4, MIDIChannel);
+                uint8_t control = value >> 4;
+                // since we scale down, only send MIDI message if the change is large enough for a new control value
+                if (control != lastControlValue) { 
+                    MIDI.sendControlChange(MidiControlChangeNumber::ExpressionController, control, MIDIChannel);
+                    lastControlValue = control;
+                }
                 break;
         }
     }

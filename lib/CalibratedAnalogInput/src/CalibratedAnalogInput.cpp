@@ -12,14 +12,27 @@ CalibratedAnalogInput::CalibratedAnalogInput()
 {
     mInputMin = 0;
     mInputMax = 1023;
+    mCenter = 1023/2;
+    mCenterDeadspot = 0;
+    mHysteresis = 1;
     mCalibrating = false;
     mLastValue = center();
+}
+
+void CalibratedAnalogInput::setRange(int maxRange) {
+    mRangeMax = maxRange;
+}
+
+void CalibratedAnalogInput::setSensitivy(int hysteresis, int deadspot) {
+    mHysteresis = hysteresis;
+    mCenterDeadspot = deadspot;
 }
 
 void CalibratedAnalogInput::setCalibrationData(const AICalibrationData &data)
 {
     mInputMin = data.min;
     mInputMax = data.max;
+    mCenter = data.center;
     mCalibrating = false;
 }
 
@@ -27,12 +40,15 @@ void CalibratedAnalogInput::getCalibrationData(AICalibrationData &data) const
 {
     data.min = mInputMin;
     data.max = mInputMax;
+    data.center = mCenter;
 }
 
 void CalibratedAnalogInput::resetCalibration()
 {
     mInputMin = 1023;
     mInputMax = 0;
+    // Center point detected when calibration is started
+    mCenter = analogRead(mPin);
     mCalibrating = true;
 }
 
@@ -60,7 +76,7 @@ int CalibratedAnalogInput::value() const
 
 int CalibratedAnalogInput::center() const
 {
-    return mRangeMax/2;
+    return map(mCenter, mInputMin, mInputMax, 0, mRangeMax);
 }
 
 void CalibratedAnalogInput::begin(uint8_t pin)
@@ -89,12 +105,18 @@ void CalibratedAnalogInput::poll()
         }
     }
 
-    int newValue = map(input, mInputMin, mInputMax, 0, mRangeMax);
+    int mappedValue = map(input, mInputMin, mInputMax, 0, mRangeMax);
 
-    if (newValue != mLastValue) {
-        mLastValue = newValue;
+    int mappedCenter = center();
+    
+    if (abs(mappedValue - mappedCenter) <= mCenterDeadspot) {
+        mappedValue = mappedCenter;
+    }
+
+    if (mappedValue < mLastValue - mHysteresis || mappedValue > mLastValue + mHysteresis) {
+        mLastValue = mappedValue;
         if (mOnChange != nullptr) {
-            mOnChange(newValue, mChangePayload);
+            mOnChange(mappedValue, mChangePayload);
         }
     }
 }
