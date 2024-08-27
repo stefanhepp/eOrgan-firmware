@@ -30,11 +30,12 @@ static MiniMIDI* MIDI = nullptr;
  * Get the number of data bytes for a particular MIDI status byte
  */
 static uint8_t midiMessageLength(uint8_t status) {
-    if (status & 0xF8) {
+    if ((status & 0xF8) == 0xF8) {
         // System Real-time message
         return 0;
     }
-    if (status & 0xF0) {
+    uint8_t opcode = status & 0xF0;
+    if (opcode == 0xF0) {
         if (status == 0xF2) {
             // Song Position Pointer
             return 2;
@@ -50,7 +51,6 @@ static uint8_t midiMessageLength(uint8_t status) {
         // Any other System message is 0 bytes;
         return 0;
     }
-    uint8_t opcode = status & 0xF0;
     if (opcode == 0xC0 || opcode == 0xD0) {
         // Program Change or Channel Pressure
         return 1;

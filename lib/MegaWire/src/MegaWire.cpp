@@ -52,7 +52,7 @@ void MegaWire::requestFrom(uint8_t address, uint8_t quantity, bool stop) {
     RequestSize = quantity;
     BufferPos = 0;
     BufferLength = 0;
-    TWCR |= (1<<TWINt)|(1<<TWSTA)|(1<<TWEN);
+    TWCR |= (1<<TWINT)|(1<<TWSTA)|(1<<TWEN);
 #endif
 }
 

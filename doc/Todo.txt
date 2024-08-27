@@ -24,9 +24,6 @@ o) Bugfixing, Testing
     - Technics Pistons: scanning, I2C reporting
 - Pedal
     - MIDI In (ToeStud) -> MIDI out
-    - MIDI out Pedal
-    - I2C Channel, LED settings
-    - Configuration Switch
 - Toestuds
     - ToeStuds I2C
     - Pedals I2C, MIDI
