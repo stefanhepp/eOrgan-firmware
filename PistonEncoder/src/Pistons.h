@@ -19,7 +19,7 @@ static const uint8_t BITS_PER_KEYBOARD = 24;
 static const uint8_t NUM_BUTTONS = BITS_PER_KEYBOARD * 2;
 
 // Number of ticks for long press, in 6*1.5 us per tick, about 2 seconds.
-static const uint8_t LONG_PRESS_DURATION = 220;
+static const uint8_t LONG_PRESS_DURATION = 120;
 
 class Pistons
 {
@@ -35,9 +35,12 @@ class Pistons
 
         uint8_t getBtnNumber(uint8_t addr, uint8_t pin);
 
+
         uint8_t getLEDNumber(uint8_t addr, uint8_t pin);
 
         uint8_t getBitValue(const uint8_t* array, uint8_t btnNumber);
+
+        void emitButtonPress(uint8_t btn, bool longPress);
 
         void readLine(const uint8_t line);
 

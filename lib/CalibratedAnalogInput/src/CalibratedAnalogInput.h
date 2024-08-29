@@ -36,11 +36,12 @@ class CalibratedAnalogInput
         // Following values are in raw input scale
         int mInputMin;
         int mInputMax;
-        int mCenter;
+        int mInputCenter;
 
         // Following values are in output scale
         int mCenterDeadspot;
         int mHysteresis;
+        int mCenter;
 
         int mLastValue;
 
@@ -55,7 +56,7 @@ class CalibratedAnalogInput
     public:
         explicit CalibratedAnalogInput();
 
-        void setRange(int maxRange);
+        void setRange(int maxRang, int center = -1);
 
         void setSensitivy(int hysteresis, int deadspot = 0);
 

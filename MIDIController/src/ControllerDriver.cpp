@@ -136,11 +136,12 @@ MIDIDivision ControllerDriver::getPistonDivision(Controller controller, uint8_t 
 
         case Controller::MC_Piston_Technics:
             // Lower part of buttons are Pedal buttons
-            if (btnIndex >= CHOIR_PISTON_OFFSET) {
-                btnIndex -= CHOIR_PISTON_OFFSET;
+            if (btnIndex >= PEDAL_PISTON_OFFSET) {
+                btnIndex -= PEDAL_PISTON_OFFSET;
+                return MIDIDivision::MD_Pedal;
+            } else {
+                return MIDIDivision::MD_Choir;
             }
-            return btnIndex < CHOIR_PISTON_OFFSET 
-                   ? MIDIDivision::MD_Pedal : MIDIDivision::MD_Choir;
 
         case Controller::MC_Piston_Keyboard:
             return kbd ? MIDIDivision::MD_Solo : MIDIDivision::MD_Swell;
@@ -153,6 +154,9 @@ MIDIDivision ControllerDriver::getPistonDivision(Controller controller, uint8_t 
 
 void ControllerDriver::readPistons(Controller controller) {
 
+    if (!Wire.available()) {
+        return;
+    }    
     uint8_t queueLength = Wire.read();
 
     while (Wire.available()) {
@@ -340,9 +344,9 @@ void ControllerDriver::setPistonLED(MIDIDivision division, uint8_t piston, bool 
 
     int idx = getPistonLEDIndex(division);
 
-    if (division == MIDIDivision::MD_Choir) {
+    if (division == MIDIDivision::MD_Pedal) {
         // Lower pistons are Pedal pistons, start with offset
-        piston += CHOIR_PISTON_OFFSET;
+        piston += PEDAL_PISTON_OFFSET;
     }
 
     uint8_t state = mPistonLEDState[idx][piston/8];

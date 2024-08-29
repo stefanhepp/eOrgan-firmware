@@ -17,6 +17,7 @@
 uint8_t EEMEM confChannel;
 uint16_t EEMEM confWheelMin;
 uint16_t EEMEM confWheelMax;
+uint16_t EEMEM confWheelCenter;
 
 Settings::Settings()
 {
@@ -43,10 +44,12 @@ void Settings::getWheelSettings(AICalibrationData &data)
 {
     data.min = (int) eeprom_read_word(&confWheelMin);
     data.max = (int) eeprom_read_word(&confWheelMax);
+    data.center = (int) eeprom_read_word(&confWheelCenter);
 }
 
 void Settings::setWheelSettings(const AICalibrationData &data)
 {
     eeprom_write_word(&confWheelMin, (uint16_t) data.min);
     eeprom_write_word(&confWheelMax, (uint16_t) data.max);
+    eeprom_write_word(&confWheelCenter, (uint16_t) data.center);
 }

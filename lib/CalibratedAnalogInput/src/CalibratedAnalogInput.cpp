@@ -12,15 +12,17 @@ CalibratedAnalogInput::CalibratedAnalogInput()
 {
     mInputMin = 0;
     mInputMax = 1023;
-    mCenter = 1023/2;
+    mInputCenter = 1023/2;
     mCenterDeadspot = 0;
     mHysteresis = 1;
+    mCenter = -1;
     mCalibrating = false;
     mLastValue = center();
 }
 
-void CalibratedAnalogInput::setRange(int maxRange) {
+void CalibratedAnalogInput::setRange(int maxRange, int center) {
     mRangeMax = maxRange;
+    mCenter = center;
 }
 
 void CalibratedAnalogInput::setSensitivy(int hysteresis, int deadspot) {
@@ -32,7 +34,7 @@ void CalibratedAnalogInput::setCalibrationData(const AICalibrationData &data)
 {
     mInputMin = data.min;
     mInputMax = data.max;
-    mCenter = data.center;
+    mInputCenter = data.center;
     mCalibrating = false;
 }
 
@@ -40,7 +42,7 @@ void CalibratedAnalogInput::getCalibrationData(AICalibrationData &data) const
 {
     data.min = mInputMin;
     data.max = mInputMax;
-    data.center = mCenter;
+    data.center = mInputCenter;
 }
 
 void CalibratedAnalogInput::resetCalibration()
@@ -48,7 +50,7 @@ void CalibratedAnalogInput::resetCalibration()
     mInputMin = 1023;
     mInputMax = 0;
     // Center point detected when calibration is started
-    mCenter = analogRead(mPin);
+    mInputCenter = analogRead(mPin);
     mCalibrating = true;
 }
 
@@ -76,7 +78,7 @@ int CalibratedAnalogInput::value() const
 
 int CalibratedAnalogInput::center() const
 {
-    return map(mCenter, mInputMin, mInputMax, 0, mRangeMax);
+    return mCenter;
 }
 
 void CalibratedAnalogInput::begin(uint8_t pin)
@@ -105,14 +107,26 @@ void CalibratedAnalogInput::poll()
         }
     }
 
-    int mappedValue = map(input, mInputMin, mInputMax, 0, mRangeMax);
+    int mappedValue;
 
-    int mappedCenter = center();
+    if (mCenter != -1) {
+        // Map input around center point
+        if (input < mInputCenter) {
+            mappedValue = map(input, mInputMin, mInputCenter, 0, mCenter);
+        } else {
+            mappedValue = map(input, mInputCenter, mInputMax, mCenter, mRangeMax);
+        }
+
+        // Center deadspot
+        if (abs(mappedValue - mCenter) <= mCenterDeadspot) {
+            mappedValue = mCenter;
+        }
     
-    if (abs(mappedValue - mappedCenter) <= mCenterDeadspot) {
-        mappedValue = mappedCenter;
+    } else {
+        // Linear mapping to input range
+        mappedValue = map(input, mInputMin, mInputMax, 0, mRangeMax);
     }
-
+    
     if (mappedValue < mLastValue - mHysteresis || mappedValue > mLastValue + mHysteresis) {
         mLastValue = mappedValue;
         if (mOnChange != nullptr) {

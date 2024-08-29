@@ -1,6 +1,5 @@
 o) Implementation
 - Bendwheels: Stop calibration (?)
-- Bendwheels: Calibrate Center point
 - MIDI controller: Piston button events
 - MIDI Controller: Toestud pedal events
 - MIDI Controller: Toestud studs events
@@ -15,14 +14,6 @@ o) Features
 o) Bugfixing, Testing
 - Technics Keyboard
     - Technics Keyboard: scanning keyboard
-    - MIDI In -> MIDI out
-- Technics Pistons
-    - Technics Pistons: scanning, I2C reporting
-- Toestuds
-    - ToeStuds I2C
-    - Pedals I2C, MIDI
-    - I2C settings MIDI/I2C
-    - Calibration
 - Keyboard
     - Keyboard Scanner
     - Training Keyboard

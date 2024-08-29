@@ -131,6 +131,8 @@ void setup() {
 
     wheel.onCalibrating(onWheelCalibrate);
     wheel.onChange(onWheelChange);
+    wheel.setRange(1023, 512);
+    wheel.setSensitivy(1, 2);
     if (settings.hasSettings()) {
         AICalibrationData data;
         settings.getWheelSettings(data);
@@ -147,7 +149,7 @@ void setup() {
 }
 
 void loop() {
-    kbd.poll();
+    //kbd.poll();
     wheel.poll();
 
     // wait for any MIDI messages being sent and add a small gap to resync

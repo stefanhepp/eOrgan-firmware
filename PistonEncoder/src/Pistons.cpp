@@ -93,8 +93,21 @@ void Pistons::begin(uint8_t numKeyboards)
 }
 
 
+void Pistons::emitButtonPress(uint8_t btn, bool longPress) {
+    if (mPressEvent) {
+        if (mNumKeyboards > 1) {
+            // for 2 keyboards, we use 3 bytes per keyboard
+            mPressEvent(btn / BITS_PER_KEYBOARD, 
+                        btn % BITS_PER_KEYBOARD, 
+                        longPress);
+        } else {
+            mPressEvent(0, btn, longPress);
+        }
+    }
+}
+
 void Pistons::readLine(const uint8_t line) {
-    uint8_t in = IO_PORT(PORT_IN);
+    uint8_t in = IO_PIN(PORT_IN);
 
     for (uint8_t i = 0; i < 8; i++) {
         uint8_t btn = getBtnNumber(line, i);
@@ -104,17 +117,16 @@ void Pistons::readLine(const uint8_t line) {
             // Increase counter, to measure duration of button press
             if (mButtons[btn] < 0xFF) {
                 mButtons[btn]++;
+                if (mButtons[btn] > LONG_PRESS_DURATION) {
+                    emitButtonPress(btn, true);
+                    mButtons[btn] = 0xFF;
+                }
             }
         } else {
-            if (mButtons[btn] > 0 && mPressEvent) {
+            if (mButtons[btn] > 0) {
                 // Button was pressed, is now released
-                if (mNumKeyboards > 1) {
-                    // for 2 keyboards, we use 3 bytes per keyboard
-                    mPressEvent(btn / BITS_PER_KEYBOARD, 
-                                btn % BITS_PER_KEYBOARD, 
-                                mButtons[btn] > LONG_PRESS_DURATION);
-                } else {
-                    mPressEvent(0, btn, mButtons[btn] > LONG_PRESS_DURATION);
+                if (mButtons[btn] != 0xFF) {
+                    emitButtonPress(btn, false);
                 }
                 mButtons[btn] = 0;
             }
@@ -146,11 +158,11 @@ void Pistons::poll()
         // select new line
         digitalWrite(PIN_ADDR1, (line     ) & 0x01);
         digitalWrite(PIN_ADDR2, (line >> 1) & 0x01);
-        digitalWrite(PIN_ADDR2, (line >> 2) & 0x01);
+        digitalWrite(PIN_ADDR3, (line >> 2) & 0x01);
 
         writeLEDs(line);
 
-        delayMicroseconds(1500);
+        delayMicroseconds(500);
 
         readLine(line);
     }

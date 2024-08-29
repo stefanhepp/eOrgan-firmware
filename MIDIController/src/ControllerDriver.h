@@ -25,7 +25,7 @@ static const uint8_t MAX_PISTON_LED_DIVISIONS = 3;
 static const uint8_t MAX_PISTON_LED_BYTES = 4;
 
 // Offset of Pedal pistons in choir manual
-static const uint8_t CHOIR_PISTON_OFFSET = 12;
+static const uint8_t PEDAL_PISTON_OFFSET = 12;
 
 class ControllerDriver
 {
