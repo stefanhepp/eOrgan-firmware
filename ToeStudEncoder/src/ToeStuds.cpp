@@ -18,7 +18,7 @@
 
 #include "config.h"
 
-static const uint8_t INPUT_PINS[5] = {PIN_D1, PIN_D2, PIN_D3, PIN_D3, PIN_D5};
+static const uint8_t INPUT_PINS[5] = {PIN_D1, PIN_D2, PIN_D3, PIN_D4, PIN_D5};
 static const uint8_t OUTPUT_PINS[4] = {PIN_L1, PIN_L2, PIN_L3, PIN_L4};
 
 ToeStuds::ToeStuds()
@@ -42,7 +42,7 @@ void ToeStuds::begin()
     uint8_t i;
     for (i = 0; i < 4; i++) {
         pinMode(OUTPUT_PINS[i], OUTPUT);
-        digitalWrite(OUTPUT_PINS[i], LOW);
+        digitalWrite(OUTPUT_PINS[i], HIGH);
     }
     for (i = 0; i < 5; i++) {
         pinMode(INPUT_PINS[i], INPUT_PULLUP);
@@ -59,13 +59,26 @@ void ToeStuds::readLine(const uint8_t line) {
         uint8_t btn = getBtnNumber(line, i);
         uint8_t value = digitalRead(INPUT_PINS[i]);
 
-        if (value && mToeStuds[btn] < 0xFF) {
+        // reading LOW means button is pressed
+        if (!value && mToeStuds[btn] < 0xFF) {
             mToeStuds[btn]++;
+
+            // Send Long button press as soon as timeout is reached
+            if (mToeStuds[btn] > TOESTUD_LONG_PRESS) {
+                mToeStuds[btn] = 0xFF;
+                if (mButtonHandler) {
+                    mButtonHandler(btn, true);
+                }
+            }
         }
-        if (!value && mToeStuds[btn] > 0) {
+        if (value && mToeStuds[btn] > 0) {
             // Button was just released
-            if (mButtonHandler) {
-                mButtonHandler(btn, mToeStuds[btn] > TOESTUD_LONG_PRESS);
+
+            // Send short press on release
+            if (mToeStuds[btn] != 0xFF) {
+                if (mButtonHandler) {
+                    mButtonHandler(btn, false);
+                }
             }
             mToeStuds[btn] = 0;
         }
@@ -77,13 +90,13 @@ void ToeStuds::poll()
 {
     uint8_t line;
 
-    for (line = 0; line < 4; line ++) {
-        digitalWrite(OUTPUT_PINS[line], HIGH);
+    for (line = 0; line < 4; line++) {
+        digitalWrite(OUTPUT_PINS[line], LOW);
 
-        delayMicroseconds(1500);
+        delayMicroseconds(500);
 
         readLine(line);
 
-        digitalWrite(OUTPUT_PINS[line], LOW);
+        digitalWrite(OUTPUT_PINS[line], HIGH);
     }
 }

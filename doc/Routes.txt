@@ -98,7 +98,7 @@ I2C Commands
 - PistonEncoder
   - W: Reset		0x01
   - W: Set LEDs		0x03 <7:kbd|6:0:bitmask4> <bitmask3> <bitmask2> <bitmask1>
-  - R: Read Pistons:    <7:kbd|6:1:btn|0:long> ..
+  - R: Read Pistons:    <length> <7:kbd|6:1:btn|0:long> ..
 
 - ToestudEncoder
   - W: Reset		0x01
@@ -107,7 +107,7 @@ I2C Commands
   - W: Set Mode:        0x04 <mode>
     - mode 0x01: Send I2C
     - mode 0x02: Send MIDI
-  - R: <channel> <pedal1:high> <pedal1:low> <pedal2:high> <pedal2:low> <pedal3:high> <pedal3:low> <7:1 btn|0:long>..
+  - R: <channel> <pedal1:high> <pedal1:low> <pedal2:high> <pedal2:low> <pedal3:high> <pedal3:low> <length> <6:1 btn|0:long>..
 
 - PedalEncodero
   - W: Reset		0x01

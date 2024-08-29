@@ -47,6 +47,16 @@ class ControllerDriver
 
         void requestTransmission(Controller controller, uint8_t length);
 
+        /**
+         * Get the division of a button message.
+         * @param controller The controller that sent the message
+         * @param kbd The keyboard bit of the message
+         * @param btn The button index
+         */
+        MIDIDivision getPistonDivision(Controller controller, uint8_t kbd, uint8_t &btnIndex);
+
+        void readPistons(Controller controller);
+
     public:
         explicit ControllerDriver();
 

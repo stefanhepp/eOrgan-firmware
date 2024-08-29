@@ -122,21 +122,12 @@ void onPedalChange(int value, void* payload) {
 }
 
 void onToeStudPress(uint8_t button, bool longPress) {
-    if (SendMode & ToeStudMode::TSM_MIDI) {
-
-        // TODO send event
-        //MIDI.sendProgramChange(button, MIDIChannel);
-
+    noInterrupts();
+    if (ToeStudBufferLength < BUFFER_SIZE) {
+        ToeStudBuffer[ToeStudBufferLength++] = (button << 1) | longPress;
     }
-
-    if (SendMode & ToeStudMode::TSM_I2C) {
-        noInterrupts();
-        if (ToeStudBufferLength < BUFFER_SIZE) {
-            ToeStudBuffer[ToeStudBufferLength++] = (button << 1) | longPress;
-        }
-        sendIRQ(IRQ_TOESTUDS);
-        interrupts();
-    }
+    sendIRQ(IRQ_TOESTUDS);
+    interrupts();
 }
 
 void i2cReceive(uint8_t length) {
@@ -184,6 +175,7 @@ void i2cRequest()
     }
     clearIRQ(IRQ_PEDALS);
 
+    Wire.write(ToeStudBufferLength);
     for (uint8_t i = 0; i < ToeStudBufferLength; i++) {
         Wire.write(ToeStudBuffer[i]);
     }
@@ -221,7 +213,7 @@ void setup() {
     MIDIChannelSwell = settings.getMIDIChannelSwell();
     MIDIChannelChoir = settings.getMIDIChannelChoir();
 
-    SendMode = settings.getSendMode(ToeStudMode::TSM_MIDI);
+    SendMode = settings.getSendMode(ToeStudMode::TSM_I2C);
 
     MIDI.begin(MIDIChannel);
 

@@ -129,6 +129,49 @@ void ControllerDriver::resetAll()
     Wire.endTransmission();
 }
 
+MIDIDivision ControllerDriver::getPistonDivision(Controller controller, uint8_t kbd, uint8_t &btnIndex) {
+    switch (controller) {
+        case Controller::MC_ToeStud:
+            return MIDIDivision::MD_Control;
+
+        case Controller::MC_Piston_Technics:
+            // Lower part of buttons are Pedal buttons
+            if (btnIndex >= CHOIR_PISTON_OFFSET) {
+                btnIndex -= CHOIR_PISTON_OFFSET;
+            }
+            return btnIndex < CHOIR_PISTON_OFFSET 
+                   ? MIDIDivision::MD_Pedal : MIDIDivision::MD_Choir;
+
+        case Controller::MC_Piston_Keyboard:
+            return kbd ? MIDIDivision::MD_Solo : MIDIDivision::MD_Swell;
+
+        default:
+            // Should never be reached
+            return MIDIDivision::MD_Solo;
+    }
+}
+
+void ControllerDriver::readPistons(Controller controller) {
+
+    uint8_t queueLength = Wire.read();
+
+    while (Wire.available()) {
+        uint8_t btn = Wire.read();
+        if (btn == 0xFF) {
+            break;
+        }
+
+        uint8_t index = (btn & ~(1<<7))>>1;
+        uint8_t kbd = btn & (1<<7);
+        uint8_t longPress = btn & 0x01;
+
+        MIDIDivision division = getPistonDivision(controller, kbd, index);
+
+        if (mPistonPressCallback) {
+            mPistonPressCallback(division, index, longPress > 0);
+        }
+    }
+}
 
 void ControllerDriver::readStatusKeyboard()
 {
@@ -143,18 +186,8 @@ void ControllerDriver::readStatusKeyboard()
         }
     }
     
-    requestTransmission(Controller::MC_Piston_Keyboard, 16);
-    while (Wire.available()) {
-        uint8_t btn = Wire.read();
-
-        MIDIDivision division = (btn & (1<<7)) ? MIDIDivision::MD_Solo : MIDIDivision::MD_Swell;
-        uint8_t index = (btn & ~(1<<7))>>1;
-        uint8_t longPress = btn & 0x01;
-
-        if (mPistonPressCallback) {
-            mPistonPressCallback(division, index, longPress > 0);
-        }
-    }
+    requestTransmission(Controller::MC_Piston_Keyboard, 8);
+    readPistons(Controller::MC_Piston_Keyboard);
 }
 
 void ControllerDriver::readStatusTechnics()
@@ -172,23 +205,8 @@ void ControllerDriver::readStatusTechnics()
         }
     }
     
-    requestTransmission(Controller::MC_Piston_Technics, 16);
-    while (Wire.available()) {
-        uint8_t btn = Wire.read();
-
-        uint8_t index = (btn & ~(1<<7))>>1;
-        MIDIDivision division = index < CHOIR_PISTON_OFFSET 
-                                ? MIDIDivision::MD_Pedal : MIDIDivision::MD_Choir;
-        // Lower part of buttons are Pedal buttons
-        if (index >= CHOIR_PISTON_OFFSET) {
-            index -= CHOIR_PISTON_OFFSET;
-        }
-        uint8_t longPress = btn & 0x01;
-
-        if (mPistonPressCallback) {
-            mPistonPressCallback(division, index, longPress > 0);
-        }
-    }
+    requestTransmission(Controller::MC_Piston_Technics, 8);
+    readPistons(Controller::MC_Piston_Technics);
 }
 
 void ControllerDriver::readStatusPedal()
@@ -203,8 +221,8 @@ void ControllerDriver::readStatusPedal()
         }
     }
     
-    requestTransmission(Controller::MC_ToeStud, 32);
-    if (Wire.available() >= 7) {
+    requestTransmission(Controller::MC_ToeStud, 16);
+    if (Wire.available() >= 8) {
         uint8_t channel    = Wire.read();
         uint8_t pedal1High = Wire.read();
         uint8_t pedal1Low  = Wire.read();
@@ -221,20 +239,7 @@ void ControllerDriver::readStatusPedal()
             mToeStudStatusCallback(channel, pedalCrescendo, pedalSwell, pedalChoir);
         }
 
-        while (Wire.available()) {
-            uint8_t btn = Wire.read();
-            if (btn == 0xFF) {
-                break;
-            }
-
-            uint8_t index = (btn & ~(1<<7))>>1;
-            MIDIDivision division = MIDIDivision::MD_Control;
-            uint8_t longPress = btn & 0x01;
-
-            if (mPistonPressCallback) {
-                mPistonPressCallback(division, index, longPress > 0);
-            }
-        }
+        readPistons(Controller::MC_ToeStud);
     }
 }
 

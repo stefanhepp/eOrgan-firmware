@@ -12,8 +12,8 @@
 
 #include <inttypes.h>
 
-static const uint8_t NUM_TOESTUDS = 20;
-static const uint8_t TOESTUD_LONG_PRESS = 220;
+static const uint8_t NUM_TOESTUDS = 25;
+static const uint8_t TOESTUD_LONG_PRESS = 200;
 
 class ToeStuds
 {

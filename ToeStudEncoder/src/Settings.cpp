@@ -33,13 +33,13 @@ uint8_t Settings::getMIDIChannel()
 
 uint8_t Settings::getMIDIChannelSwell()
 {
-    uint8_t v = eeprom_read_byte(&confChannel);
+    uint8_t v = eeprom_read_byte(&confChannelSwell);
     return (v == 0xFF) ? MIDI_CHANNEL_TOESTUD_SWELL : v;
 }
 
 uint8_t Settings::getMIDIChannelChoir()
 {
-    uint8_t v = eeprom_read_byte(&confChannel);
+    uint8_t v = eeprom_read_byte(&confChannelChoir);
     return (v == 0xFF) ? MIDI_CHANNEL_TOESTUD_CHOIR : v;
 }
 
@@ -70,7 +70,7 @@ void Settings::setCalibrationData(uint8_t pedal, const AICalibrationData &data)
 
 uint8_t Settings::getSendMode(uint8_t defaultMode)
 {
-    uint8_t v = eeprom_read_byte(&confChannel);
+    uint8_t v = eeprom_read_byte(&confMode);
     return (v == 0xFF) ? defaultMode : v;
 }
 
