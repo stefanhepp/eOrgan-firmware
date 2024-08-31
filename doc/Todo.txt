@@ -12,14 +12,12 @@ o) Features
 - Teensy Audio FX-processor
 
 o) Bugfixing, Testing
-- Technics Keyboard
-    - Technics Keyboard: scanning keyboard
 - Keyboard
     - Keyboard Scanner
     - Training Keyboard
-- Keyboard Pistons
-    - Piston I2C cmds
 - MIDI Controller
+    - MIDI In 3
+    - MIDI Out 1,2,3,4
     - Audio In (USB) -> Audio Out (Line)
     - Audio In (Line) -> Audio Out (USB)
 

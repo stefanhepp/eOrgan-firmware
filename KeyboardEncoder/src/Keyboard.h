@@ -31,6 +31,8 @@ class Keyboard
 
         uint8_t mKeyMap[NUM_KEYBOARDS * NUM_LINES * 8];
 
+        uint8_t mKbdStatus[NUM_KEYBOARDS * NUM_LINES];
+
         // callback for key changes
         KeyChangeCallback mKeyChangeCallback;
         LearnCompleteCallback mLearnCompleteCallback;

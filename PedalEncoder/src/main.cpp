@@ -48,7 +48,7 @@ static uint16_t IRQFlags = 0x00;
 
 static inline char getNote( char pedalKey ) 
 {
-    return pedalKey + LOWEST_NOTE;
+    return MIDI_NOTE_C2 + pedalKey;
 }
 
 static void sendIRQ(uint8_t flag)

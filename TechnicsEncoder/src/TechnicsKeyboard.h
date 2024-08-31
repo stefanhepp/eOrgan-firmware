@@ -13,14 +13,18 @@
 
 #include <inttypes.h>
 
+static const int NUM_KEYS = 61;
+
 class TechnicsKeyboard
 {
     private:
 
+        uint8_t mLastKeysState[NUM_KEYS];
+
         // callback for key changes
         void (*mKeyChangeHandler)(uint8_t key, uint8_t velocity);
 
-        uint8_t readData();
+        bool readData(uint8_t &data);
         
     public:
         explicit TechnicsKeyboard();

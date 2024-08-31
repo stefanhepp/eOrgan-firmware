@@ -25,8 +25,5 @@ static const uint8_t PIN_CONFIG      = PIN_PC0;
 static const uint8_t PIN_INTERRUPT   = PIN_PC3;
 static const uint8_t PIN_LED         = PIN_PD3;
 
-// midi number of lowest key on pedal (great C)
-static const uint8_t LOWEST_NOTE    = 36;
-
 #endif
 

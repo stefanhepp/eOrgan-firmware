@@ -15,14 +15,11 @@
 
 #include <avrlib.h>
 
+#include <common_config.h>
+
 #include "config.h"
 
-struct KeyEvent {
-    uint8_t note;
-    uint8_t velocity;
-};
-
-static const uint8_t BUFFER_SIZE = 64;
+static const uint8_t KEY_NOTE_OFF = 0;
 
 TechnicsKeyboard::TechnicsKeyboard() : mKeyChangeHandler(NULL) {
 }
@@ -31,16 +28,31 @@ void TechnicsKeyboard::setHandleKeyChange( void(*handler)(uint8_t note, uint8_t 
     mKeyChangeHandler = handler;
 }
 
-uint8_t TechnicsKeyboard::readData()
+bool TechnicsKeyboard::readData(uint8_t &data)
 {
+    int i;
+
     // Wait for clock to be high
-    while (digitalRead(PIN_CLOCK) == LOW);
+    i = 0;
+    while (digitalRead(PIN_CLOCK) == LOW) {
+        delayMicroseconds(1);
+        i++;
+        // timeout
+        if (i > 1000) { return false; }
+    }
 
-    // Wait for Clock falling edge
-    while (digitalRead(PIN_CLOCK) == HIGH);    
-
+    // Latch in data
+    digitalWrite(PIN_LATCH, LOW);
+    delayMicroseconds(1);
     // Pin B7 is read pin, ignore its data
-    return IO_PORT(PORT_IN) & 0x7F;
+    data = IO_PIN(PORT_IN) & 0x7F;
+    digitalWrite(PIN_LATCH, HIGH);
+
+    // Clock is ~5us low, might be too fast to see.
+    // Just wait for the next clock cycle instead.
+    delayMicroseconds(4);
+
+    return true;
 }
 
 void TechnicsKeyboard::begin()
@@ -50,13 +62,19 @@ void TechnicsKeyboard::begin()
     IO_PORT(PORT_IN) = 0x00;
 
     pinMode(PIN_ENABLE, OUTPUT);
-    pinMode(PIN_LATCH, INPUT);
+    pinMode(PIN_LATCH, OUTPUT);
+    pinMode(PIN_READ, OUTPUT);
+
     pinMode(PIN_CLOCK, INPUT);
 
-    pinMode(PIN_READ, OUTPUT);
     digitalWrite(PIN_READ, LOW);
+    digitalWrite(PIN_LATCH, HIGH);
 
     digitalWrite(PIN_ENABLE, HIGH);
+
+    for (int i = 0; i < NUM_KEYS; i++) {
+        mLastKeysState[i] = KEY_NOTE_OFF;
+    }
 
     delayMicroseconds(1000);
 }
@@ -66,23 +84,34 @@ void TechnicsKeyboard::poll()
     // Start read cycle
     digitalWrite(PIN_READ, HIGH);
 
-    KeyEvent Buffer[BUFFER_SIZE];
-    uint8_t BufferLength = 0;
+    uint8_t pressedKeys[NUM_KEYS];
+
+    for (int note = 0; note < NUM_KEYS; note++) {
+        pressedKeys[note] = KEY_NOTE_OFF;
+    }
 
     // Read data from Technics keyboard controller
-    for (int i = 0; i < BUFFER_SIZE; i++) {
-        uint8_t note = readData();
-        uint8_t velocity = readData();
+    for (int i = 0; i < NUM_KEYS; i++) {
+        uint8_t note;
+        uint8_t velocity;
 
-        // Stop message, no more data
-        if (note == 0x7F && velocity == 0x7F) {
+        if (!readData(note)) {
+            // Read error
+            break;
+        }
+        if (!readData(velocity)) {
+            // Read error
             break;
         }
 
-        if (BufferLength < BUFFER_SIZE) {
-            Buffer[BufferLength].note = note;
-            Buffer[BufferLength].velocity = velocity;
-            BufferLength++;
+        // Stop message, no more data
+        if (note == 126 && velocity == 126) {
+            break;
+        }
+
+        // Got a pressed key
+        if (note < NUM_KEYS) {
+            pressedKeys[note] = velocity;
         }
     }
 
@@ -91,8 +120,14 @@ void TechnicsKeyboard::poll()
 
     // Process all received events
     if (mKeyChangeHandler) {
-        for (uint8_t i = 0; i < BufferLength; i++) {
-            mKeyChangeHandler(Buffer[i].note, Buffer[i].velocity);
+        for (int note = 0; note < NUM_KEYS; note++) {
+            // Check for changes, trigger handler on change.
+            if (pressedKeys[note] != mLastKeysState[note]) {
+                // Note: if note is no longer pressed, then its new state is 0 (NOTE_OFF).
+                mKeyChangeHandler(MIDI_NOTE_C2 + note, pressedKeys[note]);
+            }
+
+            mLastKeysState[note] = pressedKeys[note];
         }
     }
 }

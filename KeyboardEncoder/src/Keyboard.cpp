@@ -20,8 +20,6 @@
 
 #include "config.h"
 
-static uint8_t kbdStatus[NUM_KEYBOARDS * NUM_LINES];
-
 static uint8_t EEMEM eeKeyMap[NUM_KEYBOARDS * NUM_LINES];
 
 void Keyboard::setHandleKeyChange( KeyChangeCallback callback ) {
@@ -74,7 +72,7 @@ void Keyboard::begin()
     digitalWrite(PIN_EN2, LOW);
 
     for (i = 0; i < NUM_KEYBOARDS * NUM_LINES; i++) {
-        kbdStatus[i] = 0x00;
+        mKbdStatus[i] = 0x00;
     }
 
     loadKeyMap();
@@ -107,8 +105,8 @@ void Keyboard::learnNextKey(const uint8_t kbd, const uint8_t key) {
 }
 
 void Keyboard::readLine(const uint8_t kbd, const uint8_t line) {
-    uint8_t idx = kbd * NUM_KEYBOARDS + line;
-    uint8_t oldStatus = kbdStatus[idx];
+    uint8_t idx = kbd * NUM_LINES + line;
+    uint8_t oldStatus = mKbdStatus[idx];
 
     // Select line
     digitalWrite(PIN_S0, (line & 0x01) > 0 ? HIGH : LOW);
@@ -141,7 +139,7 @@ void Keyboard::readLine(const uint8_t kbd, const uint8_t line) {
         }
     } 
 
-    kbdStatus[idx] = input;
+    mKbdStatus[idx] = input;
 }
 
 void Keyboard::poll()

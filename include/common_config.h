@@ -69,6 +69,9 @@ static const int NUM_MIDI_PORTS = 10;
  * Various Constants
  * ============================================================== */
 
+// MIDI note for lowest note on organ divisions: C2 (great C)
+static const uint8_t MIDI_NOTE_C2 = 36;
+
 // Maximum number of pistons in a division
 static const uint8_t MAX_PISTONS = 26;
 
