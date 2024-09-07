@@ -13,6 +13,10 @@
 			"path": "lib"
 		},
 		{
+			"name": "LEDController",
+			"path": "LEDController"
+		},
+		{
 			"name": "KeyboardEncoder",
 			"path": "KeyboardEncoder"
 		},
