@@ -274,20 +274,23 @@ class ToeStudModeParser: public CommandParser
         }
 };
 
-void onKeyboardStatus(uint8_t channel1, uint8_t channel2, bool training)
+void onKeyboardStatus(uint8_t channel1, uint8_t channel2, bool training, uint8_t lastKey)
 {
     if (PrintNextStatus & PRINT_KEYBOARD || PrintI2C & PRINT_KEYBOARD) {
         PrintNextStatus &= ~PRINT_KEYBOARD;
         Serial.printf("Keyboard: chan1=%d chan2=%d", channel1, channel2);
         if (training) {
-            Serial.print(" training");
+            Serial.printf(" training; learned %hhu", lastKey);
         }
         Serial.println();
     }
 
     if (training & !KeyboardIsLearning) {
         Serial.println("Keyboard: training started!");
-    }    
+    }
+    if (training) {
+        Serial.printf("Keyboard: learned %hhu\n", lastKey);
+    }
     if (!training & KeyboardIsLearning) {
         Serial.println("Keyboard: training complete!");
     }

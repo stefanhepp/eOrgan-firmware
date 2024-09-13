@@ -94,7 +94,7 @@ void onKeyChange(uint8_t kbd, uint8_t note, uint8_t velocity) {
     }
 }
 
-void onLearnComplete(uint8_t kbd) {
+void onLearnComplete(uint8_t kbd, uint8_t key) {
     sendIRQ(IRQ_LEARN);
 }
 
@@ -127,7 +127,15 @@ void i2cReceive(uint8_t length) {
 void i2cRequest() {
     Wire.write(MIDIChannel[0]);
     Wire.write(MIDIChannel[1]);
-    Wire.write(kbd.isLearning());
+    if (kbd.isLearning()) {
+        if (kbd.lastLearnedKey() != 0) {
+            Wire.write(kbd.lastLearnedKey());
+        } else {
+            Wire.write(0xFF);
+        }
+    } else {
+        Wire.write((uint8_t)0x00);
+    }
     clearIRQ(IRQ_LEARN);
 }
 

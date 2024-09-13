@@ -20,9 +20,9 @@
 
 
 // MIDI Devices
-MIDI_CREATE_INSTANCE(HardwareSerial, Serial5,    MIDI1);
+MIDI_CREATE_INSTANCE(HardwareSerial, Serial7,    MIDI1);
 MIDI_CREATE_INSTANCE(HardwareSerial, Serial1,    MIDI2);
-MIDI_CREATE_INSTANCE(HardwareSerial, Serial7,    MIDI3);
+MIDI_CREATE_INSTANCE(HardwareSerial, Serial5,    MIDI3);
 MIDI_CREATE_INSTANCE(HardwareSerial, Serial4,    MIDI4);
 // TXD8 is not connected
 MIDI_CREATE_INSTANCE(HardwareSerial, Serial8,    MIDIPedal);
@@ -38,12 +38,17 @@ static MIDIRouter* Router;
 
 template<MIDIPort inPort>
 void processMIDIMessage(const MidiMessage &msg) {
-    Router->routeMessage(inPort, msg);
+    // Construct a new message, set the length field. as it is
+    // not set in the 5.0.2 MIDI library version.
+    MidiMessage fixedMsg(msg);
+    Router->setMessageLength(fixedMsg);
+
+    Router->routeMessage(inPort, fixedMsg);
 }
 
 template<MIDIPort inPort>
 void processMIDIError(int8_t error) {
-    //Serial.printf("MIDI Error %hhu: %hhd\n", inPort, error);
+    Serial.printf("MIDI Error %hhu: %hhd\n", inPort, error);
 }
 
 MIDIRouter::MIDIRouter()
@@ -56,6 +61,52 @@ void MIDIRouter::echoMIDIMessages(bool enabled) {
     mEchoMIDI = enabled;
 }
 
+void MIDIRouter::setMessageLength(MidiMessage &msg) const {
+    using namespace midi;
+
+    switch (msg.type) {
+            // 1 byte messages
+            case Start:
+            case Continue:
+            case Stop:
+            case Clock:
+            case Tick:
+            case ActiveSensing:
+            case SystemReset:
+            case TuneRequest:
+                msg.length = 1;
+                break;
+
+            // 2 bytes messages
+            case ProgramChange:
+            case AfterTouchChannel:
+            case TimeCodeQuarterFrame:
+            case SongSelect:
+                msg.length = 2;
+                break;
+
+            // 3 bytes messages
+            case NoteOn:
+            case NoteOff:
+            case ControlChange:
+            case PitchBend:
+            case AfterTouchPoly:
+            case SongPosition:
+                msg.length = 3;
+                break;
+
+            case SystemExclusiveStart:
+            case SystemExclusiveEnd:
+                // The message can be any length
+                // between 3 and MidiMessage::sSysExMaxSize bytes
+
+                break;
+            case InvalidType:
+            default:
+                break;
+    }
+}
+
 void MIDIRouter::printNote(int note) const {
     Serial.printf("N%d", note);
 }
@@ -65,10 +116,16 @@ void MIDIRouter::printMessage(const MidiMessage &msg) const {
         // Channel message 
         Serial.printf("C%hhu ", msg.channel);
     }
+    
     int pitch = 0;
+    uint16_t pitchAbs = 0;
+
     switch (msg.type) {
         case midi::MidiType::InvalidType:
             Serial.println("Invalid");
+            break;
+        case midi::MidiType::SystemExclusive:
+            Serial.print("SysEx");
             break;
         case midi::MidiType::NoteOn:
             Serial.print("NoteOn ");
@@ -95,7 +152,8 @@ void MIDIRouter::printMessage(const MidiMessage &msg) const {
             Serial.printf("Channel Aftertouch V%hhu\n", msg.data1);
             break;
         case midi::MidiType::PitchBend:
-            pitch = (((int)(msg.data1)<<8)|(int)msg.data2) - 0x2000;
+            pitchAbs = (((uint16_t)msg.data2)<<7) | ((uint16_t)msg.data1);
+            pitch = pitchAbs - 0x2000;
             Serial.printf("Bend %d\n", pitch);
             break;
         default:
@@ -214,13 +272,13 @@ void MIDIRouter::routeMessage(MIDIPort inPort, const MidiMessage &msg)
         printMessage(msg);
         Serial.print(" ->");
     }
-
+    if (inPort != MIDIPort::MP_Pedal) {
     forwardMessage(inPort, MIDIPort::MP_MIDI1, msg, echo);
     forwardMessage(inPort, MIDIPort::MP_MIDI2, msg, echo);
     forwardMessage(inPort, MIDIPort::MP_MIDI3, msg, echo);
     forwardMessage(inPort, MIDIPort::MP_MIDI4, msg, echo);
     forwardMessage(inPort, MIDIPort::MP_MIDI_USB, msg, echo);
-
+    }
     if (echo) {
         Serial.println();
     }

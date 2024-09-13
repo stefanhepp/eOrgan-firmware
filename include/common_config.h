@@ -38,10 +38,9 @@ enum Controller : uint8_t
     MC_ToeStud         = 0x52,
     MC_Pedal           = 0x53,
     MC_Panel           = 0x54,
-    MC_PowerControl    = 0x55,
+    MC_LEDController   = 0x55,
     MC_Piston_Keyboard = 0x5A,
     MC_Piston_Technics = 0x5B,
-    MC_LEDController   = 0x60
 };
 
 enum MIDIPort : uint8_t

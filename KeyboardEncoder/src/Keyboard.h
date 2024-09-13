@@ -20,7 +20,7 @@ static const uint8_t NUM_LINES = 8;
 static const uint8_t NUM_KEYS = 61;
 
 using KeyChangeCallback     = void(*)(uint8_t kbd, uint8_t note, uint8_t velocity);
-using LearnCompleteCallback = void(*)(uint8_t kbd);
+using LearnCompleteCallback = void(*)(uint8_t kbd, uint8_t key);
 
 class Keyboard
 {
@@ -45,7 +45,7 @@ class Keyboard
 
         void readLine(const uint8_t kbd, const uint8_t line);
     public:
-        explicit Keyboard() : mLearning(0xFF), mKeyChangeCallback(NULL), mLearnCompleteCallback(NULL) {}
+        explicit Keyboard();
 
         void setHandleKeyChange(KeyChangeCallback callback);
 
@@ -56,9 +56,11 @@ class Keyboard
          **/
         void begin();
 
-        bool isLearning() const { return mLearning != 0xFF; }
+        bool isLearning() const;
 
         void startLearning(uint8_t kbd);
+
+        uint8_t lastLearnedKey() const;
 
         /** 
          * poll input ports for changes, call handler on changed notes.

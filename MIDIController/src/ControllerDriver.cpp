@@ -83,10 +83,10 @@ void ControllerDriver::selectController(Controller controller)
         case Controller::MC_Panel:
             MP.selectChannel(0);
             break;
-        case Controller::MC_PowerControl:
+        case Controller::MC_LEDController:
             // On StopLeft port
             MP.selectChannel(2);
-            break;
+            break;            
     }
 }
 
@@ -156,8 +156,9 @@ void ControllerDriver::readPistons(Controller controller) {
 
     if (!Wire.available()) {
         return;
-    }    
-    uint8_t queueLength = Wire.read();
+    }
+    // First byte is queue length; ignore
+    (void) Wire.read();
 
     while (Wire.available()) {
         uint8_t btn = Wire.read();
@@ -183,10 +184,11 @@ void ControllerDriver::readStatusKeyboard()
     if (Wire.available() >= 3) {
         uint8_t channel1 = Wire.read();
         uint8_t channel2 = Wire.read();
-        uint8_t training = Wire.read();
+        uint8_t trainedKey  = Wire.read();
 
         if (mKeyboardStatusCallback) {
-            mKeyboardStatusCallback(channel1, channel2, training > 0);
+            mKeyboardStatusCallback(channel1, channel2, trainedKey > 0,
+                                    trainedKey != 0xFF ? trainedKey : 0);
         }
     }
     

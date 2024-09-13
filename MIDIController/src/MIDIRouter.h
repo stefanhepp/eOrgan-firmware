@@ -51,6 +51,11 @@ class MIDIRouter
 
         void echoMIDIMessages(bool enable);
 
+        /**
+         * Helper function to set message length
+         */
+        void setMessageLength(MidiMessage &msg) const;
+
         void resetRoutes();
 
         // TODO enable/disable routes

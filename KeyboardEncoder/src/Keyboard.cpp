@@ -20,7 +20,21 @@
 
 #include "config.h"
 
-static uint8_t EEMEM eeKeyMap[NUM_KEYBOARDS * NUM_LINES];
+static uint8_t EEMEM eeKeyMap[NUM_KEYBOARDS * NUM_LINES * 8];
+
+static int mapIndex(uint8_t kbd, uint8_t key) {
+    return kbd * NUM_LINES * 8 + key;
+}
+
+static const uint8_t NOT_LEARNING = 0xFF;
+
+ Keyboard::Keyboard() 
+ : mLearning(NOT_LEARNING), 
+   mLearnNextNote(0),
+   mKeyChangeCallback(NULL), 
+   mLearnCompleteCallback(NULL)
+ {
+ }
 
 void Keyboard::setHandleKeyChange( KeyChangeCallback callback ) {
     mKeyChangeCallback = callback;
@@ -91,16 +105,29 @@ void Keyboard::learnNextKey(const uint8_t kbd, const uint8_t key) {
     }
 
     // The input key for note 'mLearnNextKey' is 'key'..
-    mKeyMap[key] = mLearnNextNote;
+    mKeyMap[mapIndex(kbd, key)] = mLearnNextNote;
 
     mCurrentInput = key;
+    if (mLearnCompleteCallback) {
+        mLearnCompleteCallback(mLearning, mLearnNextNote);
+    }
+
     mLearnNextNote++;
-    if (mLearnNextNote >= NUM_KEYS) {
+    if (mLearnNextNote >= LOWEST_NOTE + NUM_KEYS) {
         storeKeyMap();
-        if (mLearnCompleteCallback) {
-            mLearnCompleteCallback(mLearning);
-        }
-        mLearning = 0xFF;
+        mLearning = NOT_LEARNING;
+    }
+}
+
+bool Keyboard::isLearning() const {
+    return mLearning != NOT_LEARNING;
+}
+
+uint8_t Keyboard::lastLearnedKey() const {
+    if (mLearnNextNote > LOWEST_NOTE) {
+        return mLearnNextNote - 1;
+    } else {
+        return 0;
     }
 }
 
@@ -108,13 +135,13 @@ void Keyboard::readLine(const uint8_t kbd, const uint8_t line) {
     uint8_t idx = kbd * NUM_LINES + line;
     uint8_t oldStatus = mKbdStatus[idx];
 
-    // Select line
-    digitalWrite(PIN_S0, (line & 0x01) > 0 ? HIGH : LOW);
-    digitalWrite(PIN_S1, (line & 0x02) > 0 ? HIGH : LOW);
-    digitalWrite(PIN_S2, (line & 0x04) > 0 ? HIGH : LOW);
+    // Select line; Sn pins are inverted
+    digitalWrite(PIN_S0, (line & 0x01) > 0 ? LOW : HIGH);
+    digitalWrite(PIN_S1, (line & 0x02) > 0 ? LOW : HIGH);
+    digitalWrite(PIN_S2, (line & 0x04) > 0 ? LOW : HIGH);
 
     // wait for response
-    delayMicroseconds(50);
+    delayMicroseconds(25);
 
     // read status from current line
     char input = IO_PIN(PORT_IN);
@@ -122,22 +149,22 @@ void Keyboard::readLine(const uint8_t kbd, const uint8_t line) {
     for (uint8_t i = 0; i < 8; i++) {
         uint8_t key = line * 8 + i;
 
-        if ( (input & (1<<i)) && !(oldStatus & (1<<i)) ) {
-            // Key was pressed
+        if ( ( !(input & (1<<i))) && (oldStatus & (1<<i)) ) {
+            // Key was pressed (input low)
             if (mLearning == kbd) {
                 learnNextKey(kbd, key);         
             } else {
-                mKeyChangeCallback(kbd, mKeyMap[key], KEY_VELOCITY);
+                mKeyChangeCallback(kbd, mKeyMap[mapIndex(kbd, key)], KEY_VELOCITY);
             }
-        } else if ( !(input & (1<<i)) && (oldStatus & (1<<i)) ) {
+        } else if ( (input & (1<<i)) && !(oldStatus & (1<<i)) ) {
             // Key was released
             if (mLearning == kbd) {
                 // ignored
             } else {
-                mKeyChangeCallback(kbd, mKeyMap[key], 0);
+                mKeyChangeCallback(kbd, mKeyMap[mapIndex(kbd, key)], 0);
             }
         }
-    } 
+    }
 
     mKbdStatus[idx] = input;
 }
