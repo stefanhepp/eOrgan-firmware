@@ -17,7 +17,7 @@
 MegaWire Wire;
 
 Settings   settings;
-StatusLED  led;
+LEDDriver  led;
 
 // Last read value from button inputs
 static uint8_t ButtonStatus = 0x00;
@@ -40,20 +40,22 @@ static void clearIRQ(uint8_t flag)
     }
 }
 
-static void updateLEDIntensity(uint8_t intensity) {
-    led.setIntensity(intensity);
-    settings.setLEDIntensity(intensity);
+static void updateLEDIntensity(int index, uint8_t intensity) {
+    led.setIntensity(index, intensity);
+    settings.setLEDIntensity(index, intensity);
 }
 
 static void resetEncoder(void)
 {
     led.reset();
-    settings.setLEDIntensity(led.getIntensity());
+    for (int i = 0; i < 7; i++) {
+        updateLEDIntensity(i, 0);
+    }
 }
 
 void i2cReceive(uint8_t length) {
     uint8_t cmd = Wire.read();
-    uint8_t value;
+    uint8_t ledIndex;
 
     switch (cmd) {
         case I2C_CMD_RESET:
@@ -61,8 +63,22 @@ void i2cReceive(uint8_t length) {
             break;
         case I2C_CMD_LED_INTENSITY:
             if (Wire.available()) {
-                value = Wire.read();
-                updateLEDIntensity(value);
+                ledIndex = Wire.read();
+                switch (ledIndex) {
+                    case 0:
+                        updateLEDIntensity(0, Wire.read());
+                        updateLEDIntensity(1, Wire.read());
+                        updateLEDIntensity(2, Wire.read());
+                        break;
+                    case 1:
+                        updateLEDIntensity(3, Wire.read());
+                        updateLEDIntensity(4, Wire.read());
+                        updateLEDIntensity(5, Wire.read());
+                        break;
+                    case 2:
+                        updateLEDIntensity(6, Wire.read());
+                        break;
+                }
             }
             break;
     }
@@ -109,7 +125,10 @@ void setup() {
     IO_PORT(PORT_LED) = 0x00;
     IO_DDR(PORT_LED) = 0xFF;
 
-    led.begin(settings.getLEDIntensity());
+    led.begin();
+    for (int i = 0; i < NUM_LEDS; i++) {
+        led.setIntensity(i, settings.getLEDIntensity(i));
+    }
 
     Wire.onReceive(i2cReceive);
     Wire.onRequest(i2cRequest);
@@ -124,4 +143,14 @@ void loop() {
     updateButton(2, btns & (1<<BTN3));
     updateButton(3, btns & (1<<BTN4));
     updateButton(4, btns & (1<<BTN5));
+
+    led.updateLEDs();
+
+    digitalWrite(PIN_LED1_R, led.getLEDStatus(0));
+    digitalWrite(PIN_LED1_G, led.getLEDStatus(1));
+    digitalWrite(PIN_LED1_B, led.getLEDStatus(2));
+    digitalWrite(PIN_LED2_R, led.getLEDStatus(3));
+    digitalWrite(PIN_LED2_G, led.getLEDStatus(4));
+    digitalWrite(PIN_LED2_B, led.getLEDStatus(5));
+    digitalWrite(PIN_LED3,   led.getLEDStatus(6));
 }

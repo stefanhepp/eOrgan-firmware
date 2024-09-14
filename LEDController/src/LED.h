@@ -1,8 +1,8 @@
 /*
- * @project     Midi Pedalboard
+ * @project     LED Controller
  * @author      Stefan Hepp, stefan@stefant.org
  *
- * LED intensity and mode interface.
+ * RGB LED driver.
  *
  * Copyright 2024 Stefan Hepp
  * License: GPL v3
@@ -13,35 +13,31 @@
 
 #include <inttypes.h>
 
-enum LEDMode {
-    LEDModeNormal = 0,
-    LEDModeBlink  = 1,
-};
+static const uint8_t NUM_LEDS = 7;
 
-class StatusLED {
+class LEDDriver {
     private:
-        uint8_t mIntensity;
+        uint8_t mIntensity[NUM_LEDS];
 
-        void updateIntensity();
+        uint8_t mPWMCounter;
 
     public:
-        static const uint8_t MAX_INTENSITY = 0x0F;
-
-        explicit StatusLED() : mIntensity(0) {}
+        explicit LEDDriver();
         
-        uint8_t getIntensity() const { return mIntensity; }
+        uint8_t getIntensity(int index) const { return mIntensity[index]; }
 
-        void setIntensity(uint8_t intensity);
+        void setIntensity(int index, uint8_t intensity);
 
         /**
          * Initialize all input ports and routines.
          **/
-        void begin(uint8_t intensity);
+        void begin();
 
         void reset();
 
-        void setMode(LEDMode mode);
+        void updateLEDs();
 
+        uint8_t getLEDStatus(int index) { return mIntensity[index] > 0 && mPWMCounter <= mIntensity[index] ? HIGH : LOW; }
 };
 
 #endif
