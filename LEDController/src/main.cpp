@@ -17,10 +17,13 @@
 MegaWire Wire;
 
 Settings   settings;
-LEDDriver  led;
+LEDDriver  LEDs;
 
 // Last read value from button inputs
-static uint8_t ButtonStatus = 0x00;
+static uint8_t ButtonStatus    = 0x00;
+static uint8_t LastButtonState = 0x00;
+
+static uint9_t LEDEnabled[3];
 
 static const uint8_t IRQ_BUTTONS = 0;
 
@@ -29,25 +32,25 @@ static uint16_t IRQFlags = 0x00;
 static void sendIRQ(uint8_t flag)
 {
     IRQFlags |= (1<<flag);
-    digitalWrite(PIN_INTERRUPT, HIGH);
+
+    // Pin will be updated in loop()
 }
 
 static void clearIRQ(uint8_t flag)
 {
     IRQFlags &= ~(1<<flag);
-    if (IRQFlags == 0x00) {
-        digitalWrite(PIN_INTERRUPT, LOW);
-    }
+
+    // Pin will be updated in loop()
 }
 
 static void updateLEDIntensity(int index, uint8_t intensity) {
-    led.setIntensity(index, intensity);
+    LEDs.setIntensity(index, intensity);
     settings.setLEDIntensity(index, intensity);
 }
 
 static void resetEncoder(void)
 {
-    led.reset();
+    LEDs.reset();
     for (int i = 0; i < 7; i++) {
         updateLEDIntensity(i, 0);
     }
@@ -66,16 +69,19 @@ void i2cReceive(uint8_t length) {
                 ledIndex = Wire.read();
                 switch (ledIndex) {
                     case 0:
+                        // LED1 RGB
                         updateLEDIntensity(0, Wire.read());
                         updateLEDIntensity(1, Wire.read());
                         updateLEDIntensity(2, Wire.read());
                         break;
                     case 1:
+                        // LED2 RGB
                         updateLEDIntensity(3, Wire.read());
                         updateLEDIntensity(4, Wire.read());
                         updateLEDIntensity(5, Wire.read());
                         break;
                     case 2:
+                        // LED3
                         updateLEDIntensity(6, Wire.read());
                         break;
                 }
@@ -95,16 +101,28 @@ void i2cRequest() {
 
 void updateButton(int index, uint8_t value) {
     if (value) {
-        if ((ButtonStatus & (1<<index)) == 0) {
+        if ((LastButtonState & (1<<index)) == 0) {
+            LastButtonState |= (1<<index);            
             ButtonStatus |= (1<<index);
             sendIRQ(IRQ_BUTTONS);
         }
     } else {
         // Clear button, except button 5 (cleared on I2C read)
-        if ((ButtonStatus & (1<<index)) > 0 && index < 4) {
-            ButtonStatus &= ~(1<<index);
-            sendIRQ(IRQ_BUTTONS);
+        if ((LastButtonState & (1<<index)) > 0) {
+            LastButtonState &= ~(1<<index);
+            // Switch buttons are updated here, push buttons are cleared on I2C read
+            if (index < 4) {
+                ButtonStatus &= ~(1<<index);
+                sendIRQ(IRQ_BUTTONS);
+            }
         }
+    }
+
+    // Button 0 toggles LED on/off
+    if (index == 0) {
+        LEDEnabled[0] = value;
+        LEDEnabled[1] = value;
+        LEDEnabled[2] = value;
     }
 }
 
@@ -125,9 +143,13 @@ void setup() {
     IO_PORT(PORT_LED) = 0x00;
     IO_DDR(PORT_LED) = 0xFF;
 
-    led.begin();
+    for (int i = 0; i < 3; i++) {
+        LEDEnabled[i] = 0;
+    }
+
+    LEDs.begin();
     for (int i = 0; i < NUM_LEDS; i++) {
-        led.setIntensity(i, settings.getLEDIntensity(i));
+        LEDs.setIntensity(i, settings.getLEDIntensity(i));
     }
 
     Wire.onReceive(i2cReceive);
@@ -144,13 +166,25 @@ void loop() {
     updateButton(3, btns & (1<<BTN4));
     updateButton(4, btns & (1<<BTN5));
 
-    led.updateLEDs();
+    LEDs.updateLEDs();
 
-    digitalWrite(PIN_LED1_R, led.getLEDStatus(0));
-    digitalWrite(PIN_LED1_G, led.getLEDStatus(1));
-    digitalWrite(PIN_LED1_B, led.getLEDStatus(2));
-    digitalWrite(PIN_LED2_R, led.getLEDStatus(3));
-    digitalWrite(PIN_LED2_G, led.getLEDStatus(4));
-    digitalWrite(PIN_LED2_B, led.getLEDStatus(5));
-    digitalWrite(PIN_LED3,   led.getLEDStatus(6));
+    uint8_t leds = 0x00;
+
+    leds |= (IRQFlags > 0) ? (1<<PIN_INTERRUPT) : 0;
+
+    if (LEDEnabled[0]) {
+        leds |= LEDs.getLEDStatus(0) ? (1<<PIN_LED1_R) : 0;
+        leds |= LEDs.getLEDStatus(1) ? (1<<PIN_LED1_G) : 0;
+        leds |= LEDs.getLEDStatus(2) ? (1<<PIN_LED1_B) : 0;
+    }
+    if (LEDEnabled[1]) {
+        leds |= LEDs.getLEDStatus(3) ? (1<<PIN_LED2_R) : 0;
+        leds |= LEDs.getLEDStatus(4) ? (1<<PIN_LED2_G) : 0;
+        leds |= LEDs.getLEDStatus(5) ? (1<<PIN_LED2_B) : 0;
+    }
+    if (LEDEnabled[2]) {
+        leds |= LEDs.getLEDStatus(6) ? (1<<PIN_LED3)   : 0;
+    }
+
+    IO_PORT(PORT_LED) = leds;
 }

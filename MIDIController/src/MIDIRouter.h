@@ -24,6 +24,13 @@ struct RouteSettings {
 
 typedef midi::Message<midi::DefaultSettings::SysExMaxSize> MidiMessage;
 
+/**
+ * Print the name of the note into the output string.
+ * 
+ * @param string Output null-terminated name of the note, must be at least 4 characters long.
+ */
+void noteToString(int note, char* string);
+
 class MIDIRouter
 {
     private:

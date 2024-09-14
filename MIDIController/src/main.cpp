@@ -218,7 +218,7 @@ class PedalLEDParser: public CommandParser
         PedalLEDParser() {}
 
         virtual void printArguments() { 
-            Serial.print("0..15");
+            Serial.print("led 0..15");
         }
 
         virtual CmdErrorCode startCommand(const char* cmd) {
@@ -227,9 +227,67 @@ class PedalLEDParser: public CommandParser
 
         virtual CmdErrorCode parseNextArgument(int argNo, const char* arg) {
             int intensity;
-            if (parseInteger(arg, intensity, 0, 15)) {
-                Control.setPedalLEDIntensity(intensity);
-                return CmdErrorCode::CmdOK;
+            if (argNo == 0) {
+                if (strcmp(arg, "led") == 0) {
+                    return CmdErrorCode::CmdNextArgument;
+                }
+            }
+            if (argNo == 1) {
+                // in 'led' command
+                if (parseInteger(arg, intensity, 0, 15)) {
+                    Control.setPedalLEDIntensity(intensity);
+                    return CmdErrorCode::CmdOK;
+                }
+            }
+            return CmdErrorCode::CmdInvalidArgument;
+        }
+};
+
+class LEDControlParser: public CommandParser
+{
+    private:
+        int mLED;
+        uint8_t mValues[3];
+
+    public:
+        LEDControlParser() {}
+
+        virtual void printArguments() { 
+            Serial.print("led 0..255 | rgb1|rbg2 <R> <G> <B>");
+        }
+
+        virtual CmdErrorCode startCommand(const char* cmd) {
+            return CmdErrorCode::CmdNextArgument;
+        }
+
+        virtual CmdErrorCode parseNextArgument(int argNo, const char* arg) {
+            int intensity;
+            if (argNo == 0) {
+                if (strcmp(arg, "rgb1") == 0) {
+                    mLED = 0;
+                    return CmdErrorCode::CmdNextArgument;
+                }
+                if (strcmp(arg, "rgb2") == 0) {
+                    mLED = 1;
+                    return CmdErrorCode::CmdNextArgument;
+                }
+                if (strcmp(arg, "led") == 0) {
+                    mLED = 2;
+                    return CmdErrorCode::CmdNextArgument;
+                }
+            }
+            else if (argNo < 4) {
+                // in 'led' command
+                if (parseInteger(arg, intensity, 0, 255)) {
+                    mValues[argNo - 1] = intensity;
+
+                    if ( (mLED < 2 && argNo == 3) || mLED == 2) {
+                        Control.setLEDControllerRGB(mLED, mValues);
+                        return CmdErrorCode::CmdOK;
+                    }
+
+                    return CmdErrorCode::CmdNextArgument;
+                }
             }
             return CmdErrorCode::CmdInvalidArgument;
         }
@@ -276,11 +334,14 @@ class ToeStudModeParser: public CommandParser
 
 void onKeyboardStatus(uint8_t channel1, uint8_t channel2, bool training, uint8_t lastKey)
 {
+    char noteName[4];
+
     if (PrintNextStatus & PRINT_KEYBOARD || PrintI2C & PRINT_KEYBOARD) {
         PrintNextStatus &= ~PRINT_KEYBOARD;
         Serial.printf("Keyboard: chan1=%d chan2=%d", channel1, channel2);
         if (training) {
-            Serial.printf(" training; learned %hhu", lastKey);
+            noteToString(lastKey, noteName);
+            Serial.printf(" training; learned %s\n", noteName);
         }
         Serial.println();
     }
@@ -289,7 +350,8 @@ void onKeyboardStatus(uint8_t channel1, uint8_t channel2, bool training, uint8_t
         Serial.println("Keyboard: training started!");
     }
     if (training) {
-        Serial.printf("Keyboard: learned %hhu\n", lastKey);
+            noteToString(lastKey, noteName);
+            Serial.printf(" training; learned %s\n", noteName);
     }
     if (!training & KeyboardIsLearning) {
         Serial.println("Keyboard: training complete!");
@@ -344,6 +406,16 @@ void onPistonPress(MIDIDivision division, uint8_t button, bool longPress)
     
 }
 
+void onLEDControllerButton(uint8_t button, uint8_t value) {
+    if (button >= 4 && value) {
+        // Button 4 is a press button
+        Serial.printf("LEDController Button %hhu pressed\n", button);
+    } else {
+        // Buttons 0..3 are switches
+        Serial.printf("LEDController Switch %hhu %s\n", button, value ? "ON" : "OFF");
+    }
+}
+
 void setup()
 {
 #ifdef TEENSY_DEBUG
@@ -354,19 +426,21 @@ void setup()
     halt_cpu(); 
 #endif
 
-    Cmdline.addCommand("debug", new DebugParser());
     Cmdline.addCommand("reset", new ResetParser());
+    Cmdline.addCommand("debug", new DebugParser());
     Cmdline.addCommand("status", new StatusParser());
     Cmdline.addCommand("channel", new ChannelParser());
     Cmdline.addCommand("calibrate", new CalibrationParser());
-    Cmdline.addCommand("led", new PedalLEDParser());
+    Cmdline.addCommand("pedal", new PedalLEDParser());
     Cmdline.addCommand("toestud", new ToeStudModeParser());
+    Cmdline.addCommand("led", new LEDControlParser());
 
     Control.setKeyboardStatusCallback(onKeyboardStatus);
     Control.setTechnicsStatusCallback(onTechnicsStatus);
     Control.setToeStudStatusCallback(onToeStudStatus);
     Control.setPedalStatusCallback(onPedalStatus);
     Control.setPistonPressCallback(onPistonPress);
+    Control.setLEDControllerCallback(onLEDControllerButton);
 
     Cmdline.begin();
     Control.begin();

@@ -14,32 +14,18 @@
 
 #include <common_config.h>
 
-uint8_t EEMEM confChannel;
-
-uint8_t EEMEM confIntensity;
+uint8_t EEMEM confIntensity[8];
 
 Settings::Settings()
 {
 }
 
-uint8_t Settings::getMIDIChannel()
+uint8_t Settings::getLEDIntensity(int index)
 {
-    uint8_t v = eeprom_read_byte(&confChannel);
-    return (v == 0xFF) ? MIDI_CHANNEL_PEDAL : v;
+    return eeprom_read_byte(&confIntensity[index]);
 }
 
-uint8_t Settings::getLEDIntensity()
+void Settings::setLEDIntensity(int index, uint8_t intensity)
 {
-    uint8_t v = eeprom_read_byte(&confIntensity);
-    return (v == 0xFF) ? 0x0F : v;
-}
-
-void Settings::setMIDIChannel(uint8_t channel)
-{
-    eeprom_write_byte(&confChannel, channel);
-}
-
-void Settings::setLEDIntensity(uint8_t intensity)
-{
-    eeprom_write_byte(&confIntensity, intensity);
+    eeprom_write_byte(&confIntensity[index], intensity);
 }

@@ -127,6 +127,10 @@ void ControllerDriver::resetAll()
     beginTransmission(Controller::MC_ToeStud);
     Wire.write(I2C_CMD_RESET);
     Wire.endTransmission();
+
+    beginTransmission(Controller::MC_LEDController);
+    Wire.write(I2C_CMD_RESET);
+    Wire.endTransmission();
 }
 
 MIDIDivision ControllerDriver::getPistonDivision(Controller controller, uint8_t kbd, uint8_t &btnIndex) {
@@ -249,11 +253,37 @@ void ControllerDriver::readStatusPedal()
     }
 }
 
+void ControllerDriver::readStatusStopLeft()
+{
+    requestTransmission(Controller::MC_LEDController, 1);
+    if (Wire.available() >= 1) {
+        uint8_t buttons = Wire.read();
+        
+        for (int i = 0; i < 5; i++) {
+            if ( (buttons & (1<<i)) != (mLEDControlButtons & (1<<i)) ) {
+                if (mLEDControllerCallback) {
+                    mLEDControllerCallback(i, (buttons & (1<<i)) ? 1 : 0);
+                }
+            }
+        }
+
+        // Only lower 4 switches are stored, pushbuttons are only triggerd once
+        mLEDControlButtons = buttons & 0x0F;
+    }
+}
+
+void ControllerDriver::readStatusStopRight()
+{
+    // No controllers here yet
+}
+
 void ControllerDriver::readAll()
 {
     readStatusKeyboard();
     readStatusTechnics();
     readStatusPedal();
+    readStatusStopLeft();
+    readStatusStopRight();
 }
 
 
@@ -389,6 +419,18 @@ void ControllerDriver::setPistonLED(MIDIDivision division, uint8_t piston, bool 
     }
 }
 
+void ControllerDriver::setLEDControllerRGB(int led, const uint8_t *rgb)
+{
+    beginTransmission(Controller::MC_LEDController);
+    Wire.write(I2C_CMD_LED_INTENSITY);    
+    Wire.write((uint8_t)led);
+    int numLeds = (led < 2) ? 3 : 1;
+    for (int i = 0; i < numLeds; i++) {
+        Wire.write(rgb[i]);
+    }
+    Wire.endTransmission();
+}
+
 void ControllerDriver::printIRQStatus()
 {
     uint8_t irqKeyboard  = digitalRead(PIN_INT_KEYBOARD);
@@ -428,5 +470,11 @@ void ControllerDriver::loop()
     }
     if (digitalRead(PIN_INT_TOESTUD) == LOW) {
         readStatusPedal();
+    }
+    if (digitalRead(PIN_INT_STOP_LEFT) == LOW) {
+        readStatusStopLeft();
+    }
+    if (digitalRead(PIN_INT_STOP_RIGHT) == LOW) {
+        readStatusStopRight();
     }
 }

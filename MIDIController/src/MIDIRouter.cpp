@@ -36,6 +36,59 @@ MIDI_CREATE_INSTANCE(HardwareSerial, Serial3,    MIDITechnics);
 // Needed for static callback functions.
 static MIDIRouter* Router;
 
+
+void noteToString(int note, char* string)
+{
+    if (note < 12) {
+        string[0] = '0' + (note/10);
+        string[1] = '0' + (note%10);
+        string[2] = '\0';
+        return;
+    }
+
+    int baseNote = (note - 12) % 12;
+    int octave = (note - 12) / 12;
+
+    switch (baseNote) {
+        case 0:
+            string[0] = 'C'; string[1] = '0' + octave; string[2] = '\0';
+            break;
+        case 1:
+            string[0] = 'C'; string[1] = '#'; string[2] = '0' + octave; string[3] = '\0';
+            break;
+        case 2:
+            string[0] = 'D'; string[1] = '0' + octave; string[2] = '\0';
+            break;
+        case 3:
+            string[0] = 'D'; string[1] = '#'; string[2] = '0' + octave; string[3] = '\0';
+            break;
+        case 4:
+            string[0] = 'E'; string[1] = '0' + octave; string[2] = '\0';
+            break;
+        case 5:
+            string[0] = 'F'; string[1] = '0' + octave; string[2] = '\0';
+            break;
+        case 6:
+            string[0] = 'F'; string[1] = '#'; string[2] = '0' + octave; string[3] = '\0';
+            break;
+        case 7:
+            string[0] = 'G'; string[1] = '0' + octave; string[2] = '\0';
+            break;
+        case 8:
+            string[0] = 'G'; string[1] = '#'; string[2] = '0' + octave; string[3] = '\0';
+            break;
+        case 9:
+            string[0] = 'A'; string[1] = '0' + octave; string[2] = '\0';
+            break;
+        case 10:
+            string[0] = 'A'; string[1] = '#'; string[2] = '0' + octave; string[3] = '\0';
+            break;
+        case 11:
+            string[0] = 'H'; string[1] = '0' + octave; string[2] = '\0';
+            break;
+    }
+}
+
 template<MIDIPort inPort>
 void processMIDIMessage(const MidiMessage &msg) {
     // Construct a new message, set the length field. as it is
@@ -108,7 +161,9 @@ void MIDIRouter::setMessageLength(MidiMessage &msg) const {
 }
 
 void MIDIRouter::printNote(int note) const {
-    Serial.printf("N%d", note);
+    char name[4];
+    noteToString(note, name);
+    Serial.print(name);
 }
 
 void MIDIRouter::printMessage(const MidiMessage &msg) const {
@@ -133,7 +188,7 @@ void MIDIRouter::printMessage(const MidiMessage &msg) const {
             Serial.printf(" V%hhu\n", msg.data2);
             break;
         case midi::MidiType::NoteOff:
-            Serial.print("NoteOn ");
+            Serial.print("NoteOff ");
             printNote(msg.data1);
             Serial.printf(" V%hhu\n", msg.data2);
             break;

@@ -26,7 +26,7 @@ class LEDDriver {
         
         uint8_t getIntensity(int index) const { return mIntensity[index]; }
 
-        void setIntensity(int index, uint8_t intensity);
+        void setIntensity(int index, uint8_t intensity) { mIntensity[index] = intensity; }
 
         /**
          * Initialize all input ports and routines.
