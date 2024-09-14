@@ -23,7 +23,7 @@ LEDDriver  LEDs;
 static uint8_t ButtonStatus    = 0x00;
 static uint8_t LastButtonState = 0x00;
 
-static uint9_t LEDEnabled[3];
+static uint8_t LEDEnabled[3];
 
 static const uint8_t IRQ_BUTTONS = 0;
 

@@ -37,7 +37,9 @@ class LEDDriver {
 
         void updateLEDs();
 
-        uint8_t getLEDStatus(int index) { return mIntensity[index] > 0 && mPWMCounter <= mIntensity[index] ? HIGH : LOW; }
+        uint8_t getLEDStatus(int index) { 
+            return mIntensity[index] > 0 && mPWMCounter <= mIntensity[index] ? 1 : 0; 
+        }
 };
 
 #endif
