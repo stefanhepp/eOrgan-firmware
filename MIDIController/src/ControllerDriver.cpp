@@ -421,6 +421,7 @@ void ControllerDriver::setPistonLED(MIDIDivision division, uint8_t piston, bool 
 
 void ControllerDriver::setLEDControllerRGB(int led, const uint8_t *rgb)
 {
+    Serial.printf("Begin LED: %d\n", led);
     beginTransmission(Controller::MC_LEDController);
     Wire.write(I2C_CMD_LED_INTENSITY);    
     Wire.write((uint8_t)led);

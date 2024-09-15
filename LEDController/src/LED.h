@@ -20,6 +20,7 @@ class LEDDriver {
         uint8_t mIntensity[NUM_LEDS];
 
         uint8_t mPWMCounter;
+        uint8_t mLastCounter;
 
     public:
         explicit LEDDriver();
@@ -35,7 +36,12 @@ class LEDDriver {
 
         void reset();
 
-        void updateLEDs();
+        /**
+         * Update LED PWM status.
+         * 
+         * Return true if PWM counter wrapped around (TOP was reached).
+         */
+        bool updateLEDs();
 
         uint8_t getLEDStatus(int index) { 
             return mIntensity[index] > 0 && mPWMCounter <= mIntensity[index] ? 1 : 0; 

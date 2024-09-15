@@ -158,13 +158,16 @@ void setup() {
 }
 
 void loop() {
-    uint8_t btns = IO_PIN(PORT_BTN);
 
-    updateButton(0, btns & (1<<BTN1));
-    updateButton(1, btns & (1<<BTN2));
-    updateButton(2, btns & (1<<BTN3));
-    updateButton(3, btns & (1<<BTN4));
-    updateButton(4, btns & (1<<BTN5));
+    if (LEDs.updateLEDs()) {
+        uint8_t btns = IO_PIN(PORT_BTN);
+
+        updateButton(0, (btns & (1<<BTN1)) == 0);
+        updateButton(1, (btns & (1<<BTN2)) == 0);
+        updateButton(2, (btns & (1<<BTN3)) == 0);
+        updateButton(3, (btns & (1<<BTN4)) == 0);
+        updateButton(4, (btns & (1<<BTN5)) == 0);
+    }
 
     LEDs.updateLEDs();
 

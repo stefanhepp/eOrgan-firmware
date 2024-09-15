@@ -17,7 +17,9 @@
 
 #include <avrlib.h>
 
-LEDDriver::LEDDriver() {
+LEDDriver::LEDDriver() 
+: mPWMCounter(0), mLastCounter(0)
+{
     for (int i = 0; i < NUM_LEDS; i++) {
         mIntensity[i] = 0;
     }
@@ -42,6 +44,8 @@ void LEDDriver::reset()
     }
 }
 
-void LEDDriver::updateLEDs() {
+bool LEDDriver::updateLEDs() {
+    mLastCounter = mPWMCounter;
     mPWMCounter = TCNT2;
+    return mPWMCounter < mLastCounter;
 }
