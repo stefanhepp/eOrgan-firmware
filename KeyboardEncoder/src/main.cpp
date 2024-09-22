@@ -172,7 +172,7 @@ void loop() {
 
     // wait for any MIDI messages being sent and add a small gap to resync
     while (MIDI.sending()) {
-        delayMicroseconds(50);
+        delayMicroseconds(20);
     }
-    delayMicroseconds(400);
+    delayMicroseconds(40);
 }

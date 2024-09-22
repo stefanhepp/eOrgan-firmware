@@ -327,13 +327,11 @@ void MIDIRouter::routeMessage(MIDIPort inPort, const MidiMessage &msg)
         printMessage(msg);
         Serial.print(" ->");
     }
-    if (inPort != MIDIPort::MP_Pedal) {
     forwardMessage(inPort, MIDIPort::MP_MIDI1, msg, echo);
     forwardMessage(inPort, MIDIPort::MP_MIDI2, msg, echo);
     forwardMessage(inPort, MIDIPort::MP_MIDI3, msg, echo);
     forwardMessage(inPort, MIDIPort::MP_MIDI4, msg, echo);
     forwardMessage(inPort, MIDIPort::MP_MIDI_USB, msg, echo);
-    }
     if (echo) {
         Serial.println();
     }
