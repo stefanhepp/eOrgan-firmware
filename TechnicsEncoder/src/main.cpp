@@ -152,9 +152,8 @@ void loop() {
     kbd.poll();
     wheel.poll();
 
-    // wait for any MIDI messages being sent and add a small gap to resync
+    // wait for any MIDI messages being sent
     while (MIDI.sending()) {
         delayMicroseconds(20);
     }
-    delayMicroseconds(40);
 }

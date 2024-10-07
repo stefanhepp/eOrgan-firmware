@@ -15,6 +15,8 @@
 
 static const int NUM_KEYS = 61;
 
+static const int MIN_VELOCITY = 10;
+
 class TechnicsKeyboard
 {
     private:

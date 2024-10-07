@@ -111,7 +111,16 @@ void TechnicsKeyboard::poll()
 
         // Got a pressed key
         if (note < NUM_KEYS) {
-            pressedKeys[note] = velocity;
+            if (velocity == 0) {
+                // Note Off event
+                pressedKeys[note] = 0;
+            } else if (velocity < MIN_VELOCITY) {
+                // Velocity data is inverted, small value is maximum velocity
+                pressedKeys[note] = 127;
+            } else {
+                // Velocity data for Note On is inverted
+                pressedKeys[note] = 127 + MIN_VELOCITY - velocity;
+            }
         }
     }
 
