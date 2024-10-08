@@ -6,6 +6,7 @@
 
 #include <Arduino.h>
 
+#include "AudioProcessor.h"
 #include "CommandLine.h"
 #include "MIDIRouter.h"
 #include "ControllerDriver.h"
@@ -15,6 +16,7 @@
   #include "TeensyDebug.h"
 #endif
 
+AudioProcessor Audio;
 CommandLine Cmdline;
 MIDIRouter MIDI;
 ControllerDriver Control;
@@ -446,6 +448,7 @@ void setup()
     Control.begin();
     MIDI.begin();
     StateMngr.begin();
+    Audio.begin();
 }
 
 void loop() {
