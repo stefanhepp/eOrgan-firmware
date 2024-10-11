@@ -1,0 +1,39 @@
+Raspberry PI for Panel
+======================
+
+Installation
+------------
+
+o) Raspberry PI OS (Buster)
+
+
+o) Setup 11.9" DSI display
+- Setup driver and display rotation in config.txt
+  ```
+dtoverlay=vc4-kms-v3d
+
+#DSI1 Use
+dtoverlay=vc4-kms-dsi-waveshare-panel,11_9_inch,rotation=270
+  ```
+
+- Setup Rotation of LCD display:
+  ```
+# Copy libinput.conf to /etc
+sudo cp /usr/share/X11/xorg.conf.d/40-libinput.conf /etc/X11/xorg.conf.d/
+# Add CalibrationMatrix to Touchscreen section
+sudo vim.tiny /etc/X11/xorg.conf.d/40-libinput.conf 
+  ```
+Section "InputClass"
+    Identifier "libinput touchscreen catchall"
+    MatchIsTouchscreen "on"
+
+    # Add one of these lines in this section
+    #90°Right touch rotation: 
+    #Option "CalibrationMatrix" "0 1 0 -1 0 1 0 0 1"
+    #180° Inverted touch rotation:
+    #Option "CalibrationMatrix" "-1 0 1 0 -1 1 0 0 1"
+    #270° Left rotation:
+    Option "CalibrationMatrix" "0 -1 1 1 0 0 0 0 1"
+
+EndSection
+  ```
