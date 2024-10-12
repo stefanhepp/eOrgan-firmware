@@ -22,6 +22,8 @@ MIDIRouter MIDI;
 ControllerDriver Control;
 OrganStateManager StateMngr(MIDI, Control);
 
+static const int PIN_LED = 23;
+
 static const int PRINT_KEYBOARD = 0x01;
 static const int PRINT_TECHNICS = 0x02;
 static const int PRINT_PEDAL    = 0x04;
@@ -427,6 +429,10 @@ void setup()
     // have to set a breakpoint or use Ctrl-C.
     halt_cpu(); 
 #endif
+
+    // Turn status LED on
+    pinMode(PIN_LED, OUTPUT);
+    digitalWrite(PIN_LED, HIGH);
 
     Cmdline.addCommand("reset", new ResetParser());
     Cmdline.addCommand("debug", new DebugParser());
