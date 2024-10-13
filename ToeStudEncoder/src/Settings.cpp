@@ -20,7 +20,7 @@ uint8_t EEMEM confChannelChoir;
 uint8_t EEMEM confMode;
 uint8_t EEMEM confSensitivity;
 
-uint16_t EEMEM confCalibrationData[9];
+uint16_t EEMEM confCalibrationData[6];
 
 Settings::Settings()
 {
@@ -59,16 +59,15 @@ bool Settings::hasCalibrationData()
 
 void Settings::getCalibrationData(uint8_t pedal, AICalibrationData &data) const
 {
-    data.min = (int) eeprom_read_word(&confCalibrationData[pedal * 3    ]);
-    data.max = (int) eeprom_read_word(&confCalibrationData[pedal * 3 + 1]);
-    data.center = (int) eeprom_read_word(&confCalibrationData[pedal * 3 + 2]);
+    data.min = (int) eeprom_read_word(&confCalibrationData[pedal * 2    ]);
+    data.max = (int) eeprom_read_word(&confCalibrationData[pedal * 2 + 1]);
+    data.center = 0;
 }
 
 void Settings::setCalibrationData(uint8_t pedal, const AICalibrationData &data)
 {
-    eeprom_write_word(&confCalibrationData[pedal * 3    ], (uint16_t) data.min);
-    eeprom_write_word(&confCalibrationData[pedal * 3 + 1], (uint16_t) data.max);
-    eeprom_write_word(&confCalibrationData[pedal * 3 + 2], (uint16_t) data.center);
+    eeprom_write_word(&confCalibrationData[pedal * 2    ], (uint16_t) data.min);
+    eeprom_write_word(&confCalibrationData[pedal * 2 + 1], (uint16_t) data.max);
 }
 
 uint8_t Settings::getSendMode(uint8_t defaultMode)

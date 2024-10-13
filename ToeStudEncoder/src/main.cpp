@@ -166,9 +166,9 @@ void i2cReceive(uint8_t length) {
             if (Wire.available()) {
                 uint8_t value = Wire.read();
                 settings.setSensitivity(value);
-                pedals[PEDAL_CRESCENDO].setSensitivy(value);
-                pedals[PEDAL_SWELL    ].setSensitivy(value);
-                pedals[PEDAL_CHOIR    ].setSensitivy(value);
+                for (int i = 0; i < 3; i++) {
+                    pedals[i].setSensitivy(value);
+                }
             }
             break;
     }
@@ -251,5 +251,4 @@ void loop() {
     while (MIDI.sending()) {
         delayMicroseconds(20);
     }
-    delayMicroseconds(40);
 }

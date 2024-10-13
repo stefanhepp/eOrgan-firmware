@@ -93,7 +93,7 @@ void ToeStuds::poll()
     for (line = 0; line < 4; line++) {
         digitalWrite(OUTPUT_PINS[line], LOW);
 
-        delayMicroseconds(500);
+        delayMicroseconds(300);
 
         readLine(line);
 
