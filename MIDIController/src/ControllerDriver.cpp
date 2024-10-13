@@ -59,6 +59,8 @@ int getPistonIndex(MIDIDivision division) {
         case MIDIDivision::MD_Solo:
             return 2;
         case MIDIDivision::MD_Control:
+        case MIDIDivision::MD_Great:
+        case MIDIDivision::MD_MIDI:
             // Should not be reached!
             return 0;
     }
@@ -234,6 +236,7 @@ void ControllerDriver::readStatusPedal()
     requestTransmission(Controller::MC_ToeStud, 16);
     if (Wire.available() >= 8) {
         uint8_t channel    = Wire.read();
+        uint8_t sendMode   = Wire.read();
         uint8_t pedal1High = Wire.read();
         uint8_t pedal1Low  = Wire.read();
         uint8_t pedal2High = Wire.read();
@@ -244,6 +247,8 @@ void ControllerDriver::readStatusPedal()
         uint16_t pedalCrescendo = pedal1High << 8 | pedal1Low;
         uint16_t pedalSwell     = pedal2High << 8 | pedal2Low;
         uint16_t pedalChoir     = pedal3High << 8 | pedal3Low;
+
+        mLastToestudMode = sendMode;
 
         if (mToeStudStatusCallback) {
             mToeStudStatusCallback(channel, pedalCrescendo, pedalSwell, pedalChoir);
@@ -319,6 +324,13 @@ void ControllerDriver::setToestudMode(uint8_t mode)
     Wire.write(I2C_CMD_SET_MODE);
     Wire.write(mode);
     Wire.endTransmission();
+
+    mLastToestudMode = mode;
+}
+
+uint8_t ControllerDriver::getToestudMode()
+{
+    return mLastToestudMode;
 }
 
 void ControllerDriver::setTechnicsChannel(uint8_t channel)

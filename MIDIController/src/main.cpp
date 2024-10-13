@@ -11,6 +11,7 @@
 #include "MIDIRouter.h"
 #include "ControllerDriver.h"
 #include "OrganStateManager.h"
+#include "CouplerProcessor.h"
 
 #ifdef TEENSY_DEBUG
   #include "TeensyDebug.h"
@@ -19,8 +20,9 @@
 AudioProcessor Audio;
 CommandLine Cmdline;
 MIDIRouter MIDI;
+CouplerProcessor Coupler(MIDI);
 ControllerDriver Control;
-OrganStateManager StateMngr(MIDI, Control);
+OrganStateManager StateMngr(MIDI, Coupler, Control);
 
 static const int PIN_LED = 23;
 
@@ -48,6 +50,10 @@ static const char* divisionName(MIDIDivision division) {
             return "Solo";
         case MIDIDivision::MD_Swell:
             return "Swell";
+        case MIDIDivision::MD_Great:
+            return "Great";
+        case MIDIDivision::MD_MIDI:
+            return "MIDI";
     }
     return "";
 }
@@ -383,8 +389,10 @@ void onToeStudStatus(uint8_t channel, uint16_t crescendo, uint16_t swell, uint16
         Serial.println();
     }
 
-    // TODO if mode is I2C (not MIDI), process I2C pedals
-
+    // if mode is not MIDI, process I2C pedals
+    if ((Control.getToestudMode() & ToeStudMode::TSM_MIDI) == 0) {
+        Coupler.processPedalChange(crescendo, swell, choir);
+    }
 }
 
 void onPedalStatus(uint8_t channel, uint8_t ledIntensity)
@@ -396,8 +404,6 @@ void onPedalStatus(uint8_t channel, uint8_t ledIntensity)
     }
 }
 
-
-
 void onPistonPress(MIDIDivision division, uint8_t button, bool longPress)
 {
     Serial.printf("Btn: %s.%d", divisionName(division), button);
@@ -406,8 +412,8 @@ void onPistonPress(MIDIDivision division, uint8_t button, bool longPress)
     }
     Serial.println();
 
-    // TODO handle button presses
-    
+    // Send all piston events to Coupler for handling
+    Coupler.processPistonPress(division, button, longPress);
 }
 
 void onLEDControllerButton(uint8_t button, uint8_t value) {
@@ -450,9 +456,12 @@ void setup()
     Control.setPistonPressCallback(onPistonPress);
     Control.setLEDControllerCallback(onLEDControllerButton);
 
+    MIDI.setCoupler(Coupler);
+
     Cmdline.begin();
     Control.begin();
     MIDI.begin();
+    Coupler.begin();
     StateMngr.begin();
     Audio.begin();
 }

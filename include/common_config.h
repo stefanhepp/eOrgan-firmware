@@ -18,6 +18,9 @@
  */
 enum MIDIDivision : uint8_t
 {
+    MD_MIDI    = 0,  // No division, general MIDI input
+    MD_Great   = 1,  // external keyboard
+
     MD_Pedal   = 3,
     MD_Choir   = 4,
     MD_Swell   = 5,
@@ -64,6 +67,8 @@ static const int NUM_MIDI_OUTPUT_PORTS = 7;
 
 // Number of both Controller and MIDI ports
 static const int NUM_MIDI_PORTS = 10;
+
+static const int NUM_MIDI_CHANNELS = 16;
 
 /* ==============================================================
  * Various Constants

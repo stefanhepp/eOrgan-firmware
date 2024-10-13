@@ -18,6 +18,7 @@
 
 #include <common_config.h>
 
+#include "CouplerProcessor.h"
 
 // MIDI Devices
 MIDI_CREATE_INSTANCE(HardwareSerial, Serial7,    MIDI1);
@@ -35,7 +36,6 @@ MIDI_CREATE_INSTANCE(HardwareSerial, Serial3,    MIDITechnics);
 // The current instance of the MIDI router, registered at begin().
 // Needed for static callback functions.
 static MIDIRouter* Router;
-
 
 void noteToString(int note, char* string)
 {
@@ -106,8 +106,12 @@ void processMIDIError(int8_t error) {
 
 MIDIRouter::MIDIRouter()
 {
-    mEchoMIDI = false;
     resetRoutes();
+}
+
+void MIDIRouter::setCoupler(CouplerProcessor &coupler) {
+    mCoupler = &coupler;
+    mEnableCoupler = true;
 }
 
 void MIDIRouter::echoMIDIMessages(bool enabled) {
@@ -158,6 +162,18 @@ void MIDIRouter::setMessageLength(MidiMessage &msg) const {
             default:
                 break;
     }
+}
+
+void MIDIRouter::enableCoupler(bool enable) {
+    mEnableCoupler = enable;
+}
+
+void MIDIRouter::enableMIDIOutput(bool enable) {
+    mEnableMIDIOut = enable;
+}
+
+void MIDIRouter::enableUSBOutput(bool enable) {
+    mEnableUSB = enable;
 }
 
 void MIDIRouter::printNote(int note) const {
@@ -327,13 +343,31 @@ void MIDIRouter::routeMessage(MIDIPort inPort, const MidiMessage &msg)
         printMessage(msg);
         Serial.print(" ->");
     }
-    forwardMessage(inPort, MIDIPort::MP_MIDI1, msg, echo);
-    forwardMessage(inPort, MIDIPort::MP_MIDI2, msg, echo);
-    forwardMessage(inPort, MIDIPort::MP_MIDI3, msg, echo);
-    forwardMessage(inPort, MIDIPort::MP_MIDI4, msg, echo);
-    forwardMessage(inPort, MIDIPort::MP_MIDI_USB, msg, echo);
+    if (mEnableCoupler && mCoupler) {
+        // Route division inputs through coupler.
+        // Injecting to division outputs is done via the coupler
+        mCoupler->routeDivisionInput(inPort, msg);
+    } else {
+        // Forward all inputs to all outputs as-is
+        injectMessage(inPort, msg);
+    }
     if (echo) {
         Serial.println();
+    }
+}
+
+void MIDIRouter::injectMessage(MIDIPort inPort, const MidiMessage &msg)
+{
+    bool echo = mEchoMIDI;
+
+    if (mEnableMIDIOut) {
+        forwardMessage(inPort, MIDIPort::MP_MIDI1, msg, echo);
+        forwardMessage(inPort, MIDIPort::MP_MIDI2, msg, echo);
+        forwardMessage(inPort, MIDIPort::MP_MIDI3, msg, echo);
+        forwardMessage(inPort, MIDIPort::MP_MIDI4, msg, echo);
+    }
+    if (mEnableUSB) {
+        forwardMessage(inPort, MIDIPort::MP_MIDI_USB, msg, echo);
     }
 }
 
@@ -394,4 +428,6 @@ void MIDIRouter::loop()
         
         routeMessage(MIDIPort::MP_MIDI_USB, msg);
     }
+
+    usbMIDI.send_now();
 }

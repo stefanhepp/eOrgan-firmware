@@ -16,8 +16,9 @@
 
 #include <common_config.h>
 
-OrganStateManager::OrganStateManager(MIDIRouter &router, ControllerDriver &driver)
-: mMIDIRouter(router), mControl(driver)
+OrganStateManager::OrganStateManager(MIDIRouter &router, CouplerProcessor &coupler, 
+                                     ControllerDriver &driver)
+: mMIDIRouter(router), mCoupler(coupler), mControl(driver)
 {
     mDivisionChannels[MIDIDivision::MD_Pedal] = MIDIDivision::MD_Pedal;
     mDivisionChannels[MIDIDivision::MD_Choir] = MIDIDivision::MD_Choir;
@@ -29,6 +30,8 @@ OrganStateManager::OrganStateManager(MIDIRouter &router, ControllerDriver &drive
 void OrganStateManager::setDivisionChannel(MIDIDivision division, uint8_t channel)
 {
     mDivisionChannels[division] = channel;
+
+    mCoupler.setDivisionChannel(division, channel);
 
     switch (division) {
         case MIDIDivision::MD_Pedal:
@@ -60,6 +63,10 @@ void OrganStateManager::setDivisionChannel(MIDIDivision division, uint8_t channe
                                         mDivisionChannels[MIDIDivision::MD_Swell], 
                                         mDivisionChannels[MIDIDivision::MD_Choir]
                                         );
+            break;
+        case MIDIDivision::MD_Great:
+        case MIDIDivision::MD_MIDI:
+            // Nothing to do, external devices
             break;
     }
 }

@@ -43,6 +43,7 @@ class ControllerDriver
 
         uint8_t mLEDControlButtons = 0;
 
+        uint8_t mLastToestudMode = ToeStudMode::TSM_I2C;
 
         int  getPistonLEDIndex(MIDIDivision division);
 
@@ -107,6 +108,9 @@ class ControllerDriver
         void setTechnicsChannel(uint8_t channel);
 
         void setKeyboardChannels(uint8_t channel1, uint8_t channel2);
+
+
+        uint8_t getToestudMode();
 
 
         void startCalibrateAnalogInputs();

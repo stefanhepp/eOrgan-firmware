@@ -168,6 +168,7 @@ void i2cReceive(uint8_t length) {
 void i2cRequest()
 {
     Wire.write(MIDIChannel);
+    Wire.write(SendMode);
 
     for (uint8_t i = 0; i < 3; i++) {
         Wire.write((uint8_t)(pedals[i].value() >> 8));
@@ -193,6 +194,8 @@ void setupPedal(const uint8_t *pedal, uint8_t pin)
         settings.getCalibrationData(*pedal, data);
         pedals[*pedal].setCalibrationData(data);
     }
+    pedals[*pedal].setRange(1023);
+    pedals[*pedal].setSensitivy(2);
     pedals[*pedal].begin(pin);
 }
 

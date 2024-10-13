@@ -40,6 +40,10 @@ bool CommandParser::parseDivision(const char* arg, MIDIDivision &division)
         division = MIDIDivision::MD_Control;
         return true;
     }
+    if (strcmp(arg, "great") == 0) {
+        division = MIDIDivision::MD_Great;
+        return true;
+    }
     return false;
 }
 

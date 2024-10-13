@@ -56,8 +56,20 @@ class CalibratedAnalogInput
     public:
         explicit CalibratedAnalogInput();
 
-        void setRange(int maxRang, int center = -1);
+        /**
+         * Set the input to output range mapping.
+         * 
+         * \param maxRange Set the output range from 0...maxRange.
+         * \param center If center is given, then this defines the output value for the center position.
+         */
+        void setRange(int maxRange, int center = -1);
 
+        /**
+         * Set the sensitivity, when a change is detected.
+         * 
+         * \param hysteresis Set an input hysteresis (after mapping to output range). Default is 1.
+         * \param deadspot Set a deadspot around the center. Values in the deadspot are mapped to the center output value.
+         */
         void setSensitivy(int hysteresis, int deadspot = 0);
 
         void setCalibrationData(const AICalibrationData &data);

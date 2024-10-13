@@ -24,6 +24,8 @@ struct RouteSettings {
 
 typedef midi::Message<midi::DefaultSettings::SysExMaxSize> MidiMessage;
 
+class CouplerProcessor;
+
 /**
  * Print the name of the note into the output string.
  * 
@@ -34,7 +36,13 @@ void noteToString(int note, char* string);
 class MIDIRouter
 {
     private:
-        bool mEchoMIDI;
+        bool mEchoMIDI = false;
+
+        CouplerProcessor *mCoupler = NULL;
+
+        bool mEnableCoupler = false;
+        bool mEnableUSB = true;
+        bool mEnableMIDIOut = true;
 
         // Routing settings, for each input channel -> for each output channel.
         RouteSettings mRoutes[NUM_MIDI_PORTS][NUM_MIDI_OUTPUT_PORTS];
@@ -56,6 +64,8 @@ class MIDIRouter
     public:
         explicit MIDIRouter();
 
+        void setCoupler(CouplerProcessor &coupler);
+
         void echoMIDIMessages(bool enable);
 
         /**
@@ -65,11 +75,29 @@ class MIDIRouter
 
         void resetRoutes();
 
+        void enableCoupler(bool enable);
+
+        void enableUSBOutput(bool enable);
+
+        void enableMIDIOutput(bool enable);
+
         // TODO enable/disable routes
 
         // TODO set channel mapping per input -> output
 
+        /**
+         * Process a new incoming MIDI message.
+         * 
+         * This sends the message through the coupler and the MIDI router.
+         */
         void routeMessage(MIDIPort inPort, const MidiMessage &msg);
+
+        /**
+         * Inject a message after the coupler into the router.
+         * 
+         * This is intended to be called by the coupler.
+         */
+        void injectMessage(MIDIPort inPort, const MidiMessage &msg);
 
         void begin();
 
