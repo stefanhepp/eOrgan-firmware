@@ -37,4 +37,8 @@ class Settings
         uint8_t getSendMode(uint8_t defaultMode);
 
         void setSendMode(uint8_t mode);
+
+        uint8_t getSensitivity();
+
+        void setSensitivity(uint8_t sensitivity);
 };

@@ -305,12 +305,19 @@ class LEDControlParser: public CommandParser
 
 class ToeStudModeParser: public CommandParser
 {
+    private:
+        enum ToeStudParserCmd {
+            TSMC_MODE,
+            TSMC_SENSITIVITY
+        };
+
+        ToeStudParserCmd mCommand;
 
     public:
         ToeStudModeParser() {}
 
         virtual void printArguments() { 
-            Serial.print("mode midi|i2c|both");
+            Serial.print("mode midi|i2c|both; sensitivity <value>");
         }
 
         virtual CmdErrorCode startCommand(const char* cmd) {
@@ -320,22 +327,34 @@ class ToeStudModeParser: public CommandParser
         virtual CmdErrorCode parseNextArgument(int argNo, const char* arg) {
             if (argNo == 0) {
                 if (strcmp(arg, "mode") == 0) {
+                    mCommand = TSMC_MODE;
+                    return CmdErrorCode::CmdNextArgument;
+                }
+                if (strcmp(arg, "sensitivity") == 0) {
+                    mCommand = TSMC_SENSITIVITY;
                     return CmdErrorCode::CmdNextArgument;
                 }
             }
             if (argNo == 1) {
-                // In "mode" command
-                if (strcmp(arg, "midi") == 0) {
-                    Control.setToestudMode(ToeStudMode::TSM_MIDI);
-                    return CmdErrorCode::CmdOK;
-                }
-                if (strcmp(arg, "i2c") == 0) {
-                    Control.setToestudMode(ToeStudMode::TSM_I2C);
-                    return CmdErrorCode::CmdOK;
-                }
-                if (strcmp(arg, "both") == 0) {
-                    Control.setToestudMode(ToeStudMode::TSM_I2C | ToeStudMode::TSM_MIDI);
-                    return CmdErrorCode::CmdOK;
+                if (mCommand == TSMC_MODE) {
+                    if (strcmp(arg, "midi") == 0) {
+                        Control.setToestudMode(ToeStudMode::TSM_MIDI);
+                        return CmdErrorCode::CmdOK;
+                    }
+                    if (strcmp(arg, "i2c") == 0) {
+                        Control.setToestudMode(ToeStudMode::TSM_I2C);
+                        return CmdErrorCode::CmdOK;
+                    }
+                    if (strcmp(arg, "both") == 0) {
+                        Control.setToestudMode(ToeStudMode::TSM_I2C | ToeStudMode::TSM_MIDI);
+                        return CmdErrorCode::CmdOK;
+                    }
+                } else {
+                    int value;
+                    if (parseInteger(arg, value, 0, 100)) {
+                        Control.setToestudSensitivity(value);
+                        return CmdErrorCode::CmdOK;
+                    }
                 }
             }
             return CmdErrorCode::CmdInvalidArgument;

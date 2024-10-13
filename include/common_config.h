@@ -92,13 +92,14 @@ enum ToeStudMode : uint8_t
  * ============================================================== */
 
 // I2C Addresses
-static const uint8_t I2C_CMD_RESET          = 0x01;
-static const uint8_t I2C_CMD_SET_CHANNEL    = 0x02;
-static const uint8_t I2C_CMD_CALIBRATE      = 0x03;
-static const uint8_t I2C_CMD_STOP_CALIBRATE = 0x04;
-static const uint8_t I2C_CMD_LED_INTENSITY  = 0x05;
-static const uint8_t I2C_CMD_SET_LEDS       = 0x06;
-static const uint8_t I2C_CMD_SET_MODE       = 0x07;
+static const uint8_t I2C_CMD_RESET           = 0x01;
+static const uint8_t I2C_CMD_SET_CHANNEL     = 0x02;
+static const uint8_t I2C_CMD_CALIBRATE       = 0x03;
+static const uint8_t I2C_CMD_STOP_CALIBRATE  = 0x04;
+static const uint8_t I2C_CMD_LED_INTENSITY   = 0x05;
+static const uint8_t I2C_CMD_SET_LEDS        = 0x06;
+static const uint8_t I2C_CMD_SET_MODE        = 0x07;
+static const uint8_t I2C_CMD_SET_SENSITIVITY = 0x08;
 
 /* ==============================================================
  * MIDI Channels and Constants

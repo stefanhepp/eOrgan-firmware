@@ -333,6 +333,14 @@ uint8_t ControllerDriver::getToestudMode()
     return mLastToestudMode;
 }
 
+void ControllerDriver::setToestudSensitivity(uint8_t sensitivity)
+{
+    beginTransmission(Controller::MC_ToeStud);
+    Wire.write(I2C_CMD_SET_SENSITIVITY);
+    Wire.write(sensitivity);
+    Wire.endTransmission();
+}
+
 void ControllerDriver::setTechnicsChannel(uint8_t channel)
 {
     beginTransmission(Controller::MC_Technics);

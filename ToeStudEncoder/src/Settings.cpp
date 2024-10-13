@@ -18,6 +18,7 @@ uint8_t EEMEM confChannel;
 uint8_t EEMEM confChannelSwell;
 uint8_t EEMEM confChannelChoir;
 uint8_t EEMEM confMode;
+uint8_t EEMEM confSensitivity;
 
 uint16_t EEMEM confCalibrationData[9];
 
@@ -79,4 +80,15 @@ uint8_t Settings::getSendMode(uint8_t defaultMode)
 void Settings::setSendMode(uint8_t mode)
 {
     eeprom_write_byte(&confMode, mode);
+}
+
+uint8_t Settings::getSensitivity()
+{
+    uint8_t v = eeprom_read_byte(&confSensitivity);
+    return (v == 0xFF) ? 6 : v;
+}
+
+void Settings::setSensitivity(uint8_t sensitvity)
+{
+    eeprom_write_byte(&confSensitivity, sensitvity);
 }

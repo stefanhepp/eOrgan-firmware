@@ -162,6 +162,15 @@ void i2cReceive(uint8_t length) {
                 settings.setSendMode(value);
             }
             break;
+        case I2C_CMD_SET_SENSITIVITY:
+            if (Wire.available()) {
+                uint8_t value = Wire.read();
+                settings.setSensitivity(value);
+                pedals[PEDAL_CRESCENDO].setSensitivy(value);
+                pedals[PEDAL_SWELL    ].setSensitivy(value);
+                pedals[PEDAL_CHOIR    ].setSensitivy(value);
+            }
+            break;
     }
 }
 
@@ -195,10 +204,10 @@ void setupPedal(const uint8_t *pedal, uint8_t pin)
         pedals[*pedal].setCalibrationData(data);
     }
     pedals[*pedal].setRange(1023);
-    pedals[*pedal].setSensitivy(2);
+    pedals[*pedal].setSensitivy(settings.getSensitivity());
     pedals[*pedal].begin(pin);
 }
-
+ 
 void setup() {
     // Enable pullups for unconnected pins
     pinMode(PIN_PB4, INPUT_PULLUP);

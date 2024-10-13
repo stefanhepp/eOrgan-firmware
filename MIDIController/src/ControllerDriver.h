@@ -105,6 +105,8 @@ class ControllerDriver
 
         void setToestudMode(uint8_t mode);
 
+        void setToestudSensitivity(uint8_t sensitivity);
+
         void setTechnicsChannel(uint8_t channel);
 
         void setKeyboardChannels(uint8_t channel1, uint8_t channel2);
