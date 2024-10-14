@@ -42,8 +42,8 @@ enum PistonCommandType {
 };
 
 struct PistonCommand {
-    PistonCommandType   type;
     MIDIDivision        division;
+    PistonCommandType   type;
     int                 param;
 };
 
