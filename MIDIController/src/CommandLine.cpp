@@ -261,6 +261,11 @@ void CommandLine::loop()
                     processEOL();
                 }
                 break;
+            case 8: // Backspace
+                if (mTokenLength > 0) {
+                    mTokenLength--;
+                }
+                break;
             default:
                 // We leave one byte space in the buffer for zero-terminiation
                 if (mTokenLength < MAX_TOKEN_LENGTH - 1) {

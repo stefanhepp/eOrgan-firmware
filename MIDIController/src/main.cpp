@@ -222,13 +222,16 @@ class CalibrationParser: public CommandParser
         }
 };
 
-class PedalLEDParser: public CommandParser
+class RouterParser: public CommandParser
 {
+    private:
+        int mCommand;
+
     public:
-        PedalLEDParser() {}
+        RouterParser() {}
 
         virtual void printArguments() { 
-            Serial.print("led 0..15");
+            Serial.print("enable|disable midi|usb|coupler");
         }
 
         virtual CmdErrorCode startCommand(const char* cmd) {
@@ -236,16 +239,28 @@ class PedalLEDParser: public CommandParser
         }
 
         virtual CmdErrorCode parseNextArgument(int argNo, const char* arg) {
-            int intensity;
             if (argNo == 0) {
-                if (strcmp(arg, "led") == 0) {
+                if (strcmp(arg, "enable") == 0) {
+                    mCommand = 0;
+                    return CmdErrorCode::CmdNextArgument;
+                }
+                if (strcmp(arg, "disable") == 0) {
+                    mCommand = 1;
                     return CmdErrorCode::CmdNextArgument;
                 }
             }
             if (argNo == 1) {
-                // in 'led' command
-                if (parseInteger(arg, intensity, 0, 15)) {
-                    Control.setPedalLEDIntensity(intensity);
+                // in "enable/disable" command
+                if (strcmp(arg, "midi") == 0) {
+                    MIDI.enableMIDIOutput(mCommand == 0 ? true : false);
+                    return CmdErrorCode::CmdOK;
+                }
+                if (strcmp(arg, "usb") == 0) {
+                    MIDI.enableUSBOutput(mCommand == 0 ? true : false);
+                    return CmdErrorCode::CmdOK;
+                }
+                if (strcmp(arg, "coupler") == 0) {
+                    MIDI.enableCoupler(mCommand == 0 ? true : false);
                     return CmdErrorCode::CmdOK;
                 }
             }
@@ -263,7 +278,7 @@ class LEDControlParser: public CommandParser
         LEDControlParser() {}
 
         virtual void printArguments() { 
-            Serial.print("led 0..255 | rgb1|rbg2 <R> <G> <B>");
+            Serial.print("rgb1|rbg2 <R> <G> <B>; led 0..255; pedal 0..15");
         }
 
         virtual CmdErrorCode startCommand(const char* cmd) {
@@ -285,6 +300,10 @@ class LEDControlParser: public CommandParser
                     mLED = 2;
                     return CmdErrorCode::CmdNextArgument;
                 }
+                if (strcmp(arg, "pedal") == 0) {
+                    mLED = 3;
+                    return CmdErrorCode::CmdNextArgument;
+                }
             }
             else if (argNo < 4) {
                 // in 'led' command
@@ -293,6 +312,10 @@ class LEDControlParser: public CommandParser
 
                     if ( (mLED < 2 && argNo == 3) || mLED == 2) {
                         Control.setLEDControllerRGB(mLED, mValues);
+                        return CmdErrorCode::CmdOK;
+                    }
+                    if  (mLED == 3) {
+                        Control.setPedalLEDIntensity(intensity);
                         return CmdErrorCode::CmdOK;
                     }
 
@@ -461,10 +484,10 @@ void setup()
 
     Cmdline.addCommand("reset", new ResetParser());
     Cmdline.addCommand("debug", new DebugParser());
+    Cmdline.addCommand("calibrate", new CalibrationParser());
     Cmdline.addCommand("status", new StatusParser());
     Cmdline.addCommand("channel", new ChannelParser());
-    Cmdline.addCommand("calibrate", new CalibrationParser());
-    Cmdline.addCommand("pedal", new PedalLEDParser());
+    Cmdline.addCommand("router", new RouterParser());
     Cmdline.addCommand("toestud", new ToeStudModeParser());
     Cmdline.addCommand("led", new LEDControlParser());
 

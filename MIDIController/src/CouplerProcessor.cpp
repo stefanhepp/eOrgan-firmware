@@ -192,11 +192,11 @@ void CouplerProcessor::processPistonPress(MIDIDivision division, uint8_t button,
             break;
         case PCT_PAGE:
             if (cmd.param == PP_PREV) {
-                //Keyboard.press(KEY_LEFT); 
-                //Keyboard.release(KEY_LEFT); 
+                Keyboard.press(KEY_LEFT); 
+                Keyboard.release(KEY_LEFT); 
             } else {
-                //Keyboard.press(KEY_RIGHT);
-                //Keyboard.release(KEY_RIGHT);
+                Keyboard.press(KEY_RIGHT);
+                Keyboard.release(KEY_RIGHT);
             }
             break;
         case PCT_SEQUENCE:

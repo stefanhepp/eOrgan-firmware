@@ -19,7 +19,7 @@
 enum MIDIDivision : uint8_t
 {
     MD_MIDI    = 0,  // No division, general MIDI input
-    MD_Great   = 1,  // external keyboard
+    MD_Great   = 2,  // external keyboard
 
     MD_Pedal   = 3,
     MD_Choir   = 4,
