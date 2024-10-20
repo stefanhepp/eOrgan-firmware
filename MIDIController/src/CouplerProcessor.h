@@ -19,24 +19,36 @@
 
 #include "MIDIRouter.h"
 
-enum PistonParameter : int {
-    PP_NEXT = 0,
-    PP_PREV = 1,
-    PP_TOGGLE = 2,
-    PP_OCTAVE_DOWN = 3,
-    PP_OCTAVE_UP = 4
+enum CoupleMode : int {
+    CM_OFF = 0,
+    CM_COUPLE = 1,
+    CM_OCTAVE_UP = 2,
+    CM_OCTAVE_DOWN = 3
+};
+
+enum ButtonType : int {
+    BT_NONE = 0,
+    BT_NEXT = 4,
+    BT_PREV = 5,
+    BT_TOGGLE = 6
+};
+
+union PistonParameter {
+    int          value;
+    MIDIDivision division;
+    ButtonType   button;
 };
 
 enum PistonCommandType {
     PCT_NONE,         // Not a valid input or no action defined
-    PCT_COUPLER,      // coupler piston; Param: division to couple to
-    PCT_TRANSPOSE,    // transpose piston; Param: TOGGLE, OCTAVE_DOWN, OCTAVE_UP
+    PCT_COUPLER,      // coupler piston; Param.division: division to couple to
+    PCT_TRANSPOSE,    // transpose piston; Param.type: TOGGLE
     PCT_OFF,          // turn division off
-    PCT_COMBINATION,  // select preset; Param: number of preset
+    PCT_COMBINATION,  // select preset; Param.value: number of preset
     PCT_CLEAR,        // clear combination
     PCT_CRESCENDO,    // crescendo coupler
-    PCT_PAGE,         // Page turn; Param: PREV, NEXT
-    PCT_SEQUENCE,     // Sequencer; Param: PREV, NEXT
+    PCT_PAGE,         // Page turn; Param.type: PREV, NEXT
+    PCT_SEQUENCE,     // Sequencer; Param.type: PREV, NEXT
     PCT_SET,          // Set combination
     PCT_HOLD          // Hold current combination
 };
@@ -44,7 +56,14 @@ enum PistonCommandType {
 struct PistonCommand {
     MIDIDivision        division;
     PistonCommandType   type;
-    int                 param;
+    PistonParameter     param;
+};
+
+struct CouplerStatus {
+    bool enabled;
+    bool crescendo;
+    // Sets the coupler mode: PP_NONE (off), PP_COUPLE (coupled), PP_OCTAVE_UP, PP_OCTAVE_DOWN
+    CoupleMode couple[MAX_DIVISION_CHANNEL+1];
 };
 
 class CouplerProcessor
@@ -57,6 +76,8 @@ class CouplerProcessor
         MIDIDivision mChannelDivisions[NUM_MIDI_CHANNELS];
 
         midi::Channel mDivisionChannels[MAX_DIVISION_CHANNEL + 1];
+
+        CouplerStatus mCoupler[MAX_DIVISION_CHANNEL + 1];
 
         uint16_t mPedalCrescendo = 0;
         uint16_t mPedalSwell = 0;
@@ -73,6 +94,44 @@ class CouplerProcessor
         explicit CouplerProcessor(MIDIRouter &router);
 
         void setDivisionChannel(MIDIDivision division, uint8_t channel);
+
+
+        /**
+         * Clear all couplers for a division.
+         */
+        void clearCouplers(MIDIDivision division);
+
+        /**
+         * \param mode Can be one of PP_NONE (off), PP_COUPLE, PP_OCTAVE_UP, PP_OCTAVE_DOWN.
+         */
+        void coupleDivision(MIDIDivision division, MIDIDivision target, CoupleMode mode);
+
+        /**
+         * \param param Can be one of PP_NONE (off), PP_OCTAVE_UP, PP_OCTAVE_DOWN.
+         */
+        void transposeDivision(MIDIDivision division, CoupleMode mode);
+
+        void enableCrescendo(MIDIDivision division, bool crescendo);
+
+        /**
+         * \param output Enable or disable normal output of division (not including transposed or couplers).
+         */
+        void enableDivision(MIDIDivision, bool output);
+
+
+        CoupleMode coupled(MIDIDivision division, MIDIDivision target) const;
+
+        CoupleMode transposed(MIDIDivision division) const;
+
+        bool crescendo(MIDIDivision division) const;
+
+        bool enabled(MIDIDivision division) const;
+
+        
+        void selectCombination(MIDIDivision division, int combination);
+
+        void clearCombination(MIDIDivision division);
+
 
         void processPistonPress(MIDIDivision division, uint8_t button, bool longPress);
 

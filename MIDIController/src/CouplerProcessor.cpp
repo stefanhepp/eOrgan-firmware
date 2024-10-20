@@ -36,23 +36,32 @@ CouplerProcessor::CouplerProcessor(MIDIRouter &router)
     mChannelDivisions[MIDIDivision::MD_Solo ] = MIDIDivision::MD_Solo;
     mChannelDivisions[MIDIDivision::MD_Control] = MIDIDivision::MD_Control;
 
+    // initialize coupler status
+    for (int i = 0; i < MAX_DIVISION_CHANNEL + 1; i++) {
+        mCoupler[i].enabled = true;
+        mCoupler[i].crescendo = false;
+        for (int j = 0; j < MAX_DIVISION_CHANNEL + 1; j++) {
+            mCoupler[i].couple[j] = CM_OFF;
+        }
+    }
+
     // initialize piston command mapping
     for (int i = 0; i < MAX_DIVISION_CHANNEL + 1; i++) {
         for (int j = 0; j < MAX_PISTONS; j++) {
             mPistonCommands[i][j].type = PCT_NONE;
             mPistonCommands[i][j].division = MIDIDivision::MD_MIDI;
-            mPistonCommands[i][j].param = 0;
+            mPistonCommands[i][j].param.value = 0;
         }
     }
 
     mPistonCommands[MD_Control][2]  = {.division = MD_Control, .type = PCT_NONE, .param = 0};        // Top row, right (right to left)
-    mPistonCommands[MD_Control][3]  = {.division = MD_Control, .type = PCT_SEQUENCE, .param = PP_NEXT};
-    mPistonCommands[MD_Control][4]  = {.division = MD_Control, .type = PCT_SEQUENCE, .param = PP_PREV};
+    mPistonCommands[MD_Control][3]  = {.division = MD_Control, .type = PCT_SEQUENCE, .param = BT_NEXT};
+    mPistonCommands[MD_Control][4]  = {.division = MD_Control, .type = PCT_SEQUENCE, .param = BT_PREV};
     mPistonCommands[MD_Control][5]  = {.division = MD_Pedal,   .type = PCT_COMBINATION, .param = 4}; // Bottom row, right (right to left)
     mPistonCommands[MD_Control][6]  = {.division = MD_Pedal,   .type = PCT_COMBINATION, .param = 3};
     mPistonCommands[MD_Control][7]  = {.division = MD_Pedal,   .type = PCT_COMBINATION, .param = 2};
     mPistonCommands[MD_Control][8]  = {.division = MD_Pedal,   .type = PCT_COMBINATION, .param = 1};
-    mPistonCommands[MD_Control][9]  = {.division = MD_Control, .type = PCT_PAGE, .param = PP_NEXT};
+    mPistonCommands[MD_Control][9]  = {.division = MD_Control, .type = PCT_PAGE, .param = BT_NEXT};
     mPistonCommands[MD_Control][11] = {.division = MD_Control, .type = PCT_COMBINATION, .param = 5}; // Top row, left
     mPistonCommands[MD_Control][12] = {.division = MD_Control, .type = PCT_COMBINATION, .param = 6};
     mPistonCommands[MD_Control][13] = {.division = MD_Control, .type = PCT_COMBINATION, .param = 7};
@@ -61,7 +70,7 @@ CouplerProcessor::CouplerProcessor(MIDIRouter &router)
     mPistonCommands[MD_Control][16] = {.division = MD_Control, .type = PCT_COMBINATION, .param = 2};
     mPistonCommands[MD_Control][17] = {.division = MD_Control, .type = PCT_COMBINATION, .param = 3};
     mPistonCommands[MD_Control][18] = {.division = MD_Control, .type = PCT_COMBINATION, .param = 4};
-    mPistonCommands[MD_Control][19] = {.division = MD_Control, .type = PCT_PAGE, .param = PP_PREV};
+    mPistonCommands[MD_Control][19] = {.division = MD_Control, .type = PCT_PAGE, .param = BT_PREV};
 
     mPistonCommands[MD_Pedal][0]  = {.division = MD_Pedal, .type = PCT_CRESCENDO, .param = 0};
     mPistonCommands[MD_Pedal][1]  = {.division = MD_Pedal, .type = PCT_CLEAR,     .param = 0};
@@ -71,7 +80,7 @@ CouplerProcessor::CouplerProcessor(MIDIRouter &router)
     mPistonCommands[MD_Pedal][5]  = {.division = MD_Pedal, .type = PCT_COMBINATION, .param = 2};
     mPistonCommands[MD_Pedal][6]  = {.division = MD_Pedal, .type = PCT_COMBINATION, .param = 1};
     mPistonCommands[MD_Pedal][7]  = {.division = MD_Pedal, .type = PCT_OFF,       .param = 0};
-    mPistonCommands[MD_Pedal][8]  = {.division = MD_Pedal, .type = PCT_TRANSPOSE, .param = PP_TOGGLE};
+    mPistonCommands[MD_Pedal][8]  = {.division = MD_Pedal, .type = PCT_TRANSPOSE, .param = BT_TOGGLE};
     mPistonCommands[MD_Pedal][9]  = {.division = MD_Pedal, .type = PCT_COUPLER, .param = MIDIDivision::MD_Choir};
     mPistonCommands[MD_Pedal][10] = {.division = MD_Pedal, .type = PCT_COUPLER, .param = MIDIDivision::MD_Great};
     mPistonCommands[MD_Pedal][11] = {.division = MD_Pedal, .type = PCT_COUPLER, .param = MIDIDivision::MD_Swell};
@@ -85,7 +94,7 @@ CouplerProcessor::CouplerProcessor(MIDIRouter &router)
     mPistonCommands[MD_Choir][5]  = {.division = MD_Choir, .type = PCT_COMBINATION, .param = 2};
     mPistonCommands[MD_Choir][6]  = {.division = MD_Choir, .type = PCT_COMBINATION, .param = 1};
     mPistonCommands[MD_Choir][7]  = {.division = MD_Choir, .type = PCT_OFF,       .param = 0};
-    mPistonCommands[MD_Choir][8]  = {.division = MD_Choir, .type = PCT_TRANSPOSE, .param = PP_TOGGLE};
+    mPistonCommands[MD_Choir][8]  = {.division = MD_Choir, .type = PCT_TRANSPOSE, .param = BT_TOGGLE};
     mPistonCommands[MD_Choir][9]  = {.division = MD_Choir, .type = PCT_COUPLER, .param = MIDIDivision::MD_Pedal};
     mPistonCommands[MD_Choir][10] = {.division = MD_Choir, .type = PCT_COUPLER, .param = MIDIDivision::MD_Swell};
     mPistonCommands[MD_Choir][11] = {.division = MD_Choir, .type = PCT_COUPLER, .param = MIDIDivision::MD_Solo};
@@ -98,13 +107,13 @@ CouplerProcessor::CouplerProcessor(MIDIRouter &router)
     mPistonCommands[MD_Swell][5]  = {.division = MD_Swell, .type = PCT_COMBINATION, .param = 2};
     mPistonCommands[MD_Swell][6]  = {.division = MD_Swell, .type = PCT_COMBINATION, .param = 1};
     mPistonCommands[MD_Swell][7]  = {.division = MD_Swell, .type = PCT_OFF,       .param = 0};
-    mPistonCommands[MD_Swell][8]  = {.division = MD_Swell, .type = PCT_TRANSPOSE, .param = PP_TOGGLE};
+    mPistonCommands[MD_Swell][8]  = {.division = MD_Swell, .type = PCT_TRANSPOSE, .param = BT_TOGGLE};
     mPistonCommands[MD_Swell][9]  = {.division = MD_Swell, .type = PCT_COUPLER, .param = MIDIDivision::MD_Pedal};
     mPistonCommands[MD_Swell][10] = {.division = MD_Swell, .type = PCT_COUPLER, .param = MIDIDivision::MD_Great};
     mPistonCommands[MD_Swell][11] = {.division = MD_Swell, .type = PCT_COUPLER, .param = MIDIDivision::MD_Solo};
 
-    mPistonCommands[MD_Swell][12] = {.division = MD_Control, .type = PCT_PAGE, .param = PP_NEXT};
-    mPistonCommands[MD_Swell][13] = {.division = MD_Control, .type = PCT_PAGE, .param = PP_PREV};
+    mPistonCommands[MD_Swell][12] = {.division = MD_Control, .type = PCT_PAGE, .param = BT_NEXT};
+    mPistonCommands[MD_Swell][13] = {.division = MD_Control, .type = PCT_PAGE, .param = BT_PREV};
     mPistonCommands[MD_Swell][14] = {.division = MD_Control, .type = PCT_COMBINATION, .param = 12};
     mPistonCommands[MD_Swell][15] = {.division = MD_Control, .type = PCT_COMBINATION, .param = 11};
     mPistonCommands[MD_Swell][16] = {.division = MD_Control, .type = PCT_COMBINATION, .param = 10};
@@ -121,13 +130,13 @@ CouplerProcessor::CouplerProcessor(MIDIRouter &router)
     mPistonCommands[MD_Solo][5]  = {.division = MD_Solo, .type = PCT_COMBINATION, .param = 2};
     mPistonCommands[MD_Solo][6]  = {.division = MD_Solo, .type = PCT_COMBINATION, .param = 1};
     mPistonCommands[MD_Solo][7]  = {.division = MD_Solo, .type = PCT_OFF,       .param = 0};
-    mPistonCommands[MD_Solo][8]  = {.division = MD_Solo, .type = PCT_TRANSPOSE, .param = PP_TOGGLE};
+    mPistonCommands[MD_Solo][8]  = {.division = MD_Solo, .type = PCT_TRANSPOSE, .param = BT_TOGGLE};
     mPistonCommands[MD_Solo][9]  = {.division = MD_Solo, .type = PCT_COUPLER, .param = MIDIDivision::MD_Choir};
     mPistonCommands[MD_Solo][10] = {.division = MD_Solo, .type = PCT_COUPLER, .param = MIDIDivision::MD_Great};
     mPistonCommands[MD_Solo][11] = {.division = MD_Solo, .type = PCT_COUPLER, .param = MIDIDivision::MD_Swell};
 
-    mPistonCommands[MD_Solo][12] = {.division = MD_Control, .type = PCT_SEQUENCE, .param = PP_NEXT};
-    mPistonCommands[MD_Solo][13] = {.division = MD_Control, .type = PCT_SEQUENCE, .param = PP_PREV};
+    mPistonCommands[MD_Solo][12] = {.division = MD_Control, .type = PCT_SEQUENCE, .param = BT_NEXT};
+    mPistonCommands[MD_Solo][13] = {.division = MD_Control, .type = PCT_SEQUENCE, .param = BT_PREV};
     mPistonCommands[MD_Solo][14] = {.division = MD_Control, .type = PCT_COMBINATION, .param = 8};
     mPistonCommands[MD_Solo][15] = {.division = MD_Control, .type = PCT_COMBINATION, .param = 7};
     mPistonCommands[MD_Solo][16] = {.division = MD_Control, .type = PCT_COMBINATION, .param = 6};
@@ -169,6 +178,68 @@ void CouplerProcessor::begin()
 {
 }
 
+void CouplerProcessor::clearCouplers(MIDIDivision division)
+{
+    for (int i = 0; i < MAX_DIVISION_CHANNEL + 1; i++) {
+        mCoupler[division].couple[i] = CM_OFF;
+    }
+}
+
+void CouplerProcessor::coupleDivision(MIDIDivision division, MIDIDivision target, CoupleMode mode)
+{
+    mCoupler[division].couple[target] = mode;
+
+    // TODO update LED output, update Panel
+}
+
+void CouplerProcessor::transposeDivision(MIDIDivision division, CoupleMode mode)
+{
+    mCoupler[division].couple[division] = mode;
+
+    // TODO update LED output, update Panel
+}
+
+void CouplerProcessor::enableCrescendo(MIDIDivision division, bool crescendo)
+{
+    mCoupler[division].crescendo = crescendo;
+}
+
+void CouplerProcessor::enableDivision(MIDIDivision division, bool output)
+{
+    mCoupler[division].enabled = output;
+}
+
+CoupleMode CouplerProcessor::coupled(MIDIDivision division, MIDIDivision target) const
+{
+    return mCoupler[division].couple[target];
+}
+
+CoupleMode CouplerProcessor::transposed(MIDIDivision division) const
+{
+    return mCoupler[division].couple[division];
+}
+
+bool CouplerProcessor::crescendo(MIDIDivision division) const
+{
+    return mCoupler[division].crescendo;
+}
+
+bool CouplerProcessor::enabled(MIDIDivision division) const
+{
+    return mCoupler[division].enabled;
+}
+
+void CouplerProcessor::selectCombination(MIDIDivision division, int combination)
+{
+
+}
+
+void CouplerProcessor::clearCombination(MIDIDivision division)
+{
+
+}
+
+
 void CouplerProcessor::processPistonPress(MIDIDivision division, uint8_t button, bool longPress)
 {
     if (button >= MAX_PISTONS) {
@@ -179,19 +250,52 @@ void CouplerProcessor::processPistonPress(MIDIDivision division, uint8_t button,
 
     switch (cmd.type) {
         case PCT_COUPLER:
+            if (longPress) {
+                // couple transposed
+                coupleDivision(cmd.division, cmd.param.division, CM_OCTAVE_UP);
+            } else {
+                // Toggle coupler status
+                if (coupled(cmd.division, cmd.param.division) == CM_OFF) {
+                    coupleDivision(cmd.division, cmd.param.division, CM_COUPLE);
+                } else {
+                    coupleDivision(cmd.division, cmd.param.division, CM_OFF);
+                }
+            }
             break;
         case PCT_TRANSPOSE:
+            if (cmd.param.button == BT_TOGGLE) {
+                if (longPress) {
+                    // Disable transpose
+                    transposeDivision(cmd.division, CM_OFF);
+                } else {
+                    if (transposed(cmd.division) == CM_OFF) {
+                        transposeDivision(cmd.division, CM_OCTAVE_UP);
+                    } else if (transposed(cmd.division) == CM_OCTAVE_UP) {
+                        transposeDivision(cmd.division, CM_OCTAVE_DOWN);
+                    } else if (transposed(cmd.division) == CM_OCTAVE_DOWN) {
+                        transposeDivision(cmd.division, CM_OFF);
+                    }                    
+                }
+            }
             break;
         case PCT_OFF:
+            if (longPress) {
+                clearCouplers(cmd.division);
+            } else {
+                enableDivision(cmd.division, !enabled(cmd.division));
+            }
             break;
         case PCT_COMBINATION:
+            selectCombination(cmd.division, cmd.param.value);
             break;
         case PCT_CLEAR:
+            clearCombination(cmd.division);
             break;
         case PCT_CRESCENDO:
+            enableCrescendo(cmd.division, !crescendo(cmd.division));
             break;
         case PCT_PAGE:
-            if (cmd.param == PP_PREV) {
+            if (cmd.param.button == BT_PREV) {
                 Keyboard.press(KEY_LEFT); 
                 Keyboard.release(KEY_LEFT); 
             } else {
@@ -233,6 +337,31 @@ void CouplerProcessor::processPedalChange(uint16_t crescendo, uint16_t swell, ui
     }
 }
 
+void CouplerProcessor::sendCouplerMessage(MIDIDivision division, MIDIDivision target, 
+                                          MIDIPort inPort, const MidiMessage &msg)
+{
+    if (mCoupler[division].couple[target] == CM_OFF) {
+        return;
+    }
+
+    // Create new MIDI message with target channel
+    MidiMessage cmsg = msg;
+    cmsg.channel = mDivisionChannels[target];
+
+    // Transpose note messages
+    if ((cmsg.type == midi::MidiType::NoteOn || cmsg.type == midi::MidiType::NoteOff)) {
+        if (mCoupler[division].couple[target] == CM_OCTAVE_DOWN) {
+            cmsg.data1 -= 12;
+        }
+        if (mCoupler[division].couple[target] == CM_OCTAVE_UP) {
+            cmsg.data1 += 12;
+        }
+    }
+
+    // Inject coupler midi message into the router (using the same MIDI port)
+    mMIDIRouter.injectMessage(inPort, cmsg);
+}
+
 void CouplerProcessor::routeDivisionInput(MIDIPort inPort, const MidiMessage &msg)
 {
     MIDIDivision division = getDivision(inPort, msg);
@@ -248,9 +377,16 @@ void CouplerProcessor::routeDivisionInput(MIDIPort inPort, const MidiMessage &ms
         return;
     }
 
-    // TODO handle coupler, transpose, inject new messages
+    // handle coupler, transpose, inject new messages
+    sendCouplerMessage(division, MIDIDivision::MD_Pedal, inPort, msg);
+    sendCouplerMessage(division, MIDIDivision::MD_Choir, inPort, msg);
+    sendCouplerMessage(division, MIDIDivision::MD_Great, inPort, msg);
+    sendCouplerMessage(division, MIDIDivision::MD_Swell, inPort, msg);
+    sendCouplerMessage(division, MIDIDivision::MD_Solo,  inPort, msg);
 
-    // TODO only inject original message if division is not OFF (only for Note messages)
-    mMIDIRouter.injectMessage(inPort, msg);
+    // only inject original message if division is not OFF (only for Note messages)
+    if (mCoupler[division].enabled) {
+        mMIDIRouter.injectMessage(inPort, msg);
+    }
 }
 
