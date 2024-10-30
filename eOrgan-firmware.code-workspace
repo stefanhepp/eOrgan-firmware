@@ -21,6 +21,10 @@
 			"path": "KeyboardEncoder"
 		},
 		{
+			"name": "MainPanelEncoder",
+			"path": "MainPanelEncoder"
+		},
+		{
 			"name": "PedalEncoder",
 			"path": "PedalEncoder"
 		},

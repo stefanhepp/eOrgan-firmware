@@ -88,7 +88,10 @@ class CouplerProcessor
         /**
          * \return True if the message was a pedal message and was processed, else false.
          */
-        bool processPedalMessage(MIDIDivision, const MidiMessage &msg);
+        bool processPedalMessage(MIDIDivision division, const MidiMessage &msg);
+
+        void sendCouplerMessage(MIDIDivision division, MIDIDivision target, 
+                                MIDIPort inPort, const MidiMessage &msg);
 
     public:
         explicit CouplerProcessor(MIDIRouter &router);
