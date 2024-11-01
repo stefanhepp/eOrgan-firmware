@@ -84,6 +84,7 @@ int CalibratedAnalogInput::center() const
 void CalibratedAnalogInput::begin(uint8_t pin)
 {
     mPin = pin;
+    pinMode(pin, INPUT);
 }
 
 void CalibratedAnalogInput::poll()

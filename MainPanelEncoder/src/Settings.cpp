@@ -27,17 +27,17 @@ bool Settings::hasCalibrationData()
     return (v != 0xFFFF);
 }
 
-void Settings::getCalibrationData(uint8_t pedal, AICalibrationData &data) const
+void Settings::getCalibrationData(uint8_t knob, AICalibrationData &data) const
 {
-    data.min = (int) eeprom_read_word(&confCalibrationData[pedal * 2    ]);
-    data.max = (int) eeprom_read_word(&confCalibrationData[pedal * 2 + 1]);
+    data.min = (int) eeprom_read_word(&confCalibrationData[knob * 2    ]);
+    data.max = (int) eeprom_read_word(&confCalibrationData[knob * 2 + 1]);
     data.center = 0;
 }
 
-void Settings::setCalibrationData(uint8_t pedal, const AICalibrationData &data)
+void Settings::setCalibrationData(uint8_t knob, const AICalibrationData &data)
 {
-    eeprom_write_word(&confCalibrationData[pedal * 2    ], (uint16_t) data.min);
-    eeprom_write_word(&confCalibrationData[pedal * 2 + 1], (uint16_t) data.max);
+    eeprom_write_word(&confCalibrationData[knob * 2    ], (uint16_t) data.min);
+    eeprom_write_word(&confCalibrationData[knob * 2 + 1], (uint16_t) data.max);
 }
 
 uint8_t Settings::getSensitivity()

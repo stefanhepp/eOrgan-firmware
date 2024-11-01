@@ -18,7 +18,8 @@
 
 #include "config.h"
 
-static const uint8_t OUTPUT_PINS[3] = {PIN_KP_L1, PIN_KP_L2, PIN_KP_L3};
+static const uint8_t NUM_OUTPUT_PINS = 5;
+static const uint8_t OUTPUT_PINS[5] = {PIN_KP_L1, PIN_KP_L2, PIN_KP_L3, PIN_BTN1, PIN_BTN2};
 
 MainPanel::MainPanel()
 {
@@ -27,6 +28,10 @@ MainPanel::MainPanel()
 
 void MainPanel::setHandleButton( void(*handler)(uint8_t button, bool longPress) ) {
     mButtonHandler = handler;
+}
+
+void MainPanel::setHandleEncoder( void(*handler)(uint8_t encoder, int position) ) {
+    mEncoderHandler = handler;
 }
 
 void MainPanel::reset()
@@ -39,20 +44,23 @@ void MainPanel::reset()
 void MainPanel::begin()
 {
     uint8_t i;
-    for (i = 0; i < 3; i++) {
+    for (i = 0; i < NUM_OUTPUT_PINS; i++) {
         pinMode(OUTPUT_PINS[i], OUTPUT);
         digitalWrite(OUTPUT_PINS[i], HIGH);
     }
     pinMode(PIN_KP_BTN, INPUT_PULLUP);
+    pinMode(PIN_S0, OUTPUT);
+    pinMode(PIN_S1, OUTPUT);
+    pinMode(PIN_S2, OUTPUT);
 }
 
 uint8_t MainPanel::getBtnNumber(uint8_t line, uint8_t pin)
 {
-    return line * 5 + pin;
+    return line * NUM_OUTPUT_PINS + pin;
 }
 
 void MainPanel::readLine(const uint8_t line) {
-    for (uint8_t i = 0; i < 5; i++) {
+    for (uint8_t i = 0; i < NUM_OUTPUT_PINS; i++) {
         uint8_t btn = getBtnNumber(line, i);
         uint8_t value = digitalRead(PIN_KP_BTN);
 

@@ -20,6 +20,7 @@ class MainPanel
     private:
         // callback for key changes
         void (*mButtonHandler)(uint8_t btn, bool longPress) = nullptr;
+        void (*mEncoderHandler)(uint8_t encoder, int position) = nullptr;
 
         uint8_t mButtons[NUM_BUTTONS];
 
@@ -32,6 +33,8 @@ class MainPanel
         void reset();
 
         void setHandleButton(void (*handler)(uint8_t btn, bool longPress) );
+
+        void setHandleEncoder(void (*handler)(uint8_t encoder, int position) );
 
         /**
          * Initialize all pins and routines.

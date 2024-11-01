@@ -21,9 +21,9 @@ class Settings
 
         bool hasCalibrationData();
 
-        void getCalibrationData(uint8_t pedal, AICalibrationData &data) const;
+        void getCalibrationData(uint8_t knob, AICalibrationData &data) const;
 
-        void setCalibrationData(uint8_t pedal, const AICalibrationData &data);
+        void setCalibrationData(uint8_t knob, const AICalibrationData &data);
 
         uint8_t getSensitivity();
 
