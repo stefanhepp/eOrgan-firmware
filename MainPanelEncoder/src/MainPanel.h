@@ -12,7 +12,8 @@
 
 #include <inttypes.h>
 
-static const uint8_t NUM_BUTTONS = 25;
+static const uint8_t NUM_BUTTONS = 18;
+static const uint8_t NUM_ENCODERS = 2;
 static const uint8_t BUTTON_LONG_PRESS = 200;
 
 class MainPanel
@@ -24,9 +25,15 @@ class MainPanel
 
         uint8_t mButtons[NUM_BUTTONS];
 
+        int8_t mEncoder[NUM_ENCODERS];
+
         uint8_t getBtnNumber(uint8_t line, uint8_t pin);
 
-        void readLine(const uint8_t line);
+        void readEncoder(uint8_t encoder, uint8_t a, uint8_t b);
+
+        void readButton(uint8_t button, uint8_t value);
+
+        void readLine(uint8_t line);
     public:
         explicit MainPanel();
 
