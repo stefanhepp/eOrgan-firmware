@@ -88,7 +88,9 @@ void ControllerDriver::selectController(Controller controller)
         case Controller::MC_LEDController:
             // On StopLeft port
             MP.selectChannel(2);
-            break;            
+            break;
+        case Controller::MC_MainPanel:
+            break;
     }
 }
 

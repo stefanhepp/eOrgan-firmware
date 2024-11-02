@@ -146,8 +146,11 @@ void i2cRequest()
     clearIRQ(IRQ_VOLUME);
 
     // Send encoder positions, clear on read (send delta only)
-    Wire.write((int8_t)EncoderPosition[0]);
-    Wire.write((int8_t)EncoderPosition[1]);
+    Wire.write((uint8_t)EncoderPosition[0]);
+    Wire.write((uint8_t)EncoderPosition[1]);
+
+    EncoderPosition[0] = 0;
+    EncoderPosition[1] = 0;
 
     // Send button press events
     Wire.write(ButtonBufferLength);
@@ -191,11 +194,14 @@ void setup() {
     setupPoti(&POTI_FX1, PIN_FX1);
     setupPoti(&POTI_FX2, PIN_FX2);
 
+    resetEncoder();
+
     Wire.onReceive(i2cReceive);
     Wire.onRequest(i2cRequest);
     Wire.begin(Controller::MC_MainPanel);
 
     Panel.setHandleButton(onButtonPress);
+    Panel.setHandleEncoder(onEncoderPosition);
     Panel.begin();
 }
 

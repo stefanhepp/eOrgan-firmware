@@ -82,12 +82,12 @@ uint8_t MainPanel::getBtnNumber(uint8_t line, uint8_t pin)
 
 void MainPanel::readEncoder(uint8_t encoder, uint8_t a, uint8_t b)
 {
-    int8_t lastPos = mEncoder[encoder];
+    int lastPos = mEncoder[encoder];
     // map A/B to quadrant number
-    int8_t pos = (b) ? 1-a : a;
+    int pos = (b) ? (int) 1-a : (int) a;
 
     if (lastPos < 127) {
-        int8_t delta = pos - lastPos;
+        int delta = pos - lastPos;
         // Wrap-around from quadrant 3 to/back to 0
         if (delta > 2) {
             delta -= 4;

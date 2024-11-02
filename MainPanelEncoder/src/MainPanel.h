@@ -25,7 +25,7 @@ class MainPanel
 
         uint8_t mButtons[NUM_BUTTONS];
 
-        int8_t mEncoder[NUM_ENCODERS];
+        int mEncoder[NUM_ENCODERS];
 
         uint8_t getBtnNumber(uint8_t line, uint8_t pin);
 
