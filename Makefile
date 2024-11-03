@@ -2,7 +2,10 @@
 
 all: keyboard technics piston pedal toestud controller
 
-.PHONY: keyboard technics piston pedal toestud controller
+.PHONY: led keyboard technics piston pedal toestud mainpanel controller
+
+led:
+	cd LEDController && platformio run
 
 keyboard:
 	cd KeyboardEncoder && platformio run

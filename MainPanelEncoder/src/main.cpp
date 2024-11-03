@@ -27,7 +27,7 @@ static const uint8_t POTI_FX2 = 2;
 
 CalibratedAnalogInput volume[3];
 
-int EncoderPosition[2];
+int EncoderPosition[2] = {0,0};
 
 static const uint8_t BUFFER_SIZE = 16;
 static uint8_t ButtonBuffer[BUFFER_SIZE];
@@ -139,16 +139,16 @@ void i2cRequest()
 {
     // Send poti values
     for (uint8_t i = 0; i < 3; i++) {
-        int value = volume[i].value();
+        int value = 1024 - volume[i].value();
+        if (value < 0) value = 0;
         Wire.write((uint8_t)(value >> 8));
         Wire.write((uint8_t)(value & 0xFF));
     }
     clearIRQ(IRQ_VOLUME);
 
     // Send encoder positions, clear on read (send delta only)
-    Wire.write((uint8_t)EncoderPosition[0]);
-    Wire.write((uint8_t)EncoderPosition[1]);
-
+    Wire.write( (uint8_t)((EncoderPosition[0]) & 0xFF) );
+    Wire.write( (uint8_t)((EncoderPosition[1]) & 0xFF) );
     EncoderPosition[0] = 0;
     EncoderPosition[1] = 0;
 

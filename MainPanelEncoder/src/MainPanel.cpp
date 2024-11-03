@@ -84,7 +84,7 @@ void MainPanel::readEncoder(uint8_t encoder, uint8_t a, uint8_t b)
 {
     int lastPos = mEncoder[encoder];
     // map A/B to quadrant number
-    int pos = (b) ? (int) 1-a : (int) a;
+    int pos = (b) ? (int) 3-a : (int) a;
 
     if (lastPos < 127) {
         int delta = pos - lastPos;
