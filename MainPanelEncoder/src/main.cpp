@@ -139,7 +139,7 @@ void i2cRequest()
 {
     // Send poti values
     for (uint8_t i = 0; i < 3; i++) {
-        int value = 1024 - volume[i].value();
+        int value = 1023 - volume[i].value();
         if (value < 0) value = 0;
         Wire.write((uint8_t)(value >> 8));
         Wire.write((uint8_t)(value & 0xFF));
