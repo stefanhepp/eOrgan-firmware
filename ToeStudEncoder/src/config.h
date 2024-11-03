@@ -16,7 +16,8 @@
 /* Common controller settings                           */
 /* ==================================================== */
 
-#define PORT_IN       B
+#define PORT_IN       D
+#define PORT_OUT      B
 
 static const uint8_t PIN_INTERRUPT   = PIN_PC3;
 
@@ -24,6 +25,7 @@ static const uint8_t PIN_L1        = PIN_PB0;
 static const uint8_t PIN_L2        = PIN_PB1;
 static const uint8_t PIN_L3        = PIN_PB2;
 static const uint8_t PIN_L4        = PIN_PB3;
+
 static const uint8_t PIN_D1        = PIN_PD3;
 static const uint8_t PIN_D2        = PIN_PD4;
 static const uint8_t PIN_D3        = PIN_PD5;

@@ -19,6 +19,7 @@
 #include <MiniMIDI.h>
 #include <MegaWire.h>
 #include <CalibratedAnalogInput.h>
+#include <avrlib.h>
 
 #include <common_config.h>
 
@@ -209,21 +210,22 @@ void setupPedal(const uint8_t *pedal, uint8_t pin)
 }
  
 void setup() {
-    // Enable pullups for unconnected pins
-    pinMode(PIN_PB4, INPUT_PULLUP);
-    pinMode(PIN_PB5, INPUT_PULLUP);
-    pinMode(PIN_PB6, INPUT_PULLUP);
-    pinMode(PIN_PB7, INPUT_PULLUP);
-    pinMode(PIN_PD2, INPUT_PULLUP);
+    // Enable ouput pins, set to HIGH initially. enable pullups for other pins
+    IO_DDR(PORT_OUT) = 0x0F;
+    IO_PORT(PORT_OUT) = 0xFF;
+
+    // Enable pullups for input ports
+    IO_DDR(PORT_IN) = 0;
+    IO_PORT(PORT_IN) = 0xFC;
 
     // Set output pin modes
     // Set pin value first before turing on output mode, to prevent spurious signals
     digitalWrite(PIN_INTERRUPT, LOW);
     pinMode(PIN_INTERRUPT, OUTPUT);
 
-    MIDIChannel = settings.getMIDIChannel();
-    MIDIChannelSwell = settings.getMIDIChannelSwell();
-    MIDIChannelChoir = settings.getMIDIChannelChoir();
+    MIDIChannel = settings.getMIDIChannel(SettingsChannel::SC_Control);
+    MIDIChannelSwell = settings.getMIDIChannel(SettingsChannel::SC_Swell);
+    MIDIChannelChoir = settings.getMIDIChannel(SettingsChannel::SC_Choir);
 
     SendMode = settings.getSendMode(ToeStudMode::TSM_I2C);
 
@@ -247,8 +249,7 @@ void loop() {
         pedals[i].poll();
     }
     
-    // wait for any MIDI messages being sent and add a small gap to resync
+    // wait for any MIDI messages being sent
     while (MIDI.sending()) {
-        delayMicroseconds(20);
     }
 }

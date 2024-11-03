@@ -5,6 +5,7 @@
 
 #include <MegaWire.h>
 
+#include <Arduino.h>
 #include <avr/io.h>
 #include <avr/interrupt.h>
 
@@ -119,6 +120,15 @@ void MegaWire::onRequest( void(*callback)() ) {
     OnRequestFct = callback;
 }
 
+/**
+ * Extend ACK signal by introducing some delay before issuing the next command.
+ */
+static inline void delay_ack() {
+#if F_CPU > 1000000
+    delayMicroseconds(8);
+#endif
+}
+
 ISR(TWI_vect) {
     switch (TWSR & 0xF8) {
 #ifdef I2C_ENABLE_MASTER
@@ -166,6 +176,7 @@ ISR(TWI_vect) {
             // Transmission about to start, clear buffer
             BufferLength = 0;
             BufferPos = 0;
+            delay_ack();
             // Clear Interrupt flag, ACK next receive
             TWCR |= (1<<TWINT)|(1<<TWEA);
             break;
@@ -174,6 +185,7 @@ ISR(TWI_vect) {
                 // Buffer received data
                 Buffer[BufferLength++] = TWDR;
             }
+            delay_ack();
             if (BufferLength < I2C_BUFFER_SIZE - 1) {
                 // Still buffer free, receive more by sending ACK
                 TWCR |= (1<<TWEA);

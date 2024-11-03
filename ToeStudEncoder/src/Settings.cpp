@@ -14,41 +14,31 @@
 
 #include <common_config.h>
 
-uint8_t EEMEM confChannel;
-uint8_t EEMEM confChannelSwell;
-uint8_t EEMEM confChannelChoir;
+uint8_t EEMEM confChannel[3];
 uint8_t EEMEM confMode;
 uint8_t EEMEM confSensitivity;
 
 uint16_t EEMEM confCalibrationData[6];
 
+static const uint8_t ChannelDefault[3] = {MIDI_CHANNEL_TOESTUD, 
+                                          MIDI_CHANNEL_TOESTUD_SWELL,
+                                          MIDI_CHANNEL_TOESTUD_CHOIR};
+
 Settings::Settings()
 {
 }
 
-uint8_t Settings::getMIDIChannel()
+uint8_t Settings::getMIDIChannel(SettingsChannel channel)
 {
-    uint8_t v = eeprom_read_byte(&confChannel);
-    return (v == 0xFF) ? MIDI_CHANNEL_TOESTUD : v;
-}
-
-uint8_t Settings::getMIDIChannelSwell()
-{
-    uint8_t v = eeprom_read_byte(&confChannelSwell);
-    return (v == 0xFF) ? MIDI_CHANNEL_TOESTUD_SWELL : v;
-}
-
-uint8_t Settings::getMIDIChannelChoir()
-{
-    uint8_t v = eeprom_read_byte(&confChannelChoir);
-    return (v == 0xFF) ? MIDI_CHANNEL_TOESTUD_CHOIR : v;
+    uint8_t v = eeprom_read_byte(&confChannel[channel]);
+    return (v == 0xFF) ? ChannelDefault[channel] : v;
 }
 
 void Settings::setMIDIChannel(uint8_t channel, uint8_t channelSwell, uint8_t channelChoir)
 {
-    eeprom_write_byte(&confChannel, channel);
-    eeprom_write_byte(&confChannelSwell, channelSwell);
-    eeprom_write_byte(&confChannelChoir, channelChoir);
+    eeprom_write_byte(&confChannel[0], channel);
+    eeprom_write_byte(&confChannel[1], channelSwell);
+    eeprom_write_byte(&confChannel[2], channelChoir);
 }
 
 bool Settings::hasCalibrationData()
