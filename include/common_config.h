@@ -125,7 +125,7 @@ static const uint8_t KEY_VELOCITY = 64;
  * Panel UART Commands and Constants
  * ============================================================== */
 
-static const int PANEL_UART_SPEED = 115200;
+static const uint32_t PANEL_UART_SPEED = 115200;
 
-static const uint8_t PANEL_CMD_PING = 0x01;
+static const uint8_t  PANEL_CMD_PING = 0x01;
 

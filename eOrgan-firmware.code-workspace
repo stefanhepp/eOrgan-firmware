@@ -1,16 +1,8 @@
 {
 	"folders": [
 		{
-			"name": "archive",
-			"path": "archive"
-		},
-		{
 			"name": "include",
 			"path": "include"
-		},
-		{
-			"name": "lib",
-			"path": "lib"
 		},
 		{
 			"name": "LEDController",
