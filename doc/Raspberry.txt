@@ -37,3 +37,9 @@ Section "InputClass"
 
 EndSection
   ```
+
+- Enable UART
+  - Run raspi-config to setup Interfaces -> Serial, disable login via serial, enable hardware serial, then reboot.
+    ```
+    raspi-config
+    ```

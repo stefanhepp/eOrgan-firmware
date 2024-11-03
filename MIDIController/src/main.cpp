@@ -12,6 +12,7 @@
 #include "ControllerDriver.h"
 #include "OrganStateManager.h"
 #include "CouplerProcessor.h"
+#include "PanelInterface.h"
 
 #ifdef TEENSY_DEBUG
   #include "TeensyDebug.h"
@@ -23,6 +24,7 @@ MIDIRouter MIDI;
 CouplerProcessor Coupler(MIDI);
 ControllerDriver Control;
 OrganStateManager StateMngr(MIDI, Coupler, Control);
+PanelInterface Panel;
 
 static const int PIN_LED = 23;
 
@@ -506,6 +508,7 @@ void setup()
     Coupler.begin();
     StateMngr.begin();
     Audio.begin();
+    Panel.begin();
 }
 
 void loop() {
@@ -513,4 +516,5 @@ void loop() {
     Control.loop();
     MIDI.loop();
     StateMngr.loop();
+    Panel.loop();
 }

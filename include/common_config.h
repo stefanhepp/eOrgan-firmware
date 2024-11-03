@@ -120,3 +120,12 @@ static const uint8_t MIDI_CONTROL_CRESCENDO =  11; // ExpressionPedal
 
 // Velocity for digital keys
 static const uint8_t KEY_VELOCITY = 64;
+
+/* ==============================================================
+ * Panel UART Commands and Constants
+ * ============================================================== */
+
+static const int PANEL_UART_SPEED = 115200;
+
+static const uint8_t PANEL_CMD_PING = 0x01;
+
