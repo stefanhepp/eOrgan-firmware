@@ -81,6 +81,12 @@ class MIDIRouter
 
         void enableMIDIOutput(bool enable);
 
+        bool isCouplerEnabled() const { return mEnableCoupler; }
+
+        bool isUSBOutEnabled() const { return mEnableUSB; }
+
+        bool isMIDIOutEnabled() const { return mEnableMIDIOut; }
+
         // TODO enable/disable routes
 
         // TODO set channel mapping per input -> output

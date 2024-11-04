@@ -24,7 +24,7 @@ MIDIRouter MIDI;
 CouplerProcessor Coupler(MIDI);
 ControllerDriver Control;
 OrganStateManager StateMngr(MIDI, Coupler, Control);
-PanelInterface Panel;
+PanelInterface Panel(Coupler, MIDI, Audio);
 
 static const int PIN_LED = 23;
 
