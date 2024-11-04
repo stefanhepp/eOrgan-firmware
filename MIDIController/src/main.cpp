@@ -24,7 +24,7 @@ MIDIRouter MIDI;
 CouplerProcessor Coupler(MIDI);
 ControllerDriver Control;
 OrganStateManager StateMngr(MIDI, Coupler, Control);
-PanelInterface Panel(Coupler, MIDI, Audio);
+PanelInterface Panel(StateMngr, Coupler, MIDI, Audio);
 
 static const int PIN_LED = 23;
 
@@ -371,7 +371,7 @@ class ToeStudModeParser: public CommandParser
                         return CmdErrorCode::CmdOK;
                     }
                     if (strcmp(arg, "both") == 0) {
-                        Control.setToestudMode(ToeStudMode::TSM_I2C | ToeStudMode::TSM_MIDI);
+                        Control.setToestudMode(ToeStudMode::TSM_BOTH);
                         return CmdErrorCode::CmdOK;
                     }
                 } else {
@@ -435,7 +435,9 @@ void onToeStudStatus(uint8_t channel, uint16_t crescendo, uint16_t swell, uint16
 
     // if mode is not MIDI, process I2C pedals
     if ((Control.getToestudMode() & ToeStudMode::TSM_MIDI) == 0) {
-        Coupler.processPedalChange(crescendo, swell, choir);
+        Coupler.processCrescendoChange(crescendo);
+        Coupler.processPedalChange(MIDIDivision::MD_Swell, swell);
+        Coupler.processPedalChange(MIDIDivision::MD_Choir, choir);
     }
 }
 

@@ -174,6 +174,11 @@ void CouplerProcessor::setDivisionChannel(MIDIDivision division, uint8_t channel
     mChannelDivisions[channel] = division;
 }
 
+void CouplerProcessor::sendMIDICommands(bool sendCommands)
+{
+    mSendMIDICommands = sendCommands;
+}
+
 void CouplerProcessor::begin()
 {
 }
@@ -315,25 +320,49 @@ void CouplerProcessor::processPistonPress(MIDIDivision division, uint8_t button,
     }
 }
 
-bool CouplerProcessor::processPedalMessage(MIDIDivision, const MidiMessage &msg)
+bool CouplerProcessor::processPedalMessage(MIDIDivision division, const MidiMessage &msg)
 {
-
+    if (division == MIDIDivision::MD_Choir || division == MIDIDivision::MD_Swell) {
+        if (msg.type == midi::MidiType::PitchBend) {
+            uint16_t value = msg.data1 | (msg.data2 << 7);
+            processPedalChange(division, value);
+            return true;
+        }        
+    }
+    if (division == MIDIDivision::MD_Control) {
+        if (msg.type == midi::MidiType::ControlChange && msg.data1 == midi::MidiControlChangeNumber::ExpressionController) {
+            uint16_t value = msg.data2 << 4;
+            processCrescendoChange(value);
+        }
+    }
     return false;
 }
 
-void CouplerProcessor::processPedalChange(uint16_t crescendo, uint16_t swell, uint16_t choir)
+void CouplerProcessor::processCrescendoChange(uint16_t crescendo)
 {
     if (crescendo != mPedalCrescendo) {
 
         mPedalCrescendo = crescendo;
     }
-    if (swell != mPedalSwell) {
+}
 
-        mPedalSwell = swell;
-    }
-    if (choir != mPedalChoir) {
+void CouplerProcessor::processPedalChange(MIDIDivision division, uint16_t value)
+{
+    switch (division) {
+        case MIDIDivision::MD_Choir:
+            if (value != mPedalChoir) {
 
-        mPedalChoir = choir;
+                mPedalChoir = value;
+            }
+            break;
+        case MIDIDivision::MD_Swell:
+            if (value != mPedalSwell) {
+
+                mPedalChoir = value;
+            }
+            break;
+        default:
+            break;
     }
 }
 
@@ -378,14 +407,16 @@ void CouplerProcessor::routeDivisionInput(MIDIPort inPort, const MidiMessage &ms
     }
 
     // handle coupler, transpose, inject new messages
-    sendCouplerMessage(division, MIDIDivision::MD_Pedal, inPort, msg);
-    sendCouplerMessage(division, MIDIDivision::MD_Choir, inPort, msg);
-    sendCouplerMessage(division, MIDIDivision::MD_Great, inPort, msg);
-    sendCouplerMessage(division, MIDIDivision::MD_Swell, inPort, msg);
-    sendCouplerMessage(division, MIDIDivision::MD_Solo,  inPort, msg);
+    if (!mSendMIDICommands) {
+        sendCouplerMessage(division, MIDIDivision::MD_Pedal, inPort, msg);
+        sendCouplerMessage(division, MIDIDivision::MD_Choir, inPort, msg);
+        sendCouplerMessage(division, MIDIDivision::MD_Great, inPort, msg);
+        sendCouplerMessage(division, MIDIDivision::MD_Swell, inPort, msg);
+        sendCouplerMessage(division, MIDIDivision::MD_Solo,  inPort, msg);
+    }
 
     // only inject original message if division is not OFF (only for Note messages)
-    if (mCoupler[division].enabled) {
+    if (mCoupler[division].enabled || mSendMIDICommands) {
         mMIDIRouter.injectMessage(inPort, msg);
     }
 }

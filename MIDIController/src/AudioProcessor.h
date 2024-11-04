@@ -18,4 +18,10 @@ class AudioProcessor {
         AudioProcessor();
 
         void begin();
+
+        void setUSBInputGain(float gain);
+
+        void setFXInputGain(float gain);
+
+        void setVolume(float volume);
 };

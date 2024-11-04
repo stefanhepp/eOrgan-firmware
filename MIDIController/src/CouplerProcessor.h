@@ -83,6 +83,12 @@ class CouplerProcessor
         uint16_t mPedalSwell = 0;
         uint16_t mPedalChoir = 0;
 
+        /**
+         * If true, send MIDI commands for coupler actions instead of
+         * performing the coupler translations.
+         */
+        bool mSendMIDICommands;
+
         MIDIDivision getDivision(MIDIPort inPort, const MidiMessage &msg);
 
         /**
@@ -97,6 +103,10 @@ class CouplerProcessor
         explicit CouplerProcessor(MIDIRouter &router);
 
         void setDivisionChannel(MIDIDivision division, uint8_t channel);
+
+        void sendMIDICommands(bool sendCommands);
+
+        bool doSendMIDICommands() const { return mSendMIDICommands; }
 
 
         /**
@@ -138,7 +148,9 @@ class CouplerProcessor
 
         void processPistonPress(MIDIDivision division, uint8_t button, bool longPress);
 
-        void processPedalChange(uint16_t crescendo, uint16_t swell, uint16_t choir);
+        void processCrescendoChange(uint16_t crescendo);
+
+        void processPedalChange(MIDIDivision division, uint16_t value);
 
         void routeDivisionInput(MIDIPort inPort, const MidiMessage &msg);
 

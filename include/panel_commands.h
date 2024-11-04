@@ -21,11 +21,14 @@ static const uint32_t PANEL_UART_SPEED = 115200;
 //    status2:1: Coupler MIDI output enabled
 static const uint8_t PANEL_CMD_STATUS  = 0x01;
 
-// Request:  COUPLER <state>
+// Request:  COUPLER <mode>
 // Response: none
-//    state:0: Coupler enabled
-//    state:1: Coupler MIDI out enabled
+//    mode: 0: Disabled, 1: MIDI output, 2: Coupler enabled
 static const uint8_t PANEL_CMD_COUPLER = 0x02;
+
+static const uint8_t PANEL_COUPLER_DISABLED = 0;
+static const uint8_t PANEL_COUPLER_MIDI = 1;
+static const uint8_t PANEL_COUPLER_ENABLED = 2;
 
 // Request:  ROUTER <output>
 // Response: none
@@ -33,3 +36,13 @@ static const uint8_t PANEL_CMD_COUPLER = 0x02;
 //    output:1: MIDI Out enabled
 static const uint8_t PANEL_CMD_ROUTER  = 0x03; 
 
+// Request:  VOLUME <channel> <volumeHigh> <volumeLow>
+// Response: none
+//    channel:    0: master volume, 1: USB input, 2: FX input
+//    volumeHigh: high byte of volume
+//    volumeLow:  low byte of volume
+static const uint8_t PANEL_CMD_VOLUME  = 0x04;
+
+static const uint8_t PANEL_CHANNEL_MASTER = 0;
+static const uint8_t PANEL_CHANNEL_USB = 1;
+static const uint8_t PANEL_CHANNEL_FX = 2;

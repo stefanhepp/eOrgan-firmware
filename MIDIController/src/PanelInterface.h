@@ -14,6 +14,7 @@
 
 #include <common_config.h>
 
+#include "OrganStateManager.h"
 #include "MIDIRouter.h"
 #include "AudioProcessor.h"
 #include "CouplerProcessor.h"
@@ -23,9 +24,10 @@ static const uint8_t CMD_BUFFER_SIZE = 64;
 class PanelInterface
 {
     private:
-        CouplerProcessor &mCoupler;
-        MIDIRouter       &mRouter;
-        AudioProcessor   &mAudio;
+        OrganStateManager &mStateManager;
+        CouplerProcessor  &mCoupler;
+        MIDIRouter        &mRouter;
+        AudioProcessor    &mAudio;
 
         uint8_t mRxBuffer[CMD_BUFFER_SIZE];
         int     mRxBufferLength = 0;
@@ -57,7 +59,8 @@ class PanelInterface
         void processCommand(uint8_t command);
 
     public:
-        explicit PanelInterface(CouplerProcessor &coupler, MIDIRouter &router, AudioProcessor &audio);
+        explicit PanelInterface(OrganStateManager &stateManager, CouplerProcessor &coupler,
+                                MIDIRouter &router, AudioProcessor &audio);
 
         void sendStatus();
 

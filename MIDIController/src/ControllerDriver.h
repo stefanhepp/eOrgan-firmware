@@ -103,7 +103,7 @@ class ControllerDriver
 
         void setToestudChannels(uint8_t channel, uint8_t swellChannel, uint8_t choirChannel);
 
-        void setToestudMode(uint8_t mode);
+        void setToestudMode(ToeStudMode mode);
 
         void setToestudSensitivity(uint8_t sensitivity);
 

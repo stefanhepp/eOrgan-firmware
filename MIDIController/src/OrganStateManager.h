@@ -19,6 +19,12 @@
 #include "MIDIRouter.h"
 #include "CouplerProcessor.h"
 
+enum CouplerMode {
+    CM_DISABLED = 0x00,
+    CM_MIDI = 0x01,
+    CM_ENABLED = 0x02
+};
+
 class OrganStateManager
 {
     private:
@@ -32,6 +38,8 @@ class OrganStateManager
         explicit OrganStateManager(MIDIRouter &router, CouplerProcessor &coupler, ControllerDriver &driver);
 
         void setDivisionChannel(MIDIDivision division, uint8_t channel);
+
+        void setCouplerMode(CouplerMode mode);
 
         void begin();
 

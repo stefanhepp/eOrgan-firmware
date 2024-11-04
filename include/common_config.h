@@ -85,7 +85,8 @@ static const uint8_t MAX_PISTONS = 26;
 enum ToeStudMode : uint8_t
 {
     TSM_MIDI = 0x01,
-    TSM_I2C  = 0x02
+    TSM_I2C  = 0x02,
+    TSM_BOTH = 0x03
 };
 
 /* ==============================================================

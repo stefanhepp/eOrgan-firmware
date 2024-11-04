@@ -320,7 +320,7 @@ void ControllerDriver::setToestudChannels(uint8_t channel, uint8_t swellChannel,
     Wire.endTransmission();
 }
 
-void ControllerDriver::setToestudMode(uint8_t mode)
+void ControllerDriver::setToestudMode(ToeStudMode mode)
 {
     beginTransmission(Controller::MC_ToeStud);
     Wire.write(I2C_CMD_SET_MODE);

@@ -71,12 +71,30 @@ void OrganStateManager::setDivisionChannel(MIDIDivision division, uint8_t channe
     }
 }
 
+void OrganStateManager::setCouplerMode(CouplerMode mode)
+{
+    switch (mode) {
+        case CM_DISABLED:
+            mMIDIRouter.enableCoupler(false);
+            mControl.setToestudMode(ToeStudMode::TSM_MIDI);
+            break;
+        case CM_MIDI:
+            mMIDIRouter.enableCoupler(true);
+            mCoupler.sendMIDICommands(true);
+            mControl.setToestudMode(ToeStudMode::TSM_I2C);
+            break;
+        case CM_ENABLED:
+            mMIDIRouter.enableCoupler(true);
+            mCoupler.sendMIDICommands(false);
+            mControl.setToestudMode(ToeStudMode::TSM_I2C);
+            break;
+    }
+}
+
 void OrganStateManager::begin()
 {
-
 }
 
 void OrganStateManager::loop()
 {
-
 }

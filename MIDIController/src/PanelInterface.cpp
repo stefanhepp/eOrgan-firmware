@@ -16,8 +16,9 @@
 #include <common_config.h>
 #include <panel_commands.h>
 
-PanelInterface::PanelInterface(CouplerProcessor &coupler, MIDIRouter &router, AudioProcessor &audio)
-: mCoupler(coupler), mRouter(router), mAudio(audio)
+PanelInterface::PanelInterface(OrganStateManager &stateManager, CouplerProcessor &coupler,
+                               MIDIRouter &router, AudioProcessor &audio)
+: mStateManager(stateManager), mCoupler(coupler), mRouter(router), mAudio(audio)
 {
 }
 
@@ -76,21 +77,53 @@ void PanelInterface::processSerialData(uint8_t data) {
 }
 
 void PanelInterface::processCommand(uint8_t command) {
-    uint8_t output, state;
+    uint8_t output, mode, channel;
+    uint8_t volumeLow, volumeHigh;
+    int volume;
 
     switch (command) {
         case PANEL_CMD_STATUS:
             sendStatus();
             break;
         case PANEL_CMD_COUPLER:
-            state = read();
-
-
+            mode = read();
+            switch (mode) {
+                case PANEL_COUPLER_DISABLED:
+                    mStateManager.setCouplerMode(CouplerMode::CM_DISABLED);
+                    break;
+                case PANEL_COUPLER_MIDI:
+                    mStateManager.setCouplerMode(CouplerMode::CM_MIDI);
+                    break;
+                case PANEL_COUPLER_ENABLED:
+                    mStateManager.setCouplerMode(CouplerMode::CM_ENABLED);
+                    break;
+                default:
+                    break;
+            }
             break;
         case PANEL_CMD_ROUTER:
             output = read();
-
-
+            mRouter.enableUSBOutput(output & 0x01 ? true : false);
+            mRouter.enableMIDIOutput(output & 0x02 ? true : false);
+            break;
+        case PANEL_CMD_VOLUME:
+            channel = read();
+            volumeHigh = read();
+            volumeLow = read();
+            volume = ((int)(volumeHigh) << 8)|(int)volumeLow;
+            switch (channel) {
+                case PANEL_CHANNEL_MASTER:
+                    mAudio.setVolume((float)(volume)/1023.0);
+                    break;
+                case PANEL_CHANNEL_USB:
+                    mAudio.setUSBInputGain((float)(volume)/1023.0);
+                    break;
+                case PANEL_CHANNEL_FX:
+                    mAudio.setFXInputGain((float)(volume)/1023.0);
+                    break;
+                default:
+                    break;
+            }
             break;
         default:
             break;
