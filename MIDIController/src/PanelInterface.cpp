@@ -77,7 +77,7 @@ void PanelInterface::processSerialData(uint8_t data) {
 }
 
 void PanelInterface::processCommand(uint8_t command) {
-    uint8_t output, mode, channel;
+    uint8_t output, mode, channel, direction;
     uint8_t volumeLow, volumeHigh;
     int volume;
 
@@ -122,6 +122,17 @@ void PanelInterface::processCommand(uint8_t command) {
                     mAudio.setFXInputGain((float)(volume)/1023.0);
                     break;
                 default:
+                    break;
+            }
+            break;
+        case PANEL_CMD_PAGE_TURN:
+            direction = read();
+            switch (direction) {
+                case PANEL_PAGE_NEXT:
+                    mCoupler.sendPageTurn(ButtonType::BT_NEXT);
+                    break;
+                case PANEL_PAGE_PREV:
+                    mCoupler.sendPageTurn(ButtonType::BT_PREV);
                     break;
             }
             break;

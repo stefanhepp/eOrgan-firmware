@@ -110,6 +110,13 @@ class CouplerProcessor
 
 
         /**
+         * Send a page turn command.
+         * 
+         * \param direction BT_NEXT or BT_PREV.
+         */
+        void sendPageTurn(ButtonType direction);
+
+        /**
          * Clear all couplers for a division.
          */
         void clearCouplers(MIDIDivision division);

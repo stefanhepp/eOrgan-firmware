@@ -183,6 +183,16 @@ void CouplerProcessor::begin()
 {
 }
 
+void CouplerProcessor::sendPageTurn(ButtonType direction) {
+    if (direction == BT_PREV) {
+        Keyboard.press(KEY_LEFT);
+        Keyboard.release(KEY_LEFT);
+    } else {
+        Keyboard.press(KEY_RIGHT);
+        Keyboard.release(KEY_RIGHT);
+    }
+}
+
 void CouplerProcessor::clearCouplers(MIDIDivision division)
 {
     for (int i = 0; i < MAX_DIVISION_CHANNEL + 1; i++) {
@@ -300,13 +310,7 @@ void CouplerProcessor::processPistonPress(MIDIDivision division, uint8_t button,
             enableCrescendo(cmd.division, !crescendo(cmd.division));
             break;
         case PCT_PAGE:
-            if (cmd.param.button == BT_PREV) {
-                Keyboard.press(KEY_LEFT); 
-                Keyboard.release(KEY_LEFT); 
-            } else {
-                Keyboard.press(KEY_RIGHT);
-                Keyboard.release(KEY_RIGHT);
-            }
+            sendPageTurn(cmd.param.button);
             break;
         case PCT_SEQUENCE:
             break;

@@ -46,3 +46,11 @@ static const uint8_t PANEL_CMD_VOLUME  = 0x04;
 static const uint8_t PANEL_CHANNEL_MASTER = 0;
 static const uint8_t PANEL_CHANNEL_USB = 1;
 static const uint8_t PANEL_CHANNEL_FX = 2;
+
+// Request:  PAGE_TURN <direction>
+// Response: none
+//    direction: 0: next, 1: back
+static const uint8_t PANEL_CMD_PAGE_TURN = 0x05;
+
+static const uint8_t PANEL_PAGE_NEXT = 0;
+static const uint8_t PANEL_PAGE_PREV = 1;

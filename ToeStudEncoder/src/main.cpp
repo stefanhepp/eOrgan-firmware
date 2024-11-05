@@ -181,8 +181,9 @@ void i2cRequest()
     Wire.write(SendMode);
 
     for (uint8_t i = 0; i < 3; i++) {
-        Wire.write((uint8_t)(pedals[i].value() >> 8));
-        Wire.write((uint8_t)(pedals[i].value() & 0xFF));
+        uint16_t value = pedals[i].value();
+        Wire.write((uint8_t)(value >> 8));
+        Wire.write((uint8_t)(value & 0xFF));
     }
     clearIRQ(IRQ_PEDALS);
 
