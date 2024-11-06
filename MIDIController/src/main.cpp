@@ -425,16 +425,16 @@ void onTechnicsStatus(uint8_t channel, uint16_t wheel)
     // Note: Wheel is sent as MIDI bend control event
 }
 
-void onToeStudStatus(uint8_t channel, uint16_t crescendo, uint16_t swell, uint16_t choir)
+void onToeStudStatus(uint8_t channel, uint8_t mode, uint16_t crescendo, uint16_t swell, uint16_t choir)
 {
     if (PrintNextStatus & PRINT_TOESTUD || PrintI2C & PRINT_TOESTUD) {
         PrintNextStatus &= ~PRINT_TOESTUD;
-        Serial.printf("ToeStuds: chan=%d cresendo=%d swell=%d choir=%d", channel, crescendo, swell, choir);
+        Serial.printf("ToeStuds: chan=%d mode=%d cresendo=%d swell=%d choir=%d", channel, mode, crescendo, swell, choir);
         Serial.println();
     }
 
     // if mode is not MIDI, process I2C pedals
-    if ((Control.getToestudMode() & ToeStudMode::TSM_MIDI) == 0) {
+    if ((mode & ToeStudMode::TSM_MIDI) == 0) {
         Coupler.processCrescendoChange(crescendo);
         Coupler.processPedalChange(MIDIDivision::MD_Swell, swell);
         Coupler.processPedalChange(MIDIDivision::MD_Choir, choir);

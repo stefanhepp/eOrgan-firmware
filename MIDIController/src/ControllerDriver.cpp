@@ -253,7 +253,7 @@ void ControllerDriver::readStatusPedal()
         mLastToestudMode = sendMode;
 
         if (mToeStudStatusCallback) {
-            mToeStudStatusCallback(channel, pedalCrescendo, pedalSwell, pedalChoir);
+            mToeStudStatusCallback(channel, sendMode, pedalCrescendo, pedalSwell, pedalChoir);
         }
 
         readPistons(Controller::MC_ToeStud);
