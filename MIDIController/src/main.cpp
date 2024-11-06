@@ -332,7 +332,6 @@ class ToeStudModeParser: public CommandParser
 {
     private:
         enum ToeStudParserCmd {
-            TSMC_MODE,
             TSMC_SENSITIVITY
         };
 
@@ -342,7 +341,7 @@ class ToeStudModeParser: public CommandParser
         ToeStudModeParser() {}
 
         virtual void printArguments() { 
-            Serial.print("mode midi|i2c|both; sensitivity <value>");
+            Serial.print("sensitivity <value>");
         }
 
         virtual CmdErrorCode startCommand(const char* cmd) {
@@ -351,30 +350,13 @@ class ToeStudModeParser: public CommandParser
 
         virtual CmdErrorCode parseNextArgument(int argNo, const char* arg) {
             if (argNo == 0) {
-                if (strcmp(arg, "mode") == 0) {
-                    mCommand = TSMC_MODE;
-                    return CmdErrorCode::CmdNextArgument;
-                }
                 if (strcmp(arg, "sensitivity") == 0) {
                     mCommand = TSMC_SENSITIVITY;
                     return CmdErrorCode::CmdNextArgument;
                 }
             }
             if (argNo == 1) {
-                if (mCommand == TSMC_MODE) {
-                    if (strcmp(arg, "midi") == 0) {
-                        Control.setToestudMode(ToeStudMode::TSM_MIDI);
-                        return CmdErrorCode::CmdOK;
-                    }
-                    if (strcmp(arg, "i2c") == 0) {
-                        Control.setToestudMode(ToeStudMode::TSM_I2C);
-                        return CmdErrorCode::CmdOK;
-                    }
-                    if (strcmp(arg, "both") == 0) {
-                        Control.setToestudMode(ToeStudMode::TSM_BOTH);
-                        return CmdErrorCode::CmdOK;
-                    }
-                } else {
+                if (mCommand == TSMC_SENSITIVITY) {
                     int value;
                     if (parseInteger(arg, value, 0, 100)) {
                         Control.setToestudSensitivity(value);
@@ -425,20 +407,17 @@ void onTechnicsStatus(uint8_t channel, uint16_t wheel)
     // Note: Wheel is sent as MIDI bend control event
 }
 
-void onToeStudStatus(uint8_t channel, uint8_t mode, uint16_t crescendo, uint16_t swell, uint16_t choir)
+void onToeStudStatus(uint16_t crescendo, uint16_t swell, uint16_t choir)
 {
     if (PrintNextStatus & PRINT_TOESTUD || PrintI2C & PRINT_TOESTUD) {
         PrintNextStatus &= ~PRINT_TOESTUD;
-        Serial.printf("ToeStuds: chan=%d mode=%d cresendo=%d swell=%d choir=%d", channel, mode, crescendo, swell, choir);
+        Serial.printf("ToeStuds: cresendo=%d swell=%d choir=%d", crescendo, swell, choir);
         Serial.println();
     }
 
-    // if mode is not MIDI, process I2C pedals
-    if ((mode & ToeStudMode::TSM_MIDI) == 0) {
-        Coupler.processCrescendoChange(crescendo);
-        Coupler.processPedalChange(MIDIDivision::MD_Swell, swell);
-        Coupler.processPedalChange(MIDIDivision::MD_Choir, choir);
-    }
+    Coupler.processCrescendoChange(crescendo);
+    Coupler.processPedalChange(MIDIDivision::MD_Swell, swell);
+    Coupler.processPedalChange(MIDIDivision::MD_Choir, choir);
 }
 
 void onPedalStatus(uint8_t channel, uint8_t ledIntensity)

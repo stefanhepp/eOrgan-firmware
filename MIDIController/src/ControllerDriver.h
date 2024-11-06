@@ -16,7 +16,7 @@
 
 using KeyboardStatusCallback =  void(*)(uint8_t channel1, uint8_t channel2, bool training, uint8_t lastKey);
 using TechnicsStatusCallback = void(*)(uint8_t channel, uint16_t wheel);
-using ToeStudStatusCallback = void(*)(uint8_t channel, uint8_t mode, uint16_t crescendo, uint16_t swell, uint16_t choir); 
+using ToeStudStatusCallback = void(*)(uint16_t crescendo, uint16_t swell, uint16_t choir);
 using PedalStatusCallback = void(*)(uint8_t channel, uint8_t ledIntensity);
 
 using PistonPressCallback = void(*)(MIDIDivision division, uint8_t button, bool longPress);
@@ -42,8 +42,6 @@ class ControllerDriver
         uint8_t mPistonLEDState[MAX_PISTON_LED_DIVISIONS][MAX_PISTON_LED_BYTES];
 
         uint8_t mLEDControlButtons = 0;
-
-        uint8_t mLastToestudMode = ToeStudMode::TSM_I2C;
 
         int  getPistonLEDIndex(MIDIDivision division);
 
@@ -101,18 +99,11 @@ class ControllerDriver
 
         void setPedalLEDIntensity(uint8_t intensity);
 
-        void setToestudChannels(uint8_t channel, uint8_t swellChannel, uint8_t choirChannel);
-
-        void setToestudMode(ToeStudMode mode);
-
         void setToestudSensitivity(uint8_t sensitivity);
 
         void setTechnicsChannel(uint8_t channel);
 
         void setKeyboardChannels(uint8_t channel1, uint8_t channel2);
-
-
-        uint8_t getToestudMode();
 
 
         void startCalibrateAnalogInputs();

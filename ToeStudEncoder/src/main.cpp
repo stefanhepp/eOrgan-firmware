@@ -16,7 +16,6 @@
  **/
 
 #include <Arduino.h>
-#include <MiniMIDI.h>
 #include <MegaWire.h>
 #include <CalibratedAnalogInput.h>
 #include <avrlib.h>
@@ -28,7 +27,6 @@
 #include "ToeStuds.h"
 
 // Create device driver instances
-MiniMIDI MIDI;
 MegaWire Wire;
 
 Settings settings;
@@ -41,10 +39,6 @@ static const uint8_t PEDAL_CHOIR = 2;
 
 CalibratedAnalogInput pedals[3];
 
-static uint8_t MIDIChannel;
-static uint8_t MIDIChannelSwell;
-static uint8_t MIDIChannelChoir;
-
 static const uint8_t BUFFER_SIZE = 16;
 static uint8_t ToeStudBuffer[BUFFER_SIZE];
 static uint8_t ToeStudBufferLength = 0;
@@ -53,8 +47,6 @@ static const uint8_t IRQ_PEDALS = 0;
 static const uint8_t IRQ_TOESTUDS = 1;
 
 static uint16_t IRQFlags = 0x00;
-
-static uint8_t SendMode;
 
 static void sendIRQ(uint8_t flag)
 {
@@ -68,13 +60,6 @@ static void clearIRQ(uint8_t flag)
     if (IRQFlags == 0x00) {
         digitalWrite(PIN_INTERRUPT, LOW);
     }
-}
-
-static void updateMIDIChannel(uint8_t channel, uint8_t channelSwell, uint8_t channelChoir) {
-    MIDIChannel = channel;
-    MIDIChannelSwell = channelSwell;
-    MIDIChannelChoir = channelChoir;
-    settings.setMIDIChannel(channel, channelSwell, channelChoir);
 }
 
 static void resetEncoder(void)
@@ -93,33 +78,8 @@ void onPedalCalibrate(void* payload) {
 }
 
 void onPedalChange(int value, void* payload) {
-    const uint8_t pedal = *((const uint8_t *)payload);
-
-    static uint8_t lastControlValue = 0;
-
-    if (SendMode & ToeStudMode::TSM_MIDI) {
-        switch (pedal) {
-            case PEDAL_CHOIR:
-                MIDI.sendPitchBend(value * 16, MIDIChannelChoir);
-                break;
-            case PEDAL_SWELL:
-                MIDI.sendPitchBend(value * 16, MIDIChannelSwell);
-                break;
-            case PEDAL_CRESCENDO:
-                uint8_t control = value >> 4;
-                // since we scale down, only send MIDI message if the change is large enough for a new control value
-                if (control != lastControlValue) { 
-                    MIDI.sendControlChange(MidiControlChangeNumber::ExpressionController, control, MIDIChannel);
-                    lastControlValue = control;
-                }
-                break;
-        }
-    }
-
-    if (SendMode & ToeStudMode::TSM_I2C) {
-        // Just set IRQ, read latest values via I2C
-        sendIRQ(IRQ_PEDALS);
-    }
+    // Just set IRQ, read latest values via I2C
+    sendIRQ(IRQ_PEDALS);
 }
 
 void onToeStudPress(uint8_t button, bool longPress) {
@@ -138,14 +98,6 @@ void i2cReceive(uint8_t length) {
         case I2C_CMD_RESET: 
             resetEncoder();
             break;
-        case I2C_CMD_SET_CHANNEL:
-            if (Wire.available() > 2) {
-                uint8_t channel = Wire.read();
-                uint8_t channelSwell = Wire.read();
-                uint8_t channelChoir = Wire.read();
-                updateMIDIChannel(channel, channelSwell, channelChoir);
-            }
-            break;
         case I2C_CMD_CALIBRATE:
             for (uint8_t i = 0; i < 3; i++) {
                 pedals[i].resetCalibration();
@@ -154,13 +106,6 @@ void i2cReceive(uint8_t length) {
         case I2C_CMD_STOP_CALIBRATE:
             for (uint8_t i = 0; i < 3; i++) {
                 pedals[i].stopCalibration();
-            }
-            break;
-        case I2C_CMD_SET_MODE:
-            if (Wire.available()) {
-                uint8_t value = Wire.read();
-                SendMode = value;
-                settings.setSendMode(value);
             }
             break;
         case I2C_CMD_SET_SENSITIVITY:
@@ -177,9 +122,6 @@ void i2cReceive(uint8_t length) {
 
 void i2cRequest()
 {
-    Wire.write(MIDIChannel);
-    Wire.write(SendMode);
-
     for (uint8_t i = 0; i < 3; i++) {
         uint16_t value = pedals[i].value();
         Wire.write((uint8_t)(value >> 8));
@@ -224,14 +166,6 @@ void setup() {
     digitalWrite(PIN_INTERRUPT, LOW);
     pinMode(PIN_INTERRUPT, OUTPUT);
 
-    MIDIChannel = settings.getMIDIChannel(SettingsChannel::SC_Control);
-    MIDIChannelSwell = settings.getMIDIChannel(SettingsChannel::SC_Swell);
-    MIDIChannelChoir = settings.getMIDIChannel(SettingsChannel::SC_Choir);
-
-    SendMode = settings.getSendMode(ToeStudMode::TSM_I2C);
-
-    MIDI.begin(MIDIChannel);
-
     setupPedal(&PEDAL_CRESCENDO, PIN_CRESCENDO);
     setupPedal(&PEDAL_SWELL, PIN_PEDAL_SWELL);
     setupPedal(&PEDAL_CHOIR, PIN_PEDAL_CHOIR);
@@ -248,9 +182,5 @@ void loop() {
     toestuds.poll();
     for (uint8_t i = 0; i < 3; i++) {
         pedals[i].poll();
-    }
-    
-    // wait for any MIDI messages being sent
-    while (MIDI.sending()) {
     }
 }

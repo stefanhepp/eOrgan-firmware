@@ -39,19 +39,11 @@ void OrganStateManager::setDivisionChannel(MIDIDivision division, uint8_t channe
             break;
         case MIDIDivision::MD_Choir:
             mControl.setTechnicsChannel(channel);
-            mControl.setToestudChannels(mDivisionChannels[MIDIDivision::MD_Control], 
-                                        mDivisionChannels[MIDIDivision::MD_Swell], 
-                                        mDivisionChannels[MIDIDivision::MD_Choir]
-                                        );
             break;
         case MIDIDivision::MD_Swell:
             mControl.setKeyboardChannels(mDivisionChannels[MIDIDivision::MD_Swell], 
                                          mDivisionChannels[MIDIDivision::MD_Solo]
                                          );
-            mControl.setToestudChannels(mDivisionChannels[MIDIDivision::MD_Control], 
-                                        mDivisionChannels[MIDIDivision::MD_Swell], 
-                                        mDivisionChannels[MIDIDivision::MD_Choir]
-                                        );
             break;
         case MIDIDivision::MD_Solo:
             mControl.setKeyboardChannels(mDivisionChannels[MIDIDivision::MD_Swell], 
@@ -59,11 +51,6 @@ void OrganStateManager::setDivisionChannel(MIDIDivision division, uint8_t channe
                                          );
             break;
         case MIDIDivision::MD_Control:
-            mControl.setToestudChannels(mDivisionChannels[MIDIDivision::MD_Control], 
-                                        mDivisionChannels[MIDIDivision::MD_Swell], 
-                                        mDivisionChannels[MIDIDivision::MD_Choir]
-                                        );
-            break;
         case MIDIDivision::MD_Great:
         case MIDIDivision::MD_MIDI:
             // Nothing to do, external devices
@@ -76,17 +63,14 @@ void OrganStateManager::setCouplerMode(CouplerMode mode)
     switch (mode) {
         case CM_DISABLED:
             mMIDIRouter.enableCoupler(false);
-            mControl.setToestudMode(ToeStudMode::TSM_MIDI);
             break;
         case CM_MIDI:
-            mMIDIRouter.enableCoupler(true);
+            mMIDIRouter.enableCoupler(false);
             mCoupler.sendMIDICommands(true);
-            mControl.setToestudMode(ToeStudMode::TSM_I2C);
             break;
         case CM_ENABLED:
             mMIDIRouter.enableCoupler(true);
             mCoupler.sendMIDICommands(false);
-            mControl.setToestudMode(ToeStudMode::TSM_I2C);
             break;
     }
 }

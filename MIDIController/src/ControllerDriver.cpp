@@ -49,24 +49,6 @@ ControllerDriver::ControllerDriver()
     }
 }
 
-int getPistonIndex(MIDIDivision division) {
-    switch (division) {
-        case MIDIDivision::MD_Pedal:
-        case MIDIDivision::MD_Choir:
-            return 0;
-        case MIDIDivision::MD_Swell:
-            return 1;
-        case MIDIDivision::MD_Solo:
-            return 2;
-        case MIDIDivision::MD_Control:
-        case MIDIDivision::MD_Great:
-        case MIDIDivision::MD_MIDI:
-            // Should not be reached!
-            return 0;
-    }
-    return 0;
-}
-
 void ControllerDriver::selectController(Controller controller)
 {
     switch (controller) {
@@ -236,9 +218,7 @@ void ControllerDriver::readStatusPedal()
     }
     
     requestTransmission(Controller::MC_ToeStud, 16);
-    if (Wire.available() >= 8) {
-        uint8_t channel    = Wire.read();
-        uint8_t sendMode   = Wire.read();
+    if (Wire.available() >= 7) {
         uint8_t pedal1High = Wire.read();
         uint8_t pedal1Low  = Wire.read();
         uint8_t pedal2High = Wire.read();
@@ -250,10 +230,8 @@ void ControllerDriver::readStatusPedal()
         uint16_t pedalSwell     = pedal2High << 8 | pedal2Low;
         uint16_t pedalChoir     = pedal3High << 8 | pedal3Low;
 
-        mLastToestudMode = sendMode;
-
         if (mToeStudStatusCallback) {
-            mToeStudStatusCallback(channel, sendMode, pedalCrescendo, pedalSwell, pedalChoir);
+            mToeStudStatusCallback(pedalCrescendo, pedalSwell, pedalChoir);
         }
 
         readPistons(Controller::MC_ToeStud);
@@ -308,31 +286,6 @@ void ControllerDriver::setPedalLEDIntensity(uint8_t intensity)
     Wire.write(I2C_CMD_LED_INTENSITY);
     Wire.write(intensity);
     Wire.endTransmission();
-}
-
-void ControllerDriver::setToestudChannels(uint8_t channel, uint8_t swellChannel, uint8_t choirChannel)
-{
-    beginTransmission(Controller::MC_ToeStud);
-    Wire.write(I2C_CMD_SET_CHANNEL);
-    Wire.write(channel);
-    Wire.write(swellChannel);
-    Wire.write(choirChannel);
-    Wire.endTransmission();
-}
-
-void ControllerDriver::setToestudMode(ToeStudMode mode)
-{
-    beginTransmission(Controller::MC_ToeStud);
-    Wire.write(I2C_CMD_SET_MODE);
-    Wire.write(mode);
-    Wire.endTransmission();
-
-    mLastToestudMode = mode;
-}
-
-uint8_t ControllerDriver::getToestudMode()
-{
-    return mLastToestudMode;
 }
 
 void ControllerDriver::setToestudSensitivity(uint8_t sensitivity)

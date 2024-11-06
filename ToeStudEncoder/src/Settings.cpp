@@ -14,8 +14,6 @@
 
 #include <common_config.h>
 
-uint8_t EEMEM confChannel[3];
-uint8_t EEMEM confMode;
 uint8_t EEMEM confSensitivity;
 
 uint16_t EEMEM confCalibrationData[6];
@@ -26,19 +24,6 @@ static const uint8_t ChannelDefault[3] = {MIDI_CHANNEL_TOESTUD,
 
 Settings::Settings()
 {
-}
-
-uint8_t Settings::getMIDIChannel(SettingsChannel channel)
-{
-    uint8_t v = eeprom_read_byte(&confChannel[channel]);
-    return (v == 0xFF) ? ChannelDefault[channel] : v;
-}
-
-void Settings::setMIDIChannel(uint8_t channel, uint8_t channelSwell, uint8_t channelChoir)
-{
-    eeprom_write_byte(&confChannel[0], channel);
-    eeprom_write_byte(&confChannel[1], channelSwell);
-    eeprom_write_byte(&confChannel[2], channelChoir);
 }
 
 bool Settings::hasCalibrationData()
@@ -58,17 +43,6 @@ void Settings::setCalibrationData(uint8_t pedal, const AICalibrationData &data)
 {
     eeprom_write_word(&confCalibrationData[pedal * 2    ], (uint16_t) data.min);
     eeprom_write_word(&confCalibrationData[pedal * 2 + 1], (uint16_t) data.max);
-}
-
-uint8_t Settings::getSendMode(uint8_t defaultMode)
-{
-    uint8_t v = eeprom_read_byte(&confMode);
-    return (v == 0xFF) ? defaultMode : v;
-}
-
-void Settings::setSendMode(uint8_t mode)
-{
-    eeprom_write_byte(&confMode, mode);
 }
 
 uint8_t Settings::getSensitivity()

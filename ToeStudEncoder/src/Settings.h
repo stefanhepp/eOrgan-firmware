@@ -16,30 +16,16 @@
 #include <CalibratedAnalogInput.h>
 
 
-enum SettingsChannel {
-    SC_Control = 0,
-    SC_Swell = 1,
-    SC_Choir = 2
-};
-
 class Settings
 {
     public:
         Settings();
-
-        uint8_t getMIDIChannel(SettingsChannel channel);
-
-        void setMIDIChannel(uint8_t channel, uint8_t channelSwell, uint8_t channelChoir);
 
         bool hasCalibrationData();
 
         void getCalibrationData(uint8_t pedal, AICalibrationData &data) const;
 
         void setCalibrationData(uint8_t pedal, const AICalibrationData &data);
-
-        uint8_t getSendMode(uint8_t defaultMode);
-
-        void setSendMode(uint8_t mode);
 
         uint8_t getSensitivity();
 

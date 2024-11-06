@@ -91,11 +91,6 @@ class CouplerProcessor
 
         MIDIDivision getDivision(MIDIPort inPort, const MidiMessage &msg);
 
-        /**
-         * \return True if the message was a pedal message and was processed, else false.
-         */
-        bool processPedalMessage(MIDIDivision division, const MidiMessage &msg);
-
         void sendCouplerMessage(MIDIDivision division, MIDIDivision target, 
                                 MIDIPort inPort, const MidiMessage &msg);
 
