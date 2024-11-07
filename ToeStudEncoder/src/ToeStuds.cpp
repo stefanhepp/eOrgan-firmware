@@ -39,6 +39,13 @@ void ToeStuds::reset()
 
 void ToeStuds::begin()
 {
+    for (int i = 0; i < 4; i++) {
+        pinMode(OUTPUT_PINS[i], OUTPUT);
+        digitalWrite(OUTPUT_PINS[i], HIGH);
+    }
+    for (int i = 0; i < 5; i++) {
+        pinMode(INPUT_PINS[i], INPUT_PULLUP);
+    }
 }
 
 uint8_t ToeStuds::getBtnNumber(uint8_t line, uint8_t pin)

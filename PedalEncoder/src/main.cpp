@@ -215,6 +215,7 @@ void setup() {
     pinMode(PIN_PC2, INPUT_PULLUP);
     pinMode(PIN_PC6, INPUT_PULLUP);
     pinMode(PIN_PD2, INPUT_PULLUP);
+    pinMode(PIN_PD0, INPUT_PULLUP);
 
     // Set output pin modes
     // Set pin value first before turing on output mode, to prevent spurious signals
@@ -224,7 +225,6 @@ void setup() {
     pinMode(PIN_CONFIG, INPUT);
 
     MIDIChannel = settings.getMIDIChannel();
-    MIDI.turnThruOn(ThruMode::Full);
     MIDI.begin(MIDIChannel);
 
     led.begin(settings.getLEDIntensity());

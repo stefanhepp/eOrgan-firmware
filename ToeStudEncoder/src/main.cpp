@@ -153,13 +153,16 @@ void setupPedal(const uint8_t *pedal, uint8_t pin)
 }
  
 void setup() {
-    // Enable ouput pins, set to HIGH initially. enable pullups for other pins
-    IO_DDR(PORT_OUT) = 0x0F;
-    IO_PORT(PORT_OUT) = 0xFF;
+    pinMode(PIN_PB4, INPUT_PULLUP);
+    pinMode(PIN_PB5, INPUT_PULLUP);
+    pinMode(PIN_PB6, INPUT_PULLUP);
+    pinMode(PIN_PB7, INPUT_PULLUP);
 
-    // Enable pullups for input ports
-    IO_DDR(PORT_IN) = 0;
-    IO_PORT(PORT_IN) = 0xFC;
+    pinMode(PIN_PD0, INPUT_PULLUP);
+    pinMode(PIN_PD1, OUTPUT);
+    digitalWrite(PIN_PD1, LOW);
+    pinMode(PIN_PD2, INPUT_PULLUP);
+    pinMode(PIN_PC6, INPUT_PULLUP);
 
     // Set output pin modes
     // Set pin value first before turing on output mode, to prevent spurious signals

@@ -31,6 +31,16 @@ controller:
 
 .PHONY: flash_keyboard flash_technics flash_piston_keyboard flash_piston_technics flash_pedal flash_toestud flash_controller flash_mainpanel
 
+update:
+	cd LEDController && platformio pkg update
+	cd KeyboardEncoder && platformio pkg update
+	cd TechnicsEncoder && platformio pkg update
+	cd PistonEncoder && platformio pkg update
+	cd PedalEncoder && platformio pkg update
+	cd ToeStudEncoder && platformio pkg update
+	cd MainPanelEncoder && platformio pkg update
+	cd MIDIController && platformio pgk update
+
 flash_keyboard:
 	cd KeyboardEncoder && platformio run -t upload
 
