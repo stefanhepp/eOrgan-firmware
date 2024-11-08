@@ -2,14 +2,11 @@ cmake_minimum_required (VERSION 3.0)
 
 project (PanelUI)
 
-# Create a variable that holds the path to our libwiringPi.so file
-set (WPI_PATH /home/alex/Development/wiringPi/wiringPi)
-
 # Add the local ‘include’ directory and the wiringPi directory to grab headers
-include_directories (include ${WPI_PATH})
+include_directories (include ../include)
 
 # Actually find the wiringPi library object
-find_library(WPI_LIB wiringPi HINTS ${WPI_PATH} NO_CMAKE_FIND_ROOT_PATH)
+find_library(WPI_LIB wiringPi)
 
 # Alert the user if we do not find it
 if(NOT WPI_LIB)

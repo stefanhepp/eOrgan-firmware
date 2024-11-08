@@ -136,8 +136,6 @@ void PanelInterface::processCommand(uint8_t command) {
                     break;
             }
             break;
-        default:
-            break;
     }
 }
 
@@ -150,7 +148,7 @@ void PanelInterface::sendStatus() {
 
     uint8_t routerState = 0x00;
     routerState |= mRouter.isCouplerEnabled() ? 0x01 : 0;
-    routerState |= 0; // mCoupler.doSendMIDIMessages();
+    routerState |= mCoupler.doSendMIDIMessages();
 
     write(midiOutput);
     write(routerState);
