@@ -202,7 +202,6 @@ void SerialInterface::processSerialData(int data)
     }
     if (mRxBufferLength == mRxCommandLength) {
         mRxReadPos = 0;
-	std::cout << "RX process: " << (int)mRxCommand << std::endl;
         processCommand(mRxCommand);
         mRxBufferLength = -1;
     }

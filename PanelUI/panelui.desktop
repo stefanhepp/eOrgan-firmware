@@ -1,0 +1,8 @@
+# To autostart, place into ~/.config/autostart/
+[Desktop Entry]
+Type=Application
+Name=PanelUI
+Exec=~/.local/bin/PanelUI
+StartupNotify=False
+Terminal=False
+

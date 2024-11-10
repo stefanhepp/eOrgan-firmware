@@ -126,7 +126,6 @@ void onStatusInfo(StatusInfo &status)
     if (!ReceivedStatus) {
         // first time we receive an answer from main controller,
         // read the status from the panel and sync main controller
-        std::cout << "UART request I2C status read" << std::endl;
         panel.readMainPanelStatus();
     }
     ReceivedStatus = true;
