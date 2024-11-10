@@ -30,7 +30,7 @@ class PanelInterface
         AudioProcessor    &mAudio;
 
         uint8_t mRxBuffer[CMD_BUFFER_SIZE];
-        int     mRxBufferLength = 0;
+        int     mRxBufferLength = -1;
         int     mRxReadPos = 0;
     
         uint8_t mRxCommand;

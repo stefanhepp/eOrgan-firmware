@@ -51,6 +51,8 @@ void PanelInterface::endTransmission() {
 }
 
 void PanelInterface::processSerialData(uint8_t data) {
+    //Serial.printf("RX Buf: %d, Len: %d, Com: %d < data: %hhu\n", 
+    //              mRxBufferLength, mRxCommandLength, mRxCommand, data);
     if (mRxBufferLength == -1) {
         // Start of transmission: 0x80 | length
         if (data & 0x80) {
@@ -69,7 +71,7 @@ void PanelInterface::processSerialData(uint8_t data) {
         }
         mRxBufferLength++;
     }
-    if (mRxBufferLength == mRxCommandLength) {
+    if (mRxBufferLength >= mRxCommandLength) {
         mRxReadPos = 0;
         processCommand(mRxCommand);
         mRxBufferLength = -1;
@@ -148,7 +150,7 @@ void PanelInterface::sendStatus() {
 
     uint8_t routerState = 0x00;
     routerState |= mRouter.isCouplerEnabled() ? 0x01 : 0;
-    routerState |= mCoupler.doSendMIDIMessages();
+    routerState |= mCoupler.doSendMIDICommands();
 
     write(midiOutput);
     write(routerState);
@@ -164,6 +166,7 @@ void PanelInterface::begin()
 void PanelInterface::loop()
 {
     while (Serial6.available()) {
-        processSerialData(Serial6.read());
+        uint8_t data = Serial6.read();
+        processSerialData(data);
     }
 }
