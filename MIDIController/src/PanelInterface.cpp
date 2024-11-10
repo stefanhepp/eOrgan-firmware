@@ -149,8 +149,8 @@ void PanelInterface::sendStatus() {
     midiOutput |= mRouter.isMIDIOutEnabled() ? 0x02 : 0;
 
     uint8_t routerState = 0x00;
-    routerState |= mRouter.isCouplerEnabled() ? 0x01 : 0;
-    routerState |= mCoupler.doSendMIDICommands();
+    routerState |= mRouter.isCouplerEnabled()    ? 0x01 : 0;
+    routerState |= mCoupler.doSendMIDICommands() ? 0x02 : 0;
 
     write(midiOutput);
     write(routerState);
