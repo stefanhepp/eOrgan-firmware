@@ -31,6 +31,18 @@ class PanelDriver
 
         uint8_t mLastMainPanelLEDs = 0x00;
 
+	int mLastVolumeMaster = -1;
+	int mLastVolumeFX1 = -1;
+	int mLastVolumeFX2 = -1;
+
+        int i2cOpen(const char* device);
+
+        int i2cSelect(uint8_t slaveAddress);
+
+        int i2cWriteData(const uint8_t *data, uint8_t size); 
+
+        int i2cReadData(uint8_t *data, uint8_t size);
+
         void readButtons(Panel panel, uint8_t *data, uint8_t size);
 
     public:

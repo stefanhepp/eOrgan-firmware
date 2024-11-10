@@ -19,6 +19,8 @@ StatusInfo LastStatus;
 
 void onButtonPress(Panel panel, int button, bool longPress)
 {
+    bool newState;
+
     std::cout << "Got Button " << button << ": " << (longPress ? "LONG" : "SHORT") << std::endl;
 
     if (!ReceivedStatus) {
@@ -28,23 +30,41 @@ void onButtonPress(Panel panel, int button, bool longPress)
     if (panel == Panel::PANEL_MAIN) {
         switch (button) {
             case BTN_ENABLE_USB:
-                
-
+                if (longPress) {
+                    serial.enableRouter(true, false);
+                } else {
+                    newState = !LastStatus.USBOutputEnabled;
+                    serial.enableRouter(newState, LastStatus.MIDIOutputEnabled);
+                }
                 serial.requestStatus();
                 break;
             case BTN_ENABLE_MIDI:
-
-
+                if (longPress) {
+                    serial.enableRouter(false, true);
+                } else {
+                    newState = !LastStatus.MIDIOutputEnabled;
+                    serial.enableRouter(LastStatus.USBOutputEnabled, newState);
+                }
                 serial.requestStatus();
                 break;
             case BTN_ENABLE_COUPLER:
-
-
+                if (LastStatus.CouplerEnabled) {
+                    serial.sendCouplerMode(CouplerMode::CM_DISABLED);
+                } else {
+                    serial.sendCouplerMode(CouplerMode::CM_ENABLED);
+                }
                 serial.requestStatus();
                 break;
             case BTN_ENABLE_SENDMIDI:
-
-
+                if (LastStatus.SendMIDIMessages) {
+                    if (LastStatus.CouplerEnabled) {
+                        serial.sendCouplerMode(CouplerMode::CM_ENABLED);
+                    } else {
+                        serial.sendCouplerMode(CouplerMode::CM_DISABLED);
+                    }
+                } else {
+                    serial.sendCouplerMode(CouplerMode::CM_MIDI);
+                }
                 serial.requestStatus();
                 break;
             case BTN_PAGE_NEXT:
@@ -83,7 +103,7 @@ void onButtonPress(Panel panel, int button, bool longPress)
 
 void onVolumeChange(VolumeChannel channel, int volume)
 {
-    std::cout << "Got Volume " << channel << ": " << volume << std::endl;
+    std::cout << "Got Volume " << (int)channel << ": " << volume << std::endl;
 
     serial.sendVolume(channel, volume);
 }
@@ -106,6 +126,7 @@ void onStatusInfo(StatusInfo &status)
     if (!ReceivedStatus) {
         // first time we receive an answer from main controller,
         // read the status from the panel and sync main controller
+        std::cout << "UART request I2C status read" << std::endl;
         panel.readMainPanelStatus();
     }
     ReceivedStatus = true;

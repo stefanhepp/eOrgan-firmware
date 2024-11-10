@@ -34,7 +34,7 @@ class SerialInterface
         StatusCallback  mStatusCallback = nullptr;
 
         uint8_t mRxBuffer[CMD_BUFFER_SIZE];
-        int     mRxBufferLength = 0;
+        int     mRxBufferLength = -1;
         int     mRxReadPos = 0;
     
         uint8_t mRxCommand;
@@ -46,15 +46,29 @@ class SerialInterface
 
         int     mFdSerial = -1;
 
+
+        int serialOpen(const char* device, uint32_t baud);
+
+        void serialWrite(uint8_t data);
+
+        int serialBufferSize();
+
+        int serialRead();
+
+        void serialFlush();
+
+        void serialClose();
+
+
         /**
          * To be called within processCommand, read next received command data byte.
          */
-        uint8_t read();
+        uint8_t readByte();
 
         /**
          * To be called between beginTransmission() and endTransmission(), add one byte to command data.
          */
-        void write(uint8_t data);
+        void writeByte(uint8_t data);
 
         void beginTransmission(uint8_t command);
 
