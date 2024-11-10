@@ -2,7 +2,7 @@
 [Desktop Entry]
 Type=Application
 Name=PanelUI
-Exec=~/.local/bin/PanelUI
+Exec=/home/stefan/Projects/eOrgan-firmware/PanelUI/build/PanelUI
 StartupNotify=False
 Terminal=False
 
