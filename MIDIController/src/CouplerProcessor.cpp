@@ -16,12 +16,25 @@
 
 #include <common_config.h>
 
+static const int COUPLER_NUM_SOUND_DIVISIONS = 5;
+static const int COUPLER_NUM_DIVISIONS = 6;
+
+static const MIDIDivision COUPLER_DIVISIONS[COUPLER_NUM_DIVISIONS] = {
+    MIDIDivision::MD_Pedal, 
+    MIDIDivision::MD_Choir,
+    MIDIDivision::MD_Great,
+    MIDIDivision::MD_Swell,
+    MIDIDivision::MD_Solo,
+    MIDIDivision::MD_Control
+};
+
 CouplerProcessor::CouplerProcessor(MIDIRouter &router)
 : mMIDIRouter(router)
 {
     // Map division -> channel
     mDivisionChannels[MIDIDivision::MD_Pedal] = MIDIDivision::MD_Pedal;
     mDivisionChannels[MIDIDivision::MD_Choir] = MIDIDivision::MD_Choir;
+    mDivisionChannels[MIDIDivision::MD_Great] = MIDIDivision::MD_Great;
     mDivisionChannels[MIDIDivision::MD_Swell] = MIDIDivision::MD_Swell;
     mDivisionChannels[MIDIDivision::MD_Solo ] = MIDIDivision::MD_Solo;
     mDivisionChannels[MIDIDivision::MD_Control] = MIDIDivision::MD_Control;
@@ -32,18 +45,20 @@ CouplerProcessor::CouplerProcessor(MIDIRouter &router)
     }
     mChannelDivisions[MIDIDivision::MD_Pedal] = MIDIDivision::MD_Pedal;
     mChannelDivisions[MIDIDivision::MD_Choir] = MIDIDivision::MD_Choir;
+    mChannelDivisions[MIDIDivision::MD_Great] = MIDIDivision::MD_Great;
     mChannelDivisions[MIDIDivision::MD_Swell] = MIDIDivision::MD_Swell;
     mChannelDivisions[MIDIDivision::MD_Solo ] = MIDIDivision::MD_Solo;
     mChannelDivisions[MIDIDivision::MD_Control] = MIDIDivision::MD_Control;
 
-    // initialize coupler status
+    // Map divisions to MIDI ports
     for (int i = 0; i < MAX_DIVISION_CHANNEL + 1; i++) {
-        mCoupler[i].enabled = true;
-        mCoupler[i].crescendo = false;
-        for (int j = 0; j < MAX_DIVISION_CHANNEL + 1; j++) {
-            mCoupler[i].couple[j] = CM_OFF;
-        }
+        mInjectPorts[i] = MIDIPort::MP_MIDI1;
     }
+    mInjectPorts[MIDIDivision::MD_Pedal] = MIDIPort::MP_Pedal;
+    mInjectPorts[MIDIDivision::MD_Choir] = MIDIPort::MP_Technics;
+    mInjectPorts[MIDIDivision::MD_Great] = MIDIPort::MP_MIDI1;
+    mInjectPorts[MIDIDivision::MD_Swell] = MIDIPort::MP_Keyboard;
+    mInjectPorts[MIDIDivision::MD_Solo]  = MIDIPort::MP_Keyboard;
 
     // initialize piston command mapping
     for (int i = 0; i < MAX_DIVISION_CHANNEL + 1; i++) {
@@ -145,6 +160,21 @@ CouplerProcessor::CouplerProcessor(MIDIRouter &router)
     mPistonCommands[MD_Solo][19] = {.division = MD_Control, .type = PCT_COMBINATION, .param = 3};
     mPistonCommands[MD_Solo][20] = {.division = MD_Control, .type = PCT_COMBINATION, .param = 2};
     mPistonCommands[MD_Solo][21] = {.division = MD_Control, .type = PCT_COMBINATION, .param = 1};
+
+    // initialize coupler and note status
+    for (int i = 0; i < MAX_DIVISION_CHANNEL + 1; i++) {
+        mCoupler[i].enabled = true;
+        mCoupler[i].crescendo = false;
+        for (int j = 0; j < MAX_DIVISION_CHANNEL + 1; j++) {
+            mCoupler[i].couple[j] = CM_OFF;
+        }
+
+        for (int j = 0; j < COUPLER_NUM_NOTES; j++) {
+            mPressedNotes[i][j].sourceMask = 0;
+            mPressedNotes[i][j].pressed = false;
+            mPressedNotes[i][j].velocity = 0;
+        }
+    }
 }
 
 MIDIDivision CouplerProcessor::getDivision(MIDIPort inPort, const MidiMessage &msg)
@@ -163,6 +193,9 @@ MIDIDivision CouplerProcessor::getDivision(MIDIPort inPort, const MidiMessage &m
 
 void CouplerProcessor::setDivisionChannel(MIDIDivision division, uint8_t channel)
 {
+    // disable playing notes first
+    allDivisionNotesOff(division);
+
     // disable the old channel, make it a unmapped MIDI input
     for (int i = 0; i < NUM_MIDI_CHANNELS; i++) {
         if (mChannelDivisions[i] == division) {
@@ -179,8 +212,181 @@ void CouplerProcessor::sendMIDICommands(bool sendCommands)
     mSendMIDICommands = sendCommands;
 }
 
+NoteStatus &CouplerProcessor::getNoteStatus(MIDIDivision division, int note)
+{
+    return mPressedNotes[division][note - COUPLER_LOWEST_NOTE];
+}
+
+void CouplerProcessor::sendCouplerNoteOn(MIDIDivision division, int note, uint8_t velocity)
+{
+    MidiMessage msg;
+    msg.channel = mDivisionChannels[division];
+    msg.type = midi::MidiType::NoteOn;
+    msg.data1 = note;
+    msg.data2 = velocity;
+    msg.length = 3;
+    msg.valid = true;
+
+    mMIDIRouter.injectMessage(mInjectPorts[division], msg);
+}
+
+void CouplerProcessor::sendCouplerNoteOff(MIDIDivision division, int note)
+{
+    MidiMessage msg;
+    msg.channel = mDivisionChannels[division];
+    msg.type = midi::MidiType::NoteOff;
+    msg.data1 = note;
+    msg.data2 = 0;
+    msg.length = 3;
+    msg.valid = false;
+
+    mMIDIRouter.injectMessage(mInjectPorts[division], msg);
+}
+
+void CouplerProcessor::setCoupledNote(MIDIDivision source, MIDIDivision target, int sourceNote, int note, bool sendMidi)
+{
+    if (note < COUPLER_LOWEST_NOTE || note >= COUPLER_LOWEST_NOTE + COUPLER_NUM_NOTES) {
+        return;
+    }
+
+    NoteStatus &status = getNoteStatus(target, note);
+
+    if (status.sourceMask == 0 && !status.pressed && sendMidi) {
+        sendCouplerNoteOn(target, note, getNoteStatus(source, sourceNote).velocity);
+    }
+    status.sourceMask |= (1<<source);
+}
+
+void CouplerProcessor::clearCoupledNote(MIDIDivision source, MIDIDivision target, int note, bool sendMidi)
+{
+    if (note < COUPLER_LOWEST_NOTE || note >= COUPLER_LOWEST_NOTE + COUPLER_NUM_NOTES) {
+        return;
+    }
+
+    NoteStatus &status = getNoteStatus(target, note);
+
+    status.sourceMask &= ~(1<<source);
+
+    if (status.sourceMask == 0 && !status.pressed && sendMidi) {
+        sendCouplerNoteOff(target, note);
+    }
+}
+
+void CouplerProcessor::updateCouplerMode(MIDIDivision source, MIDIDivision target, CoupleMode mode)
+{
+    CoupleMode oldMode = mCoupler[source].couple[target];
+
+    if (oldMode == mode) {
+        return;
+    }
+
+    for (uint8_t note = COUPLER_LOWEST_NOTE; note < COUPLER_LOWEST_NOTE + COUPLER_NUM_NOTES; note++) {
+        NoteStatus &status = getNoteStatus(source, note);
+
+        // disable old mode 
+        if (status.pressed && oldMode != CoupleMode::CM_OFF) {
+            clearCoupledNote(source, target, getTransposedNote(oldMode, note), true);
+        }
+
+        //enable new mode
+        if (status.pressed && mode != CoupleMode::CM_OFF) {
+            setCoupledNote(source, target, note, getTransposedNote(mode, note), true);
+        }
+    }
+
+    mCoupler[source].couple[target] = mode;
+}
+
+void CouplerProcessor::updateCoupledNote(MIDIDivision source, MIDIDivision target, 
+                                         const MidiMessage &msg, const MidiMessage &cmsg)
+{
+    if (cmsg.type == midi::MidiType::NoteOn) {
+        setCoupledNote(source, target, msg.data1, cmsg.data1, false);
+    }
+    if (cmsg.type == midi::MidiType::NoteOff) {
+        clearCoupledNote(source, target, cmsg.data1, false);
+    }
+}
+
+void CouplerProcessor::updatePlayedNote(MIDIDivision source, const MidiMessage &msg)
+{
+    int note = msg.data2;
+
+    if (note < COUPLER_LOWEST_NOTE || note >= COUPLER_LOWEST_NOTE + COUPLER_NUM_NOTES) {
+        return;
+    }
+
+    NoteStatus &status = getNoteStatus(source, note);
+
+    if (msg.type == midi::MidiType::NoteOn) {
+        status.pressed = mCoupler[source].enabled;
+        status.velocity = msg.data2;
+    }
+    if (msg.type == midi::MidiType::NoteOff) {
+        status.pressed = false;
+    }
+}
+
+uint8_t CouplerProcessor::getTransposedNote(CoupleMode mode, uint8_t note)
+{
+    if (mode == CoupleMode::CM_OCTAVE_DOWN) {
+        return note - 12;
+    }
+    else if (mode == CoupleMode::CM_OCTAVE_UP) {
+        return note + 12;
+    }
+    else {
+        return note;
+    }
+}
+
 void CouplerProcessor::begin()
 {
+}
+
+void CouplerProcessor::reset()
+{
+    allCouplerNotesOff();
+
+    // initialize coupler status
+    for (int i = 0; i < MAX_DIVISION_CHANNEL + 1; i++) {
+        mCoupler[i].enabled = true;
+        mCoupler[i].crescendo = false;
+        for (int j = 0; j < MAX_DIVISION_CHANNEL + 1; j++) {
+            mCoupler[i].couple[j] = CM_OFF;
+        }
+    }
+}
+
+void CouplerProcessor::allCouplerNotesOff()
+{
+    for (int i = 0; i < COUPLER_NUM_SOUND_DIVISIONS; i++) {
+        allCouplerNotesOff(COUPLER_DIVISIONS[i]);
+    }
+}
+
+void CouplerProcessor::allCouplerNotesOff(MIDIDivision division)
+{
+    for (int i = 0; i < COUPLER_NUM_SOUND_DIVISIONS; i++) {
+        MIDIDivision target = COUPLER_DIVISIONS[i];
+        for (int note = COUPLER_LOWEST_NOTE; note < COUPLER_LOWEST_NOTE+COUPLER_NUM_NOTES; note++) {
+            clearCoupledNote(division, target, note, true);
+        }
+    }
+}
+
+void CouplerProcessor::allDivisionNotesOff(MIDIDivision division)
+{
+    for (int note = COUPLER_LOWEST_NOTE; note < COUPLER_LOWEST_NOTE+COUPLER_NUM_NOTES; note++) {
+        NoteStatus &status = getNoteStatus(division, note);
+
+        if (status.pressed || status.sourceMask != 0) {
+            sendCouplerNoteOff(division, note);
+        }
+
+        status.sourceMask = 0;
+        status.pressed = false;
+    }
 }
 
 void CouplerProcessor::sendPageTurn(ButtonType direction) {
@@ -195,6 +401,8 @@ void CouplerProcessor::sendPageTurn(ButtonType direction) {
 
 void CouplerProcessor::clearCouplers(MIDIDivision division)
 {
+    allCouplerNotesOff(division);
+
     for (int i = 0; i < MAX_DIVISION_CHANNEL + 1; i++) {
         mCoupler[division].couple[i] = CM_OFF;
     }
@@ -202,14 +410,14 @@ void CouplerProcessor::clearCouplers(MIDIDivision division)
 
 void CouplerProcessor::coupleDivision(MIDIDivision division, MIDIDivision target, CoupleMode mode)
 {
-    mCoupler[division].couple[target] = mode;
+    updateCouplerMode(division, target, mode);
 
     // TODO update LED output, update Panel
 }
 
 void CouplerProcessor::transposeDivision(MIDIDivision division, CoupleMode mode)
 {
-    mCoupler[division].couple[division] = mode;
+    updateCouplerMode(division, division, mode);
 
     // TODO update LED output, update Panel
 }
@@ -222,6 +430,19 @@ void CouplerProcessor::enableCrescendo(MIDIDivision division, bool crescendo)
 void CouplerProcessor::enableDivision(MIDIDivision division, bool output)
 {
     mCoupler[division].enabled = output;
+
+    // send note off for curently playing notes
+    if (!output) {
+        for (int note = COUPLER_LOWEST_NOTE; note < COUPLER_LOWEST_NOTE+COUPLER_NUM_NOTES; note++) {
+
+            NoteStatus &status = getNoteStatus(division, note);
+
+            if (status.pressed && status.sourceMask == 0) {
+                sendCouplerNoteOff(division, note);
+            }
+            status.pressed = false;
+        }
+    }
 }
 
 CoupleMode CouplerProcessor::coupled(MIDIDivision division, MIDIDivision target) const
@@ -304,6 +525,9 @@ void CouplerProcessor::processPistonPress(MIDIDivision division, uint8_t button,
             selectCombination(cmd.division, cmd.param.value);
             break;
         case PCT_CLEAR:
+            if (longPress) {
+                clearCouplers(cmd.division);
+            }
             clearCombination(cmd.division);
             break;
         case PCT_CRESCENDO:
@@ -352,8 +576,7 @@ void CouplerProcessor::processPedalChange(MIDIDivision division, uint16_t value)
     }
 }
 
-void CouplerProcessor::sendCouplerMessage(MIDIDivision division, MIDIDivision target, 
-                                          MIDIPort inPort, const MidiMessage &msg)
+void CouplerProcessor::sendCouplerMessage(MIDIDivision division, MIDIDivision target, const MidiMessage &msg)
 {
     if (mCoupler[division].couple[target] == CM_OFF) {
         return;
@@ -365,16 +588,13 @@ void CouplerProcessor::sendCouplerMessage(MIDIDivision division, MIDIDivision ta
 
     // Transpose note messages
     if ((cmsg.type == midi::MidiType::NoteOn || cmsg.type == midi::MidiType::NoteOff)) {
-        if (mCoupler[division].couple[target] == CM_OCTAVE_DOWN) {
-            cmsg.data1 -= 12;
-        }
-        if (mCoupler[division].couple[target] == CM_OCTAVE_UP) {
-            cmsg.data1 += 12;
-        }
+        cmsg.data1 = getTransposedNote(mCoupler[division].couple[target], cmsg.data1);
     }
 
-    // Inject coupler midi message into the router (using the same MIDI port)
-    mMIDIRouter.injectMessage(inPort, cmsg);
+    updateCoupledNote(division, target, msg, cmsg);
+
+    // Inject coupler midi message into the router (using the same MIDI port)    
+    mMIDIRouter.injectMessage(mInjectPorts[target], cmsg);
 }
 
 void CouplerProcessor::routeDivisionInput(MIDIPort inPort, const MidiMessage &msg)
@@ -387,12 +607,13 @@ void CouplerProcessor::routeDivisionInput(MIDIPort inPort, const MidiMessage &ms
         return;
     }
 
+    updatePlayedNote(division, msg);
+
     // handle coupler, transpose, inject new messages
-    sendCouplerMessage(division, MIDIDivision::MD_Pedal, inPort, msg);
-    sendCouplerMessage(division, MIDIDivision::MD_Choir, inPort, msg);
-    sendCouplerMessage(division, MIDIDivision::MD_Great, inPort, msg);
-    sendCouplerMessage(division, MIDIDivision::MD_Swell, inPort, msg);
-    sendCouplerMessage(division, MIDIDivision::MD_Solo,  inPort, msg);
+    for (int i = 0; i < COUPLER_NUM_SOUND_DIVISIONS; i++) {
+        MIDIDivision target = COUPLER_DIVISIONS[i];
+        sendCouplerMessage(division, target, msg);    
+    }
 
     // only inject original message if division is not OFF (only for Note messages)
     if (mCoupler[division].enabled) {

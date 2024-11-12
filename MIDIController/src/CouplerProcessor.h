@@ -66,6 +66,19 @@ struct CouplerStatus {
     CoupleMode couple[MAX_DIVISION_CHANNEL+1];
 };
 
+struct NoteStatus {
+    // This is a bitmask of source divisions playing this note
+    uint16_t sourceMask;
+    // true if the note is played by the division manual
+    bool     pressed;
+    // Velocity of the original note
+    uint8_t  velocity;
+};
+
+static const int COUPLER_LOWEST_NOTE = 16;
+// 77key keyboard plus transposed octaves
+static const int COUPLER_NUM_NOTES = 77 + 2*12;
+
 class CouplerProcessor
 {
     private:
@@ -77,7 +90,11 @@ class CouplerProcessor
 
         midi::Channel mDivisionChannels[MAX_DIVISION_CHANNEL + 1];
 
+        MIDIPort mInjectPorts[MAX_DIVISION_CHANNEL + 1];
+
         CouplerStatus mCoupler[MAX_DIVISION_CHANNEL + 1];
+
+        NoteStatus mPressedNotes[MAX_DIVISION_CHANNEL+1][COUPLER_NUM_NOTES];
 
         uint16_t mPedalCrescendo = 0;
         uint16_t mPedalSwell = 0;
@@ -89,10 +106,51 @@ class CouplerProcessor
          */
         bool mSendMIDICommands;
 
+        /**
+         * Get the division for a MIDI message.
+         * \param inPort where the message is received from.
+         * \param msg the MIDI message.
+         */
         MIDIDivision getDivision(MIDIPort inPort, const MidiMessage &msg);
 
-        void sendCouplerMessage(MIDIDivision division, MIDIDivision target, 
-                                MIDIPort inPort, const MidiMessage &msg);
+        NoteStatus &getNoteStatus(MIDIDivision division, int note);
+
+        void sendCouplerNoteOn(MIDIDivision division, int note, uint8_t velocity);
+
+        void sendCouplerNoteOff(MIDIDivision division, int note);
+
+        /**
+         * Send MIDI messages for any active coupler for a received input message.
+         * \param division the source division of the MIDI message.
+         * \param target the target division to check the coupler and send any coupler message.
+         * \param msg the source MIDI message.
+         */
+        void sendCouplerMessage(MIDIDivision division, MIDIDivision target, const MidiMessage &msg);
+
+        /**
+         * Play a note on a division.
+         * 
+         * \param sendMidi if true, send a NoteOn if this note is not yet played.
+         */
+        void setCoupledNote(MIDIDivision source, MIDIDivision target, int sourceNote, int note, bool sendMidi);
+
+        /**
+         * Stop playing a note on a division.
+         * 
+         * \param sendMidi if true, send a NoteOff if this note is not played from any division anymore.
+         */
+        void clearCoupledNote(MIDIDivision source, MIDIDivision target, int note, bool sendMidi);
+
+        void updateCouplerMode(MIDIDivision source, MIDIDivision target, CoupleMode mode);
+
+        void updateCoupledNote(MIDIDivision source, MIDIDivision target, const MidiMessage &msg, const MidiMessage &cmsg);
+
+        /**
+         * Update NoteStatus for a received input MIDI message.
+         */
+        void updatePlayedNote(MIDIDivision souce, const MidiMessage &msg);
+
+        uint8_t getTransposedNote(CoupleMode mode, uint8_t note);
 
     public:
         explicit CouplerProcessor(MIDIRouter &router);
@@ -103,6 +161,26 @@ class CouplerProcessor
 
         bool doSendMIDICommands() const { return mSendMIDICommands; }
 
+
+        /**
+         * Reset coupler states and turn all notes off.
+         */
+        void reset();
+
+        /**
+         * Turn all notes off on all divisions.
+         */
+        void allCouplerNotesOff();
+
+        /**
+         * Turn all notes off that are coupled from this division.
+         */
+        void allCouplerNotesOff(MIDIDivision division);
+
+        /**
+         * Turn all notes playing on a division off.
+         */
+        void allDivisionNotesOff(MIDIDivision division);
 
         /**
          * Send a page turn command.
