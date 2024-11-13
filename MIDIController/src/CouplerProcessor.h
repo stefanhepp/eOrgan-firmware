@@ -177,6 +177,8 @@ class CouplerProcessor
          */
         void allCouplerNotesOff(MIDIDivision division);
 
+        void allDivisionsNotesOff();
+
         /**
          * Turn all notes playing on a division off.
          */

@@ -375,18 +375,33 @@ void CouplerProcessor::allCouplerNotesOff(MIDIDivision division)
     }
 }
 
+void CouplerProcessor::allDivisionsNotesOff()
+{
+    for (int i = 0; i < COUPLER_NUM_SOUND_DIVISIONS; i++) {
+        allDivisionNotesOff(COUPLER_DIVISIONS[i]);
+    }
+}
+
 void CouplerProcessor::allDivisionNotesOff(MIDIDivision division)
 {
     for (int note = COUPLER_LOWEST_NOTE; note < COUPLER_LOWEST_NOTE+COUPLER_NUM_NOTES; note++) {
         NoteStatus &status = getNoteStatus(division, note);
 
-        if (status.pressed || status.sourceMask != 0) {
-            sendCouplerNoteOff(division, note);
-        }
-
         status.sourceMask = 0;
         status.pressed = false;
     }
+
+    // send AllNotesOff message
+    MidiMessage msg;
+    msg.channel = mDivisionChannels[division];
+    msg.type = midi::MidiType::ControlChange;
+    msg.data1 = midi::MidiControlChangeNumber::AllNotesOff;
+    msg.data2 = 0;
+    msg.length = 3;
+    msg.valid = false;
+
+    mMIDIRouter.injectMessage(mInjectPorts[division], msg);
+
 }
 
 void CouplerProcessor::sendPageTurn(ButtonType direction) {
@@ -526,7 +541,7 @@ void CouplerProcessor::processPistonPress(MIDIDivision division, uint8_t button,
             break;
         case PCT_CLEAR:
             if (longPress) {
-                clearCouplers(cmd.division);
+                allDivisionNotesOff(cmd.division);
             }
             clearCombination(cmd.division);
             break;
