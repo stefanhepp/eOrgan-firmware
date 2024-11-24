@@ -58,23 +58,6 @@ void OrganStateManager::setDivisionChannel(MIDIDivision division, uint8_t channe
     }
 }
 
-void OrganStateManager::setCouplerMode(CouplerMode mode)
-{
-    switch (mode) {
-        case CM_DISABLED:
-            mMIDIRouter.enableCoupler(false);
-            break;
-        case CM_MIDI:
-            mMIDIRouter.enableCoupler(false);
-            mCoupler.sendMIDICommands(true);
-            break;
-        case CM_ENABLED:
-            mMIDIRouter.enableCoupler(true);
-            mCoupler.sendMIDICommands(false);
-            break;
-    }
-}
-
 void OrganStateManager::begin()
 {
 }

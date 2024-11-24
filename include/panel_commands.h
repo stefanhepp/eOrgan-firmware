@@ -18,7 +18,7 @@ static const uint32_t PANEL_UART_SPEED = 115200;
 //    status1:0: MIDI USB out enabled
 //    status1:1: MIDI out enabled
 //    status2:0: Coupler enabled
-//    status2:1: Coupler MIDI output enabled
+//    status2:1: Coupler MIDI commands only
 static const uint8_t PANEL_CMD_STATUS  = 0x01;
 
 // Request:  COUPLER <mode>

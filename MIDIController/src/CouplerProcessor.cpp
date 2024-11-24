@@ -29,7 +29,7 @@ static const MIDIDivision COUPLER_DIVISIONS[COUPLER_NUM_DIVISIONS] = {
 };
 
 CouplerProcessor::CouplerProcessor(MIDIRouter &router)
-: mMIDIRouter(router)
+: mMIDIRouter(router), mCouplerMode(CouplerMode::CM_ENABLED)
 {
     // Map division -> channel
     mDivisionChannels[MIDIDivision::MD_Pedal] = MIDIDivision::MD_Pedal;
@@ -69,7 +69,7 @@ CouplerProcessor::CouplerProcessor(MIDIRouter &router)
         }
     }
 
-    mPistonCommands[MD_Control][2]  = {.division = MD_Control, .type = PCT_NONE, .param = 0};        // Top row, right (right to left)
+    mPistonCommands[MD_Control][2]  = {.division = MD_Control, .type = PCT_SOUNDOFF, .param = BT_ALL};        // Top row, right (right to left)
     mPistonCommands[MD_Control][3]  = {.division = MD_Control, .type = PCT_SEQUENCE, .param = BT_NEXT};
     mPistonCommands[MD_Control][4]  = {.division = MD_Control, .type = PCT_SEQUENCE, .param = BT_PREV};
     mPistonCommands[MD_Control][5]  = {.division = MD_Pedal,   .type = PCT_COMBINATION, .param = 4}; // Bottom row, right (right to left)
@@ -166,7 +166,7 @@ CouplerProcessor::CouplerProcessor(MIDIRouter &router)
         mCoupler[i].enabled = true;
         mCoupler[i].crescendo = false;
         for (int j = 0; j < MAX_DIVISION_CHANNEL + 1; j++) {
-            mCoupler[i].couple[j] = CM_OFF;
+            mCoupler[i].couple[j] = CS_OFF;
         }
 
         for (int j = 0; j < COUPLER_NUM_NOTES; j++) {
@@ -207,9 +207,13 @@ void CouplerProcessor::setDivisionChannel(MIDIDivision division, uint8_t channel
     mChannelDivisions[channel] = division;
 }
 
-void CouplerProcessor::sendMIDICommands(bool sendCommands)
+void CouplerProcessor::setCouplerMode(CouplerMode mode)
 {
-    mSendMIDICommands = sendCommands;
+    if (mCouplerMode == CouplerMode::CM_ENABLED && mode != mCouplerMode) {
+        allCouplerNotesOff();
+    }
+
+    mCouplerMode = mode;
 }
 
 NoteStatus &CouplerProcessor::getNoteStatus(MIDIDivision division, int note)
@@ -272,9 +276,9 @@ void CouplerProcessor::clearCoupledNote(MIDIDivision source, MIDIDivision target
     }
 }
 
-void CouplerProcessor::updateCouplerMode(MIDIDivision source, MIDIDivision target, CoupleMode mode)
+void CouplerProcessor::updateCouplerMode(MIDIDivision source, MIDIDivision target, CouplerState mode)
 {
-    CoupleMode oldMode = mCoupler[source].couple[target];
+    CouplerState oldMode = mCoupler[source].couple[target];
 
     if (oldMode == mode) {
         return;
@@ -284,12 +288,12 @@ void CouplerProcessor::updateCouplerMode(MIDIDivision source, MIDIDivision targe
         NoteStatus &status = getNoteStatus(source, note);
 
         // disable old mode 
-        if (status.pressed && oldMode != CoupleMode::CM_OFF) {
+        if (status.pressed && oldMode != CouplerState::CS_OFF) {
             clearCoupledNote(source, target, getTransposedNote(oldMode, note), true);
         }
 
         //enable new mode
-        if (status.pressed && mode != CoupleMode::CM_OFF) {
+        if (status.pressed && mode != CouplerState::CS_OFF) {
             setCoupledNote(source, target, note, getTransposedNote(mode, note), true);
         }
     }
@@ -327,12 +331,12 @@ void CouplerProcessor::updatePlayedNote(MIDIDivision source, const MidiMessage &
     }
 }
 
-uint8_t CouplerProcessor::getTransposedNote(CoupleMode mode, uint8_t note)
+uint8_t CouplerProcessor::getTransposedNote(CouplerState mode, uint8_t note)
 {
-    if (mode == CoupleMode::CM_OCTAVE_DOWN) {
+    if (mode == CouplerState::CS_OCTAVE_DOWN) {
         return note - 12;
     }
-    else if (mode == CoupleMode::CM_OCTAVE_UP) {
+    else if (mode == CouplerState::CS_OCTAVE_UP) {
         return note + 12;
     }
     else {
@@ -353,7 +357,7 @@ void CouplerProcessor::reset()
         mCoupler[i].enabled = true;
         mCoupler[i].crescendo = false;
         for (int j = 0; j < MAX_DIVISION_CHANNEL + 1; j++) {
-            mCoupler[i].couple[j] = CM_OFF;
+            mCoupler[i].couple[j] = CS_OFF;
         }
     }
 }
@@ -375,14 +379,14 @@ void CouplerProcessor::allCouplerNotesOff(MIDIDivision division)
     }
 }
 
-void CouplerProcessor::allDivisionsNotesOff()
+void CouplerProcessor::allDivisionsNotesOff(bool soundOff)
 {
     for (int i = 0; i < COUPLER_NUM_SOUND_DIVISIONS; i++) {
-        allDivisionNotesOff(COUPLER_DIVISIONS[i]);
+        allDivisionNotesOff(COUPLER_DIVISIONS[i], soundOff);
     }
 }
 
-void CouplerProcessor::allDivisionNotesOff(MIDIDivision division)
+void CouplerProcessor::allDivisionNotesOff(MIDIDivision division, bool soundOff)
 {
     for (int note = COUPLER_LOWEST_NOTE; note < COUPLER_LOWEST_NOTE+COUPLER_NUM_NOTES; note++) {
         NoteStatus &status = getNoteStatus(division, note);
@@ -395,7 +399,8 @@ void CouplerProcessor::allDivisionNotesOff(MIDIDivision division)
     MidiMessage msg;
     msg.channel = mDivisionChannels[division];
     msg.type = midi::MidiType::ControlChange;
-    msg.data1 = midi::MidiControlChangeNumber::AllNotesOff;
+    msg.data1 = soundOff ? midi::MidiControlChangeNumber::AllSoundOff 
+                         : midi::MidiControlChangeNumber::AllNotesOff;
     msg.data2 = 0;
     msg.length = 3;
     msg.valid = false;
@@ -419,18 +424,18 @@ void CouplerProcessor::clearCouplers(MIDIDivision division)
     allCouplerNotesOff(division);
 
     for (int i = 0; i < MAX_DIVISION_CHANNEL + 1; i++) {
-        mCoupler[division].couple[i] = CM_OFF;
+        mCoupler[division].couple[i] = CS_OFF;
     }
 }
 
-void CouplerProcessor::coupleDivision(MIDIDivision division, MIDIDivision target, CoupleMode mode)
+void CouplerProcessor::coupleDivision(MIDIDivision division, MIDIDivision target, CouplerState mode)
 {
     updateCouplerMode(division, target, mode);
 
     // TODO update LED output, update Panel
 }
 
-void CouplerProcessor::transposeDivision(MIDIDivision division, CoupleMode mode)
+void CouplerProcessor::transposeDivision(MIDIDivision division, CouplerState mode)
 {
     updateCouplerMode(division, division, mode);
 
@@ -460,12 +465,12 @@ void CouplerProcessor::enableDivision(MIDIDivision division, bool output)
     }
 }
 
-CoupleMode CouplerProcessor::coupled(MIDIDivision division, MIDIDivision target) const
+CouplerState CouplerProcessor::coupled(MIDIDivision division, MIDIDivision target) const
 {
     return mCoupler[division].couple[target];
 }
 
-CoupleMode CouplerProcessor::transposed(MIDIDivision division) const
+CouplerState CouplerProcessor::transposed(MIDIDivision division) const
 {
     return mCoupler[division].couple[division];
 }
@@ -503,13 +508,13 @@ void CouplerProcessor::processPistonPress(MIDIDivision division, uint8_t button,
         case PCT_COUPLER:
             if (longPress) {
                 // couple transposed
-                coupleDivision(cmd.division, cmd.param.division, CM_OCTAVE_UP);
+                coupleDivision(cmd.division, cmd.param.division, CS_OCTAVE_UP);
             } else {
                 // Toggle coupler status
-                if (coupled(cmd.division, cmd.param.division) == CM_OFF) {
-                    coupleDivision(cmd.division, cmd.param.division, CM_COUPLE);
+                if (coupled(cmd.division, cmd.param.division) == CS_OFF) {
+                    coupleDivision(cmd.division, cmd.param.division, CS_COUPLE);
                 } else {
-                    coupleDivision(cmd.division, cmd.param.division, CM_OFF);
+                    coupleDivision(cmd.division, cmd.param.division, CS_OFF);
                 }
             }
             break;
@@ -517,14 +522,14 @@ void CouplerProcessor::processPistonPress(MIDIDivision division, uint8_t button,
             if (cmd.param.button == BT_TOGGLE) {
                 if (longPress) {
                     // Disable transpose
-                    transposeDivision(cmd.division, CM_OFF);
+                    transposeDivision(cmd.division, CS_OFF);
                 } else {
-                    if (transposed(cmd.division) == CM_OFF) {
-                        transposeDivision(cmd.division, CM_OCTAVE_UP);
-                    } else if (transposed(cmd.division) == CM_OCTAVE_UP) {
-                        transposeDivision(cmd.division, CM_OCTAVE_DOWN);
-                    } else if (transposed(cmd.division) == CM_OCTAVE_DOWN) {
-                        transposeDivision(cmd.division, CM_OFF);
+                    if (transposed(cmd.division) == CS_OFF) {
+                        transposeDivision(cmd.division, CS_OCTAVE_UP);
+                    } else if (transposed(cmd.division) == CS_OCTAVE_UP) {
+                        transposeDivision(cmd.division, CS_OCTAVE_DOWN);
+                    } else if (transposed(cmd.division) == CS_OCTAVE_DOWN) {
+                        transposeDivision(cmd.division, CS_OFF);
                     }                    
                 }
             }
@@ -556,6 +561,13 @@ void CouplerProcessor::processPistonPress(MIDIDivision division, uint8_t button,
         case PCT_SET:
             break;
         case PCT_HOLD:
+            break;
+        case PCT_SOUNDOFF:
+            if (longPress || cmd.param.button == ButtonType::BT_ALL) {
+                allDivisionsNotesOff(true);
+            } else {
+                allDivisionNotesOff(cmd.division, true);
+            }
             break;
 
         case PCT_NONE:
@@ -593,7 +605,7 @@ void CouplerProcessor::processPedalChange(MIDIDivision division, uint16_t value)
 
 void CouplerProcessor::sendCouplerMessage(MIDIDivision division, MIDIDivision target, const MidiMessage &msg)
 {
-    if (mCoupler[division].couple[target] == CM_OFF) {
+    if (mCoupler[division].couple[target] == CS_OFF) {
         return;
     }
 
@@ -617,7 +629,7 @@ void CouplerProcessor::routeDivisionInput(MIDIPort inPort, const MidiMessage &ms
     MIDIDivision division = getDivision(inPort, msg);
 
     // Forward any non-division inputs directly to output routing
-    if (division == MIDIDivision::MD_MIDI) {
+    if (mCouplerMode != CouplerMode::CM_ENABLED || division == MIDIDivision::MD_MIDI) {
         mMIDIRouter.injectMessage(inPort, msg);
         return;
     }

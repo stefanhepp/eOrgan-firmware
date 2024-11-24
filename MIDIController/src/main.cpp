@@ -32,7 +32,8 @@ static const int PRINT_KEYBOARD = 0x01;
 static const int PRINT_TECHNICS = 0x02;
 static const int PRINT_PEDAL    = 0x04;
 static const int PRINT_TOESTUD  = 0x08;
-static const int PRINT_ALL = PRINT_KEYBOARD | PRINT_TECHNICS | PRINT_PEDAL | PRINT_TOESTUD;
+static const int PRINT_BUTTONS  = 0x10;
+static const int PRINT_ALL = PRINT_KEYBOARD | PRINT_TECHNICS | PRINT_PEDAL | PRINT_TOESTUD | PRINT_BUTTONS;
 
 static int PrintNextStatus = 0;
 
@@ -77,7 +78,7 @@ class DebugParser: public CommandParser
         DebugParser() {}
 
         virtual void printArguments() { 
-            Serial.print("off|on|i2c");
+            Serial.print("off|on|i2c|buttons");
         }
 
         virtual CmdErrorCode startCommand(const char* cmd) {
@@ -94,6 +95,9 @@ class DebugParser: public CommandParser
             } else if (strcmp("i2c", arg) == 0) {
                 MIDI.echoMIDIMessages(false);
                 PrintI2C = PRINT_ALL;
+            } else if (strcmp("buttons", arg) == 0) {
+                MIDI.echoMIDIMessages(false);
+                PrintI2C = PRINT_BUTTONS;
             } else {
                 return CmdErrorCode::CmdInvalidArgument;
             }
@@ -242,11 +246,11 @@ class RouterParser: public CommandParser
 
         virtual CmdErrorCode parseNextArgument(int argNo, const char* arg) {
             if (argNo == 0) {
-                if (strcmp(arg, "enable") == 0) {
+                if (strcmp(arg, "disable") == 0) {
                     mCommand = 0;
                     return CmdErrorCode::CmdNextArgument;
                 }
-                if (strcmp(arg, "disable") == 0) {
+                if (strcmp(arg, "enable") == 0) {
                     mCommand = 1;
                     return CmdErrorCode::CmdNextArgument;
                 }
@@ -254,15 +258,15 @@ class RouterParser: public CommandParser
             if (argNo == 1) {
                 // in "enable/disable" command
                 if (strcmp(arg, "midi") == 0) {
-                    MIDI.enableMIDIOutput(mCommand == 0 ? true : false);
+                    MIDI.enableMIDIOutput(mCommand == 1 ? true : false);
                     return CmdErrorCode::CmdOK;
                 }
                 if (strcmp(arg, "usb") == 0) {
-                    MIDI.enableUSBOutput(mCommand == 0 ? true : false);
+                    MIDI.enableUSBOutput(mCommand == 1 ? true : false);
                     return CmdErrorCode::CmdOK;
                 }
                 if (strcmp(arg, "coupler") == 0) {
-                    MIDI.enableCoupler(mCommand == 0 ? true : false);
+                    Coupler.setCouplerMode(mCommand == 1 ? CouplerMode::CM_ENABLED : CouplerMode::CM_DISABLED);
                     return CmdErrorCode::CmdOK;
                 }
             }
@@ -431,11 +435,13 @@ void onPedalStatus(uint8_t channel, uint8_t ledIntensity)
 
 void onPistonPress(MIDIDivision division, uint8_t button, bool longPress)
 {
-    Serial.printf("Btn: %s.%d", divisionName(division), button);
-    if (longPress) {
-        Serial.print(" long");
+    if (PrintI2C & PRINT_BUTTONS) {
+        Serial.printf("Btn: %s.%d", divisionName(division), button);
+        if (longPress) {
+            Serial.print(" long");
+        }
+        Serial.println();
     }
-    Serial.println();
 
     // Send all piston events to Coupler for handling
     Coupler.processPistonPress(division, button, longPress);
@@ -444,10 +450,18 @@ void onPistonPress(MIDIDivision division, uint8_t button, bool longPress)
 void onLEDControllerButton(uint8_t button, uint8_t value) {
     if (button >= 4 && value) {
         // Button 4 is a press button
-        Serial.printf("LEDController Button %hhu pressed\n", button);
+        if (PrintI2C & PRINT_BUTTONS) {
+            Serial.printf("LEDController Button %hhu pressed\n", button);
+        }
+        if (button == 4) {
+            // Send all sound off on reset
+            Coupler.allDivisionsNotesOff(true);
+        }
     } else {
         // Buttons 0..3 are switches
-        Serial.printf("LEDController Switch %hhu %s\n", button, value ? "ON" : "OFF");
+        if (PrintI2C & PRINT_BUTTONS) {
+            Serial.printf("LEDController Switch %hhu %s\n", button, value ? "ON" : "OFF");
+        }
     }
 }
 

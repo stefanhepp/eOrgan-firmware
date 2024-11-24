@@ -111,7 +111,6 @@ MIDIRouter::MIDIRouter()
 
 void MIDIRouter::setCoupler(CouplerProcessor &coupler) {
     mCoupler = &coupler;
-    mEnableCoupler = true;
 }
 
 void MIDIRouter::echoMIDIMessages(bool enabled) {
@@ -162,10 +161,6 @@ void MIDIRouter::setMessageLength(MidiMessage &msg) const {
             default:
                 break;
     }
-}
-
-void MIDIRouter::enableCoupler(bool enable) {
-    mEnableCoupler = enable;
 }
 
 void MIDIRouter::enableMIDIOutput(bool enable) {
@@ -343,7 +338,7 @@ void MIDIRouter::routeMessage(MIDIPort inPort, const MidiMessage &msg)
         printMessage(msg);
         Serial.print(" ->");
     }
-    if (mEnableCoupler && mCoupler) {
+    if (mCoupler) {
         // Route division inputs through coupler.
         // Injecting to division outputs is done via the coupler
         mCoupler->routeDivisionInput(inPort, msg);

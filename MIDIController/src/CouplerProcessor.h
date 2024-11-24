@@ -19,18 +19,25 @@
 
 #include "MIDIRouter.h"
 
-enum CoupleMode : int {
-    CM_OFF = 0,
-    CM_COUPLE = 1,
-    CM_OCTAVE_UP = 2,
-    CM_OCTAVE_DOWN = 3
+enum CouplerMode {
+    CM_DISABLED = 0x00,
+    CM_MIDI = 0x01,
+    CM_ENABLED = 0x02
+};
+
+enum CouplerState : int {
+    CS_OFF = 0,
+    CS_COUPLE = 1,
+    CS_OCTAVE_UP = 2,
+    CS_OCTAVE_DOWN = 3
 };
 
 enum ButtonType : int {
     BT_NONE = 0,
     BT_NEXT = 4,
     BT_PREV = 5,
-    BT_TOGGLE = 6
+    BT_TOGGLE = 6,
+    BT_ALL = 7
 };
 
 union PistonParameter {
@@ -50,7 +57,8 @@ enum PistonCommandType {
     PCT_PAGE,         // Page turn; Param.type: PREV, NEXT
     PCT_SEQUENCE,     // Sequencer; Param.type: PREV, NEXT
     PCT_SET,          // Set combination
-    PCT_HOLD          // Hold current combination
+    PCT_HOLD,         // Hold current combination
+    PCT_SOUNDOFF      // Send AllSoundOff; Param.value: ALL = all divisions, else param.division
 };
 
 struct PistonCommand {
@@ -63,7 +71,7 @@ struct CouplerStatus {
     bool enabled;
     bool crescendo;
     // Sets the coupler mode: PP_NONE (off), PP_COUPLE (coupled), PP_OCTAVE_UP, PP_OCTAVE_DOWN
-    CoupleMode couple[MAX_DIVISION_CHANNEL+1];
+    CouplerState couple[MAX_DIVISION_CHANNEL+1];
 };
 
 struct NoteStatus {
@@ -101,10 +109,12 @@ class CouplerProcessor
         uint16_t mPedalChoir = 0;
 
         /**
-         * If true, send MIDI commands for coupler actions instead of
-         * performing the coupler translations.
+         * Mode of the coupler processor:
+         * - CM_DISABLED: all output off
+         * - CM_MIDI: Send MIDI commands for stops and couplers
+         * - CM_ENABLED: Transform MIDI notes with couplers, send stops as MIDI commands.
          */
-        bool mSendMIDICommands;
+        CouplerMode mCouplerMode;
 
         /**
          * Get the division for a MIDI message.
@@ -141,7 +151,7 @@ class CouplerProcessor
          */
         void clearCoupledNote(MIDIDivision source, MIDIDivision target, int note, bool sendMidi);
 
-        void updateCouplerMode(MIDIDivision source, MIDIDivision target, CoupleMode mode);
+        void updateCouplerMode(MIDIDivision source, MIDIDivision target, CouplerState mode);
 
         void updateCoupledNote(MIDIDivision source, MIDIDivision target, const MidiMessage &msg, const MidiMessage &cmsg);
 
@@ -150,16 +160,17 @@ class CouplerProcessor
          */
         void updatePlayedNote(MIDIDivision souce, const MidiMessage &msg);
 
-        uint8_t getTransposedNote(CoupleMode mode, uint8_t note);
+        uint8_t getTransposedNote(CouplerState mode, uint8_t note);
 
     public:
         explicit CouplerProcessor(MIDIRouter &router);
 
         void setDivisionChannel(MIDIDivision division, uint8_t channel);
 
-        void sendMIDICommands(bool sendCommands);
 
-        bool doSendMIDICommands() const { return mSendMIDICommands; }
+        void setCouplerMode(CouplerMode mode);
+
+        CouplerMode couplerMode() const { return mCouplerMode; }
 
 
         /**
@@ -177,12 +188,14 @@ class CouplerProcessor
          */
         void allCouplerNotesOff(MIDIDivision division);
 
-        void allDivisionsNotesOff();
+        void allDivisionsNotesOff(bool soundOff = false);
 
         /**
          * Turn all notes playing on a division off.
+         * 
+         * \param soundOff send AllSoundOff instead of AllNotesOff
          */
-        void allDivisionNotesOff(MIDIDivision division);
+        void allDivisionNotesOff(MIDIDivision division, bool soundOff = false);
 
         /**
          * Send a page turn command.
@@ -199,12 +212,12 @@ class CouplerProcessor
         /**
          * \param mode Can be one of PP_NONE (off), PP_COUPLE, PP_OCTAVE_UP, PP_OCTAVE_DOWN.
          */
-        void coupleDivision(MIDIDivision division, MIDIDivision target, CoupleMode mode);
+        void coupleDivision(MIDIDivision division, MIDIDivision target, CouplerState mode);
 
         /**
          * \param param Can be one of PP_NONE (off), PP_OCTAVE_UP, PP_OCTAVE_DOWN.
          */
-        void transposeDivision(MIDIDivision division, CoupleMode mode);
+        void transposeDivision(MIDIDivision division, CouplerState mode);
 
         void enableCrescendo(MIDIDivision division, bool crescendo);
 
@@ -214,9 +227,9 @@ class CouplerProcessor
         void enableDivision(MIDIDivision, bool output);
 
 
-        CoupleMode coupled(MIDIDivision division, MIDIDivision target) const;
+        CouplerState coupled(MIDIDivision division, MIDIDivision target) const;
 
-        CoupleMode transposed(MIDIDivision division) const;
+        CouplerState transposed(MIDIDivision division) const;
 
         bool crescendo(MIDIDivision division) const;
 

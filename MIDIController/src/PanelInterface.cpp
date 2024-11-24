@@ -91,13 +91,13 @@ void PanelInterface::processCommand(uint8_t command) {
             mode = read();
             switch (mode) {
                 case PANEL_COUPLER_DISABLED:
-                    mStateManager.setCouplerMode(CouplerMode::CM_DISABLED);
+                    mCoupler.setCouplerMode(CouplerMode::CM_DISABLED);
                     break;
                 case PANEL_COUPLER_MIDI:
-                    mStateManager.setCouplerMode(CouplerMode::CM_MIDI);
+                    mCoupler.setCouplerMode(CouplerMode::CM_MIDI);
                     break;
                 case PANEL_COUPLER_ENABLED:
-                    mStateManager.setCouplerMode(CouplerMode::CM_ENABLED);
+                    mCoupler.setCouplerMode(CouplerMode::CM_ENABLED);
                     break;
                 default:
                     break;
@@ -149,8 +149,8 @@ void PanelInterface::sendStatus() {
     midiOutput |= mRouter.isMIDIOutEnabled() ? 0x02 : 0;
 
     uint8_t routerState = 0x00;
-    routerState |= mRouter.isCouplerEnabled()    ? 0x01 : 0;
-    routerState |= mCoupler.doSendMIDICommands() ? 0x02 : 0;
+    routerState |= mCoupler.couplerMode() != CouplerMode::CM_DISABLED ? 0x01 : 0;
+    routerState |= mCoupler.couplerMode() == CouplerMode::CM_MIDI     ? 0x02 : 0;
 
     write(midiOutput);
     write(routerState);

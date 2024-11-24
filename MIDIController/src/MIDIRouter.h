@@ -40,7 +40,6 @@ class MIDIRouter
 
         CouplerProcessor *mCoupler = NULL;
 
-        bool mEnableCoupler = false;
         bool mEnableUSB = true;
         bool mEnableMIDIOut = true;
 
@@ -75,13 +74,9 @@ class MIDIRouter
 
         void resetRoutes();
 
-        void enableCoupler(bool enable);
-
         void enableUSBOutput(bool enable);
 
         void enableMIDIOutput(bool enable);
-
-        bool isCouplerEnabled() const { return mEnableCoupler; }
 
         bool isUSBOutEnabled() const { return mEnableUSB; }
 

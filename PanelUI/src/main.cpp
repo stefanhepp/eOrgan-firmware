@@ -21,8 +21,6 @@ void onButtonPress(Panel panel, int button, bool longPress)
 {
     bool newState;
 
-    std::cout << "Got Button " << button << ": " << (longPress ? "LONG" : "SHORT") << std::endl;
-
     if (!ReceivedStatus) {
         return;
     }
