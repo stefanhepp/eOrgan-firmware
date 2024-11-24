@@ -95,10 +95,13 @@ enum NRPNEvent : int {
     NRPN_Hold            = 103,
     NRPN_EnableCrescendo = 104,
     NRPN_Off             = 105,
-    NRPN_SequencerPrev   = 106,
-    NRPN_SequencerNext   = 107
+    NRPN_ClearCouplers   = 106,
+    NRPN_SequencerPrev   = 107,
+    NRPN_SequencerNext   = 108
 };
 
+static const int NRPN_COUPLER_OFFSET = 200;
+static const int NRPN_STOPS_OFFSET = 1000;
 
 class CouplerProcessor
 {
@@ -205,9 +208,11 @@ class CouplerProcessor
         /**
          * Update NoteStatus for a received input MIDI message.
          */
-        void recordPlayedNote(MIDIDivision souce, const MidiMessage &msg);
+        void recordPlayedNote(MIDIDivision source, const MidiMessage &msg);
 
         uint8_t getTransposedNote(CouplerState mode, uint8_t note);
+
+        int getCouplerNRPN(MIDIDivision target, CouplerState mode);
 
         /**
          * Create MIDI messages for coupled notes for a target division for a received division manual message.

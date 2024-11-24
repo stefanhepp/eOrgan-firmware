@@ -448,10 +448,31 @@ void CouplerProcessor::clearCouplers(MIDIDivision division)
     for (int i = 0; i < MAX_DIVISION_CHANNEL + 1; i++) {
         mCoupler[division].couple[i] = CS_OFF;
     }
+
+    if (mCouplerMode == CouplerMode::CM_MIDI) {
+        sendNRPN(division, NRPN_ClearCouplers, 127);
+    }
+}
+
+int CouplerProcessor::getCouplerNRPN(MIDIDivision target, CouplerState mode)
+{
+    return NRPN_COUPLER_OFFSET + target * 4 + mode - 1;
 }
 
 void CouplerProcessor::coupleDivision(MIDIDivision division, MIDIDivision target, CouplerState mode)
 {
+    if (mCouplerMode == CouplerMode::CM_MIDI) {
+        // TODO send different NRPM for transposed couplers?
+        if (coupled(division, target) != CouplerState::CS_OFF) {
+            // Turn off old coupler mode
+            sendNRPN(division, getCouplerNRPN(target, coupled(division, target)), 0);
+        }
+        if (mode != CouplerState::CS_OFF) {
+            // Turn on new coupler mode
+            sendNRPN(division, getCouplerNRPN(target, mode), 127);
+        }
+    }
+
     updateCouplerMode(division, target, mode);
 
     // TODO update LED output, update Panel
@@ -459,6 +480,18 @@ void CouplerProcessor::coupleDivision(MIDIDivision division, MIDIDivision target
 
 void CouplerProcessor::transposeDivision(MIDIDivision division, CouplerState mode)
 {
+    if (mCouplerMode == CouplerMode::CM_MIDI) {
+        // TODO send different NRPM for transposed couplers?
+        if (transposed(division) != CouplerState::CS_OFF) {
+            // Turn off old coupler mode
+            sendNRPN(division, getCouplerNRPN(division, transposed(division)), 0);
+        }
+        if (mode != CouplerState::CS_OFF) {
+            // Turn on new coupler mode
+            sendNRPN(division, getCouplerNRPN(division, mode), 127);
+        }
+    }
+
     updateCouplerMode(division, division, mode);
 
     // TODO update LED output, update Panel
