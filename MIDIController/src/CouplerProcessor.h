@@ -87,6 +87,19 @@ static const int COUPLER_LOWEST_NOTE = 16;
 // 77key keyboard plus transposed octaves
 static const int COUPLER_NUM_NOTES = 77 + 2*12;
 
+
+// NRPN numbers for specific coupler events
+enum NRPNEvent : int {
+    NRPN_Set             = 101,
+    NRPN_Clear           = 102,
+    NRPN_Hold            = 103,
+    NRPN_EnableCrescendo = 104,
+    NRPN_Off             = 105,
+    NRPN_SequencerPrev   = 106,
+    NRPN_SequencerNext   = 107
+};
+
+
 class CouplerProcessor
 {
     private:
@@ -117,6 +130,16 @@ class CouplerProcessor
         CouplerMode mCouplerMode;
 
         /**
+         * If enabled, setting of general or divisional combinations is enabled.
+         */
+        bool mSettingCombination = false;
+
+        /**
+         * If enabled, changing stops only has effect when holding is disabled.
+         */
+        bool mHoldingCombination = false;
+
+        /**
          * Get the division for a MIDI message.
          * \param inPort where the message is received from.
          * \param msg the MIDI message.
@@ -125,24 +148,40 @@ class CouplerProcessor
 
         NoteStatus &getNoteStatus(MIDIDivision division, int note);
 
+        /**
+         * Send MIDI note on message on a given division.
+         * 
+         * MIDI message is sent regardless of CouplerMode.
+         */
         void sendCouplerNoteOn(MIDIDivision division, int note, uint8_t velocity);
 
+        /**
+         * Send MIDI note off message on a given division.
+         * 
+         * MIDI message is sent regardless of CouplerMode.
+         */
         void sendCouplerNoteOff(MIDIDivision division, int note);
 
         /**
-         * Send MIDI messages for any active coupler for a received input message.
-         * \param division the source division of the MIDI message.
-         * \param target the target division to check the coupler and send any coupler message.
-         * \param msg the source MIDI message.
+         * Send MIDI CC message on a given division.
+         * 
+         * MIDI message is sent regardless of CouplerMode.
          */
-        void sendCouplerMessage(MIDIDivision division, MIDIDivision target, const MidiMessage &msg);
+        void sendControlChange(MIDIDivision division, midi::MidiControlChangeNumber ccNumber, uint8_t value);
+
+        /**
+         * Send MIDI Non-Registered Parameter Number message on a given division.
+         * 
+         * MIDI message is sent regardless of CouplerMode.
+         */
+        void sendNRPN(MIDIDivision division, int parameterNumber, uint8_t value);
 
         /**
          * Play a note on a division.
          * 
          * \param sendMidi if true, send a NoteOn if this note is not yet played.
          */
-        void setCoupledNote(MIDIDivision source, MIDIDivision target, int sourceNote, int note, bool sendMidi);
+        void playCoupledNote(MIDIDivision source, MIDIDivision target, int sourceNote, int note, bool sendMidi);
 
         /**
          * Stop playing a note on a division.
@@ -151,16 +190,33 @@ class CouplerProcessor
          */
         void clearCoupledNote(MIDIDivision source, MIDIDivision target, int note, bool sendMidi);
 
+        /** 
+         * Change the state of a coupler.
+         * 
+         * If CouplerMode == Enabled, then send MIDI Note On/Off messages for affected pressed keys.
+         */
         void updateCouplerMode(MIDIDivision source, MIDIDivision target, CouplerState mode);
 
-        void updateCoupledNote(MIDIDivision source, MIDIDivision target, const MidiMessage &msg, const MidiMessage &cmsg);
+        /**
+         * Record the state of a coupled Note On/off message.
+         */
+        void recordCoupledNote(MIDIDivision source, MIDIDivision target, const MidiMessage &msg, const MidiMessage &cmsg);
 
         /**
          * Update NoteStatus for a received input MIDI message.
          */
-        void updatePlayedNote(MIDIDivision souce, const MidiMessage &msg);
+        void recordPlayedNote(MIDIDivision souce, const MidiMessage &msg);
 
         uint8_t getTransposedNote(CouplerState mode, uint8_t note);
+
+        /**
+         * Create MIDI messages for coupled notes for a target division for a received division manual message.
+         * 
+         * \param division the source division of the MIDI message.
+         * \param target the target division to check the coupler and send any coupled message for.
+         * \param msg the source MIDI message on <division>.
+         */
+        void sendCouplerMessage(MIDIDivision division, MIDIDivision target, const MidiMessage &msg);
 
     public:
         explicit CouplerProcessor(MIDIRouter &router);
@@ -234,11 +290,22 @@ class CouplerProcessor
         bool crescendo(MIDIDivision division) const;
 
         bool enabled(MIDIDivision division) const;
-
         
         void selectCombination(MIDIDivision division, int combination);
 
         void clearCombination(MIDIDivision division);
+
+
+        bool settingCombination() const { return mSettingCombination; }
+
+        bool holdingCombination() const { return mHoldingCombination; }
+
+        void setCombination(bool enable);
+
+        void holdCombination(bool enable);
+
+
+        void selectSequencer(ButtonType button);
 
 
         void processPistonPress(MIDIDivision division, uint8_t button, bool longPress);
