@@ -124,6 +124,8 @@ class CouplerProcessor
         uint16_t mPedalSwell = 0;
         uint16_t mPedalChoir = 0;
 
+        bool mDebug = false;
+
         /**
          * Mode of the coupler processor:
          * - CM_DISABLED: all output off
@@ -233,6 +235,8 @@ class CouplerProcessor
 
         CouplerMode couplerMode() const { return mCouplerMode; }
 
+
+        void setDebug(bool debug) { mDebug = debug; }
 
         /**
          * Reset coupler states and turn all notes off.

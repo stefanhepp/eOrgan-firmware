@@ -37,6 +37,8 @@ class MIDIRouter
 {
     private:
         bool mEchoMIDI = false;
+        // True when processing an incoming MIDI message
+        bool mIsRouting = false;
 
         CouplerProcessor *mCoupler = NULL;
 

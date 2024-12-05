@@ -88,15 +88,19 @@ class DebugParser: public CommandParser
         virtual CmdErrorCode parseNextArgument(int argNo, const char* arg) {
             if (strcmp("on", arg) == 0) {
                 MIDI.echoMIDIMessages(true);
+                Coupler.setDebug(true);
                 PrintI2C = PRINT_ALL;
             } else if (strcmp("off", arg) == 0) {
                 MIDI.echoMIDIMessages(false);
+                Coupler.setDebug(false);
                 PrintI2C = 0;
             } else if (strcmp("i2c", arg) == 0) {
                 MIDI.echoMIDIMessages(false);
+                Coupler.setDebug(false);
                 PrintI2C = PRINT_ALL;
             } else if (strcmp("buttons", arg) == 0) {
                 MIDI.echoMIDIMessages(false);
+                Coupler.setDebug(true);
                 PrintI2C = PRINT_BUTTONS;
             } else {
                 return CmdErrorCode::CmdInvalidArgument;

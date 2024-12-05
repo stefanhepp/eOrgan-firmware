@@ -338,6 +338,7 @@ void MIDIRouter::routeMessage(MIDIPort inPort, const MidiMessage &msg)
         printMessage(msg);
         Serial.print(" ->");
     }
+    mIsRouting = true;
     if (mCoupler) {
         // Route division inputs through coupler.
         // Injecting to division outputs is done via the coupler
@@ -346,6 +347,7 @@ void MIDIRouter::routeMessage(MIDIPort inPort, const MidiMessage &msg)
         // Forward all inputs to all outputs as-is
         injectMessage(inPort, msg);
     }
+    mIsRouting = false;
     if (echo) {
         Serial.println();
     }
@@ -355,6 +357,12 @@ void MIDIRouter::injectMessage(MIDIPort inPort, const MidiMessage &msg)
 {
     bool echo = mEchoMIDI;
 
+    if (echo && !mIsRouting) {
+        Serial.printf("MIDI Out %d: ", inPort);
+        printMessage(msg);
+        Serial.print(" ->");
+    }
+
     if (mEnableMIDIOut) {
         forwardMessage(inPort, MIDIPort::MP_MIDI1, msg, echo);
         forwardMessage(inPort, MIDIPort::MP_MIDI2, msg, echo);
@@ -363,6 +371,10 @@ void MIDIRouter::injectMessage(MIDIPort inPort, const MidiMessage &msg)
     }
     if (mEnableUSB) {
         forwardMessage(inPort, MIDIPort::MP_MIDI_USB, msg, echo);
+    }
+
+    if (echo && !mIsRouting) {
+        Serial.println();
     }
 }
 
